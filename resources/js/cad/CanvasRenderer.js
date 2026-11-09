@@ -60,8 +60,15 @@ export default class CanvasRenderer {
         const length = wall.getLength();
         const label = `${Math.round(length)} mm`
 
+        ctx.save();
+
+        ctx.fillStyle = 'black';
+        ctx.font = '14px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(label, midX, midY);
+
+        ctx.fillText(label, midX, midY - 10);
+
+        ctx.restore();
     }
 }
