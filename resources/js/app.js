@@ -25,6 +25,7 @@ if (canvas) {
                 engine.startPoint.y === point.y
             ) {
                 engine.startPoint = null;
+                engine.render();
                 return;
             }
 
