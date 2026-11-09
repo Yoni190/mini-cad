@@ -33,6 +33,7 @@ export default class DrawingEngine {
 
         if (previewWall) {
             this.renderer.drawWall(previewWall, true);
+            this.renderer.drawWallLength(previewWall);
         }
     }
 }

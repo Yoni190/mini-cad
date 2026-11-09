@@ -32,7 +32,7 @@ export default class CanvasRenderer {
         ctx.closePath();
 
         ctx.fillStyle = isPreview
-            ? 'rgba(0, 255, 255, 0.2)'
+            ? 'red'
             : 'cyan';
 
         ctx.strokeStyle = isPreview ? 'blue' : 'black';
@@ -46,5 +46,22 @@ export default class CanvasRenderer {
             x: x / this.scale,
             y: y / this.scale
         };
+    }
+
+    drawWallLength (wall) {
+        const ctx = this.ctx;
+        const { start, end } = wall;
+
+        //Calculate wall midpoints (in pixels)
+        const midX = ((start.x + end.x) / 2) * this.scale;
+        const midY = ((start.y + end.y) / 2) * this.scale;
+
+        //Get wall length
+        const length = wall.getLength();
+        const label = `${Math.round(length)} mm`
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(label, midX, midY);
     }
 }
