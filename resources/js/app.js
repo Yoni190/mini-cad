@@ -2,12 +2,15 @@ import './bootstrap';
 import CanvasRenderer from './cad/CanvasRenderer';
 import DrawingEngine from './cad/DrawingEngine';
 import Wall from './cad/models/Wall';
+import SnapManager from './cad/SnapManager';
+
 
 const canvas = document.getElementById('cadCanvas');
 
 if (canvas) {
     const renderer = new CanvasRenderer(canvas);
     const engine = new DrawingEngine(renderer);
+    const snapManager = new SnapManager();
 
     canvas.addEventListener('click', (event) => {
         const rect = canvas.getBoundingClientRect();
@@ -15,7 +18,8 @@ if (canvas) {
         const screenX = event.clientX - rect.left;
         const screenY = event.clientY - rect.top;
 
-        const point = renderer.screenToWorld(screenX, screenY);
+        const rawPoint = renderer.screenToWorld(screenX, screenY);
+        const point = snapManager.snap(rawPoint, engine.elements);
 
         if(engine.startPoint === null) {
             engine.startPoint = point;
@@ -41,8 +45,9 @@ if (canvas) {
             const screenX = event.clientX - rect.left;
             const screenY = event.clientY - rect.top;
 
-            const point = renderer.screenToWorld(screenX, screenY);
-
+            const rawPoint = renderer.screenToWorld(screenX, screenY);
+            const point = snapManager.snap(rawPoint, engine.elements);
+            
             if(
                 engine.startPoint.x === point.x &&
                 engine.startPoint.y === point.y
