@@ -4,10 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini CAD Editor</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/js/app.js'])
 </head>
 <body>
     <h2>Mini CAD Editor</h2>
+    <div>
+        <p>
+            Logged in as:
+            <strong>{{ auth()->user()->name }}</strong>
+        </p>
+
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+
+    <hr>
 
     <div>
         <label for="wallLength">Wall Length (mm)</label>
