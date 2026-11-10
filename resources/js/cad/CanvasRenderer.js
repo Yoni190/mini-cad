@@ -71,4 +71,9 @@ export default class CanvasRenderer {
 
         ctx.restore();
     }
+
+    clear() {
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 }

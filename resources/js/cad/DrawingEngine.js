@@ -22,10 +22,8 @@ export default class DrawingEngine {
     }
 
     render (previewWall = null) {
-        const ctx = this.renderer.ctx;
-
         //Clear canvas
-        ctx.clearRect(0, 0, this.renderer.canvas.width, this.renderer.canvas.height);
+        this.renderer.clear();
 
         for (const element of this.elements) {
             this.renderer.drawWall(element);
