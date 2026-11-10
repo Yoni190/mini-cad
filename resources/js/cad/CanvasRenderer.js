@@ -5,6 +5,9 @@ export default class CanvasRenderer {
 
         // 1 Canvas pixel = 10 millimeters
         this.scale = 0.1;
+
+        this.offsetX = 0;
+        this.offsetY = 0;
     }
 
     drawElement(element, isPreview = false, isSelected = false){
@@ -56,10 +59,19 @@ export default class CanvasRenderer {
         ctx.stroke();
     }
 
+    //Convert screen coordinates to world coordinates
     screenToWorld(x, y) {
         return {
-            x: x / this.scale,
-            y: y / this.scale
+            x: (x - this.offsetX) / this.scale,
+            y: (y - this.offsetY) / this.scale
+        };
+    }
+
+    //Convert world coordinates to screen coordinates
+    worldToScreen(x, y) {
+        return {
+            x: (x * this.scale) + this.offsetX,
+            y: (y * this.scale) + this.offsetY
         };
     }
 
