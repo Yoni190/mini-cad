@@ -7,7 +7,7 @@ export default class CanvasRenderer {
         this.scale = 0.1;
     }
 
-    drawElement(element, isPreview = false){
+    drawElement(element, isPreview = false, isSelected = false){
         const corners = element.getGeometry();
         const ctx = this.ctx;
 
@@ -43,6 +43,13 @@ export default class CanvasRenderer {
             : 'green';
 
             ctx.strokeStyle = isPreview ? 'blue' : 'black';
+        }
+
+        if (isSelected) {
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 3;
+        } else {
+            ctx.lineWidth = 1;
         }
 
         ctx.fill();
