@@ -1,5 +1,6 @@
 import Wall from "./models/Wall";
 import Column from "./models/Column";
+import GeometryService from "./GeometryService";
 
 export default class DrawingEngine {
     constructor(renderer) {
@@ -34,6 +35,8 @@ export default class DrawingEngine {
     }
 
     render(previewWall = null, selectedId = null) {
+        const wallGeometry = this.getWallDisplayGeometry();
+
         //Clear canvas
         this.renderer.clear();
 
@@ -44,7 +47,16 @@ export default class DrawingEngine {
         for (const element of this.elements) {
             const isSelected = element.id === selectedId;
 
-            this.renderer.drawElement(element, false, isSelected);
+            const customCorners = element.type === 'wall'
+                ? wallGeometry.get(element.id)
+                : null;
+
+            this.renderer.drawElement(
+                element,
+                false,
+                isSelected,
+                customCorners
+            );
         }
 
         if (previewWall) {
@@ -80,6 +92,40 @@ export default class DrawingEngine {
         column.depth = depth;
 
         this.render();
+    }
+
+    getWallDisplayGeometry() {
+        // Map each wall ID to the polygon used for rendering
+        const geometryMap = new Map();
+
+        // Get only walls
+        const walls = this.elements.filter(
+            element => element.type === 'wall'
+        );
+
+        // Start with each wall's original geometry
+        for (const wall of walls) {
+            geometryMap.set(wall.id, wall.getGeometry());
+        }
+
+        // Check each unique pair of walls
+        for (let i = 0; i < walls.length; i++) {
+            for (let j = i + 1; j < walls.length; j++) {
+                const wallA = walls[i];
+                const wallB = walls[j];
+
+                const joined =
+                    GeometryService.getJoinedWallCorners(wallA, wallB) ??
+                    GeometryService.getJoinedWallCorners(wallB, wallA);
+
+                if (joined) {
+                    geometryMap.set(wallA.id, joined.wallACorners);
+                    geometryMap.set(wallB.id, joined.wallBCorners);
+                }
+            }
+        }
+
+        return geometryMap;
     }
 
     removeElement(id) {
