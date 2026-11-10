@@ -6,9 +6,11 @@ export default class Column extends DrawingElement {
         position,
         width = 400,
         depth = 400,
-        height = 3000
+        height = 3000,
+        id
     }) {
-        super('column');
+        super('column', id);
+
         if(!position ||
             !Number.isFinite(position.x) ||
             !Number.isFinite(position.y)

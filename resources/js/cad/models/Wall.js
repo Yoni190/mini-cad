@@ -3,16 +3,16 @@ import DrawingElement from "./DrawingElement";
 
 export default class Wall extends DrawingElement {
     
-    constructor ({ start, end, thickness = 200, height = 3000 }) {
-        super('wall');
+    constructor ({ start, end, thickness = 200, height = 3000, id }) {
+        super('wall', id);
 
         const validPoint = (point) =>
             point &&
             Number.isFinite(point.x) &&
             Number.isFinite(point.y);
 
-        if(!validPoint) {
-            throw new Error('The given point is invalid');
+        if (!validPoint(start) || !validPoint(end)) {
+            throw new Error('Invalid wall start or end point');
         }
 
         if(!Number.isFinite(thickness) || thickness <= 0) {
