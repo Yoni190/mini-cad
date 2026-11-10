@@ -10,6 +10,8 @@ export default class EditorController {
         this.activeTool = 'wall';
         this.directionPoint = null;
         this.selectionManager = selectionManager;
+        this.isDragging = false;
+        this.dragOffset = { x: 0, y: 0 };
     }
 
     init() {
@@ -19,6 +21,14 @@ export default class EditorController {
 
         this.canvas.addEventListener('mousemove', (event) => {
             this.handleMouseMove(event);
+        });
+
+        this.canvas.addEventListener('mousedown', (event) => {
+            this.handleMouseDown(event);
+        });
+
+        window.addEventListener('mouseup', () => {
+            this.handleMouseUp();
         });
 
         document.addEventListener('keydown', (event) => {
@@ -91,12 +101,31 @@ export default class EditorController {
     }
 
     handleMouseMove(event) {
+        // Handle column dragging
+        if (this.isDragging) {
+            const point = this.getMousePoint(event, false);
+            const column = this.selectionManager.selectedElement;
+
+            if (!column) {
+                this.isDragging = false;
+                return;
+            }
+
+            column.position = {
+                x: point.x - this.dragOffset.x,
+                y: point.y - this.dragOffset.y
+            };
+
+            this.engine.render(null, column.id);
+            return;
+        }
+
         if (this.activeTool === 'wall' && this.engine.startPoint) {
             const point = this.getMousePoint(event);
 
             this.directionPoint = point;
 
-            if(
+            if (
                 this.engine.startPoint.x === point.x &&
                 this.engine.startPoint.y === point.y
             ) {
@@ -111,6 +140,35 @@ export default class EditorController {
 
             this.engine.render(wall);
         }
+    }
+
+    handleMouseDown(event) {
+        if (this.activeTool !== 'select' || event.button !== 0) {
+            return;
+        }
+
+        const column = this.selectionManager.selectedElement;
+
+        if (!column || column.type !== 'column') {
+            return;
+        }
+
+        const point = this.getMousePoint(event, false);
+
+        if (!this.selectionManager.isPointInsideColumn(point, column)) {
+            return;
+        }
+
+        this.dragOffset = {
+            x: point.x - column.position.x,
+            y: point.y - column.position.y
+        };
+
+        this.isDragging = true;
+    }
+
+    handleMouseUp() {
+        this.isDragging = false;
     }
 
     handleKeyDown(event) {
