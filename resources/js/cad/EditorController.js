@@ -2,13 +2,14 @@ import GeometryService from "./GeometryService";
 import Wall from "./models/Wall";
 
 export default class EditorController {
-    constructor(canvas, engine, renderer, snapManager) {
+    constructor(canvas, engine, renderer, snapManager, selectionManager) {
         this.canvas = canvas;
         this.engine = engine;
         this.renderer = renderer;
         this.snapManager = snapManager;
         this.activeTool = 'wall';
         this.directionPoint = null;
+        this.selectionManager = selectionManager;
     }
 
     init() {
@@ -49,7 +50,20 @@ export default class EditorController {
     }
 
     handleClick(event) {
-        const point = this.getMousePoint(event);
+        const point = this.getMousePoint(
+            event,
+            this.activeTool !== 'select'
+        );
+
+        if(this.activeTool === 'select') {
+            const selected = this.selectionManager.select(
+                point,
+                this.engine.elements
+            );
+
+            this.engine.render(null, selected?.id ?? null);
+            return;
+        }
 
         if(this.activeTool === 'column') {
             this.engine.addColumn(point);
@@ -108,7 +122,7 @@ export default class EditorController {
     }
 
     //Calculate mouse coordinates
-    getMousePoint(event) {
+    getMousePoint(event, applySnap = true) {
         //Read mouse coordinatess
         const rect = this.canvas.getBoundingClientRect();
 
@@ -118,8 +132,10 @@ export default class EditorController {
         //Convert pixels to millimeters
         const rawPoint = this.renderer.screenToWorld(screenX, screenY);
 
-        //Apply snapping
-        return this.snapManager.snap(rawPoint, this.engine.elements);
+        //Apply snapping (for walls)
+        return applySnap
+            ? this.snapManager.snap(rawPoint, this.engine.elements)
+            : rawPoint;
     }
 
     createWallWithLength(length) {
