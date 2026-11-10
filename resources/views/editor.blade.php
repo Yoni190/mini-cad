@@ -28,6 +28,7 @@
         <label for="drawingTool">Drawing Tool: </label>
 
         <select id="drawingTool">
+            <option value="select">Select</option>
             <option value="wall">Wall</option>
             <option value="column">Column</option>
         </select>
