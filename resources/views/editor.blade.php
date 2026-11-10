@@ -79,6 +79,18 @@
     </div>
 
     <div>
+        <label for="projectList">Saved Projects</label>
+
+        <select id="projectList">
+            <option value="">Select a project</option>
+        </select>
+
+        <button type="button" id="loadProject">
+            Load Project
+        </button>
+    </div>
+
+    <div>
         <button type="button" id="show2D">2D View</button>
         <button type="button" id="show3D">3D View</button>
     </div>

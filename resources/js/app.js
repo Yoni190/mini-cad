@@ -7,6 +7,8 @@ import ProjectService from './cad/ProjectService';
 import SelectionManager from './cad/SelectionManager';
 import SnapManager from './cad/SnapManager';
 import ThreeViewer from './cad/ThreeViewer';
+import Wall from './cad/models/Wall';
+import Column from './cad/models/Column';
 
 const canvas = document.getElementById('cadCanvas');
 const twoContainer = document.getElementById('twoContainer');
@@ -18,6 +20,34 @@ if (canvas && twoContainer && threeContainer) {
     const snapManager = new SnapManager();
     const selectionManager = new SelectionManager();
     const projectService = new ProjectService();
+    const projectList = document.getElementById('projectList');
+    const status = document.getElementById('saveStatus');
+
+    async function refreshProjectList() {
+        const projects = await projectService.getProjects();
+
+        // Preserve the currently selected option
+        const selectedId = projectList.value;
+
+        // Clear existing options
+        projectList.replaceChildren();
+
+        const placeholder = new Option('Select a project', '');
+        projectList.add(placeholder);
+
+        for (const project of projects) {
+            const option = new Option(project.name, String(project.id));
+            projectList.add(option);
+        }
+
+        // Restore selection if the project still exists
+        projectList.value = selectedId;
+    }
+
+    // Load available projects when the editor opens
+    refreshProjectList().catch(error => {
+        status.textContent = `Could not load project list: ${error.message}`;
+    });
 
     const editor = new EditorController(
         canvas,
@@ -90,6 +120,73 @@ if (canvas && twoContainer && threeContainer) {
                 status.textContent = `Save failed: ${error.message}`;
             } finally {
                 saveButton.disabled = false;
+            }
+        });
+
+    //Load a project
+    document.getElementById('loadProject')
+        .addEventListener('click', async () => {
+            const projectId = projectList.value;
+            const loadButton = document.getElementById('loadProject');
+
+            if (!projectId) {
+                status.textContent = 'Please select a project first.';
+                return;
+            }
+
+            loadButton.disabled = true;
+
+            try {
+                status.textContent = 'Loading project...';
+
+                // 1. Fetch the project from Laravel
+                const project = await projectService.loadProject(projectId);
+
+                // 2. Reconstruct actual Wall and Column instances
+                // Do this BEFORE modifying the current drawing.
+                const elements = project.elements.map(element => {
+                    if (element.type === 'wall') {
+                        return new Wall(element);
+                    }
+
+                    if (element.type === 'column') {
+                        return new Column(element);
+                    }
+
+                    throw new Error(
+                        `Unsupported element type: ${element.type}`
+                    );
+                });
+
+                // 3. All elements were reconstructed successfully.
+                // We can now safely replace the current drawing.
+                engine.elements = elements;
+
+                // 4. Clear temporary editor state
+                engine.startPoint = null;
+                editor.directionPoint = null;
+                editor.isDragging = false;
+                selectionManager.clear();
+
+                // 5. Update the 2D canvas
+                engine.render();
+
+                // 6. Update the 3D viewer if it already exists
+                if (threeViewer) {
+                    threeViewer.updateElements(engine.elements);
+                }
+
+                // 7. Display the loaded project name
+                document.getElementById('projectName').value = project.name;
+
+                status.textContent =
+                    `Project "${project.name}" loaded successfully!`;
+
+            } catch (error) {
+                status.textContent =
+                    `Load failed: ${error.message}`;
+            } finally {
+                loadButton.disabled = false;
             }
         });
 
