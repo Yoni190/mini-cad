@@ -1,3 +1,4 @@
+
 import './bootstrap';
 import CanvasRenderer from './cad/CanvasRenderer';
 import DrawingEngine from './cad/DrawingEngine';
@@ -7,8 +8,10 @@ import SnapManager from './cad/SnapManager';
 import ThreeViewer from './cad/ThreeViewer';
 
 const canvas = document.getElementById('cadCanvas');
+const twoContainer = document.getElementById('twoContainer');
+const threeContainer = document.getElementById('threeContainer');
 
-if (canvas) {
+if (canvas && twoContainer && threeContainer) {
     const renderer = new CanvasRenderer(canvas);
     const engine = new DrawingEngine(renderer);
     const snapManager = new SnapManager();
@@ -24,9 +27,27 @@ if (canvas) {
 
     editor.init();
 
-    const threeContainer = document.getElementById('threeContainer');
+    // Create Three.js viewer only when needed
+    let threeViewer = null;
 
-    if(threeContainer) {
-        const threeViewer = new ThreeViewer(threeContainer);
-    }
+    // Switch to 3D
+    document.getElementById('show3D').addEventListener('click', () => {
+        twoContainer.style.display = 'none';
+        threeContainer.style.display = 'block';
+
+        if (!threeViewer) {
+            threeViewer = new ThreeViewer(threeContainer);
+        }
+
+        // Render the same elements used by the 2D editor
+        threeViewer.updateElements(engine.elements);
+    });
+
+    // Switch back to 2D
+    document.getElementById('show2D').addEventListener('click', () => {
+        threeContainer.style.display = 'none';
+        twoContainer.style.display = 'block';
+
+        engine.render();
+    });
 }
