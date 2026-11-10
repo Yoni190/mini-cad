@@ -46,16 +46,23 @@
         </button>
     </div>
 
-    <canvas
-        id="cadCanvas"
-        width="1000"
-        height="600"
-        style="border: 1px solid #ccc;"
+    <div>
+        <button type="button" id="show2D">2D View</button>
+        <button type="button" id="show3D">3D View</button>
+    </div>
+
+    <div id="twoContainer">
+        <canvas
+            id="cadCanvas"
+            width="1000"
+            height="600"
+            style="border: 1px solid #ccc;"
         ></canvas>
+    </div>
 
     <div
         id="threeContainer"
-        style="width: 1000px; height: 600px"
+        style="width: 1000px; height: 600px; display: none;"
     ></div>
 </body>
 </html>
