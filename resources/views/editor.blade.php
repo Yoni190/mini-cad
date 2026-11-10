@@ -24,6 +24,15 @@
         </button>
     </div>
 
+    <div>
+        <label for="drawingTool">Drawing Tool: </label>
+
+        <select id="drawingTool">
+            <option value="wall">Wall</option>
+            <option value="column">Column</option>
+        </select>
+    </div>
+
     <canvas
         id="cadCanvas"
         width="1000"
