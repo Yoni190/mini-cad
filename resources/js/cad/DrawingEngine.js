@@ -79,6 +79,9 @@ export default class DrawingEngine {
             throw new Error('Column not found');
         }
 
+        width = Number(width);
+        depth = Number(depth);
+
         //Validate width and depth
         if(!Number.isFinite(width) || width <= 0) {
             throw new Error('Column width must be a positive number');
