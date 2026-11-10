@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import Column from './models/Column';
 
 export default class ThreeViewer {
     constructor(container) {
@@ -72,5 +71,83 @@ export default class ThreeViewer {
         mesh.position.set(x, y, z);
 
         return mesh;
+    }
+
+    createWallMesh(wall) {
+        // 1. Get the wall's actual length in millimeters
+        const length = wall.getLength();
+
+        const { start, end, thickness, height } = wall;
+
+        // 2. Convert dimensions from millimeters to meters
+        // Three.js will use 1 unit = 1 meter
+        const lengthM = length / 1000;
+        const heightM = height / 1000;
+        const thicknessM = thickness / 1000;
+
+        // 3. Create a rectangular 3D box
+        // BoxGeometry(width, height, depth)
+        // X = wall length
+        // Y = wall height
+        // Z = wall thickness
+        const geometry = new THREE.BoxGeometry(
+            lengthM,
+            heightM,
+            thicknessM
+        );
+
+        // 4. Create a material to make the wall visible
+        // MeshNormalMaterial colors faces according to direction
+        // and doesn't require lighting
+        const material = new THREE.MeshNormalMaterial();
+
+        // 5. Combine the geometry and material into a mesh
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // 6. Get the four corners of the wall's 2D footprint
+        // These account for the wall's actual thickness
+        // and its inner-face reference line
+        const corners = wall.getGeometry();
+
+        // 7. Calculate the center of the wall's footprint
+        // The center is the average of all four corners
+        let sumX = 0;
+        let sumY = 0;
+
+        for (const corner of corners) {
+            sumX += corner.x;
+            sumY += corner.y;
+        }
+
+        const centerX = sumX / corners.length;
+        const centerY = sumY / corners.length;
+
+        // 8. Position the 3D wall
+        // CAD X becomes Three.js X
+        // CAD Y becomes Three.js Z
+        // Height becomes Three.js Y
+        //
+        // We use half the height because BoxGeometry is
+        // centered at its origin. This places its base at Y = 0.
+        mesh.position.set(
+            centerX / 1000,
+            heightM / 2,
+            centerY / 1000
+        );
+
+        // 9. Calculate the direction of the wall
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+
+        // atan2() returns the angle in radians
+        // relative to the positive X-axis
+        const angle = Math.atan2(dy, dx);
+
+        // 10. Rotate the wall around the vertical Y-axis
+        // Negative because CAD Y maps to Three.js Z
+        mesh.rotation.y = -angle;
+
+        // 11. Return the mesh so it can be added to the scene
+        return mesh;   
     }
 }
