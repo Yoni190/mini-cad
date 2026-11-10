@@ -73,4 +73,30 @@ export default class ProjectService {
         return data;
     }
 
+    async updateProject(id, name, elements) {
+        const response = await fetch(`/projects/${id}`, {
+            method: 'PUT',
+
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': this.csrfToken
+            },
+
+            body: JSON.stringify({ name, elements })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errors = data.errors
+                ? Object.values(data.errors).flat().join(' ')
+                : data.message;
+
+            throw new Error(errors || 'Failed to update project.');
+        }
+
+        return data;
+    }
+
 }

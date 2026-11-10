@@ -22,6 +22,7 @@ if (canvas && twoContainer && threeContainer) {
     const projectService = new ProjectService();
     const projectList = document.getElementById('projectList');
     const status = document.getElementById('saveStatus');
+    let currentProjectId = null;
 
     async function refreshProjectList() {
         const projects = await projectService.getProjects();
@@ -101,31 +102,55 @@ if (canvas && twoContainer && threeContainer) {
 
             saveButton.disabled = true;
 
+            let project;
+
             try {
                 status.textContent = 'Saving...';
 
-                // Send the current elements to Laravel
-                const project = await projectService.saveProject(
-                    name,
-                    engine.elements
-                );
+                project = currentProjectId
+                    ? await projectService.updateProject(
+                        currentProjectId,
+                        name,
+                        engine.elements
+                    )
+                    : await projectService.saveProject(
+                        name,
+                        engine.elements
+                    );
+
+                currentProjectId = project.id;
 
                 status.textContent =
                     `Project "${project.name}" saved successfully!`;
 
-                console.log('Saved project:', project);
-
             } catch (error) {
-                // Keep the drawing unchanged if saving fails
                 status.textContent = `Save failed: ${error.message}`;
+                return;
+
             } finally {
                 saveButton.disabled = false;
+            }
+
+            // Refresh dropdown
+            try {
+                await refreshProjectList();
+                projectList.value = String(currentProjectId);
+            } catch (error) {
+                status.textContent +=
+                    ` (Project list could not refresh: ${error.message})`;
             }
         });
 
     //Load a project
     document.getElementById('loadProject')
         .addEventListener('click', async () => {
+            const confirmed = window.confirm(
+                'Loading a project will replace your current drawing. Continue?'
+            );
+
+            if (!confirmed) {
+                return;
+            }
             const projectId = projectList.value;
             const loadButton = document.getElementById('loadProject');
 
@@ -161,6 +186,7 @@ if (canvas && twoContainer && threeContainer) {
                 // 3. All elements were reconstructed successfully.
                 // We can now safely replace the current drawing.
                 engine.elements = elements;
+                currentProjectId = project.id;
 
                 // 4. Clear temporary editor state
                 engine.startPoint = null;
