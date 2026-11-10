@@ -9,16 +9,20 @@ export default class SelectionManager {
         for (let i = elements.length - 1; i >= 0; i--) {
             const element = elements[i];
             
-            if (element.type !== 'column') {
-                continue;
+            if (element.type === 'column') {
+                if (this.isPointInsideColumn(point, element)) {
+                    this.selectedElement = element;
+                    break;
+                }
             }
 
-            const { position, width, depth } = element;
+            if (element.type === 'wall') {
+                const corners = element.getGeometry();
 
-            //Check if point is inside the selected column
-            if (this.isPointInsideColumn(point, element)) {
-                this.selectedElement = element;
-                return element;
+                if (this.isPointInsidePolygon(point, corners)) {
+                    this.selectedElement = element;
+                    break;
+                }
             }
         }
         
@@ -38,5 +42,34 @@ export default class SelectionManager {
             point.y >= position.y &&
             point.y <= position.y + depth
         );
+    }
+
+    isPointInsidePolygon(point, corners) {
+        let inside = false;
+
+        for (
+            let i = 0, j = corners.length - 1;
+            i < corners.length;
+            j = i++
+        ) {
+            const xi = corners[i].x;
+            const yi = corners[i].y;
+
+            const xj = corners[j].x;
+            const yj = corners[j].y;
+
+            const intersects =
+                ((yi > point.y) !== (yj > point.y)) &&
+                (point.x <
+                    ((xj - xi) * (point.y - yi)) /
+                    (yj - yi) + xi
+                );
+
+            if (intersects) {
+                inside = !inside;
+            }
+        }
+
+        return inside;
     }
 }
