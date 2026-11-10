@@ -1,4 +1,5 @@
 import Wall from "./models/Wall";
+import Column from "./models/Column";
 
 export default class DrawingEngine {
     constructor (renderer) {
@@ -16,6 +17,17 @@ export default class DrawingEngine {
 
         //Add the wall to this.elements
         this.elements.push(wall);
+
+        //Render all elements
+        this.render();
+    }
+
+    addColumn(position) {
+        //Create a column instance
+        const column = new Column({ position });
+
+        //Add the column to this.elements
+        this.elements.push(column);
 
         //Render all elements
         this.render();
