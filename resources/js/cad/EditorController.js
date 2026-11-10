@@ -55,8 +55,40 @@ export default class EditorController {
 
                 this.engine.startPoint = null;
                 this.directionPoint = null;
+                this.isDragging = false;
+                this.selectionManager.clear();
+
                 this.engine.render();
-            })
+            });
+
+        document.getElementById('updateColumn')
+            .addEventListener('click', () => {
+                const selected = this.selectionManager.selectedElement;
+
+                if (!selected || selected.type !== 'column') {
+                    alert('Please select a column first.');
+                    return;
+                }
+
+                //Check that a column is selected
+                if(this.activeTool === 'select') {
+                    //Convert column dimensions input values into numbers
+                    const width = Number(document.getElementById('columnWidth').value);
+                    const depth = Number(document.getElementById('columnDepth').value);
+
+                    if (
+                        !Number.isFinite(width) || width <= 0 ||
+                        !Number.isFinite(depth) || depth <= 0
+                    ) {
+                        alert('Width and depth must be positive numbers.');
+                        return;
+                    }
+
+                    this.engine.updateColumnDimensions(selected.id, width, depth);
+
+                    this.engine.render(null, selected.id);
+                }
+            });
     }
 
     handleClick(event) {
@@ -179,6 +211,9 @@ export default class EditorController {
         if (event.key === 'Escape') {
             this.engine.startPoint = null;
             this.directionPoint = null;
+            this.isDragging = false;
+            this.selectionManager.clear();
+
             this.engine.render();
         }
 
