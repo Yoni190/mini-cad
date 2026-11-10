@@ -62,6 +62,23 @@
     </div>
 
     <div>
+        <label for="projectName">Project Name</label>
+
+        <input
+            type="text"
+            id="projectName"
+            placeholder="e.g. Ground Floor"
+            maxlength="255"
+        >
+
+        <button type="button" id="saveProject">
+            Save Project
+        </button>
+
+        <p id="saveStatus"></p>
+    </div>
+
+    <div>
         <button type="button" id="show2D">2D View</button>
         <button type="button" id="show3D">3D View</button>
     </div>

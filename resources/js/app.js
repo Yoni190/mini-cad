@@ -3,6 +3,7 @@ import './bootstrap';
 import CanvasRenderer from './cad/CanvasRenderer';
 import DrawingEngine from './cad/DrawingEngine';
 import EditorController from './cad/EditorController';
+import ProjectService from './cad/ProjectService';
 import SelectionManager from './cad/SelectionManager';
 import SnapManager from './cad/SnapManager';
 import ThreeViewer from './cad/ThreeViewer';
@@ -16,6 +17,7 @@ if (canvas && twoContainer && threeContainer) {
     const engine = new DrawingEngine(renderer);
     const snapManager = new SnapManager();
     const selectionManager = new SelectionManager();
+    const projectService = new ProjectService();
 
     const editor = new EditorController(
         canvas,
@@ -50,4 +52,45 @@ if (canvas && twoContainer && threeContainer) {
 
         engine.render();
     });
+
+    //Save a project
+    document.getElementById('saveProject')
+        .addEventListener('click', async () => {
+            const saveButton = document.getElementById('saveProject');
+            const status = document.getElementById('saveStatus');
+
+            const name = document
+                .getElementById('projectName')
+                .value.trim();
+
+            // Validate the project name before sending
+            if (!name) {
+                status.textContent = 'Please enter a project name.';
+                return;
+            }
+
+            saveButton.disabled = true;
+
+            try {
+                status.textContent = 'Saving...';
+
+                // Send the current elements to Laravel
+                const project = await projectService.saveProject(
+                    name,
+                    engine.elements
+                );
+
+                status.textContent =
+                    `Project "${project.name}" saved successfully!`;
+
+                console.log('Saved project:', project);
+
+            } catch (error) {
+                // Keep the drawing unchanged if saving fails
+                status.textContent = `Save failed: ${error.message}`;
+            } finally {
+                saveButton.disabled = false;
+            }
+        });
+
 }
