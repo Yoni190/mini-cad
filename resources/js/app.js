@@ -2,10 +2,9 @@ import './bootstrap';
 import CanvasRenderer from './cad/CanvasRenderer';
 import DrawingEngine from './cad/DrawingEngine';
 import EditorController from './cad/EditorController';
-import Column from './cad/models/Column';
 import SelectionManager from './cad/SelectionManager';
 import SnapManager from './cad/SnapManager';
-
+import ThreeViewer from './cad/ThreeViewer';
 
 const canvas = document.getElementById('cadCanvas');
 
@@ -24,4 +23,10 @@ if (canvas) {
     );
 
     editor.init();
+
+    const threeContainer = document.getElementById('threeContainer');
+
+    if(threeContainer) {
+        const threeViewer = new ThreeViewer(threeContainer);
+    }
 }
