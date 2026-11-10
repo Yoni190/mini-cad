@@ -10,8 +10,13 @@ export default class CanvasRenderer {
         this.offsetY = 0;
     }
 
-    drawElement(element, isPreview = false, isSelected = false){
-        const corners = element.getGeometry();
+    drawElement(
+        element,
+        isPreview = false,
+        isSelected = false,
+        customCorners = null
+    ){
+        const corners = customCorners ?? element.getGeometry();
         const ctx = this.ctx;
 
         ctx.beginPath();
