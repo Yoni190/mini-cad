@@ -119,7 +119,30 @@ export default class EditorController {
             this.directionPoint = null;
             this.engine.render();
         }
+
+        if(
+            this.activeTool === 'select' &&
+            (event.key === 'Delete' || event.key === 'Backspace')
+        ) {
+            const tag = event.target?.tagName;
+
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) {
+                return;
+            }
+
+            const selected = this.selectionManager.selectedElement;
+
+            if (!selected) {
+                return;
+            }
+
+            event.preventDefault();
+
+            this.engine.removeElement(selected.id);
+            this.selectionManager.clear();
+        }
     }
+
 
     //Calculate mouse coordinates
     getMousePoint(event, applySnap = true) {
