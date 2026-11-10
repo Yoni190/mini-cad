@@ -33,12 +33,14 @@ export default class DrawingEngine {
         this.render();
     }
 
-    render (previewWall = null) {
+    render (previewWall = null, selectedId = null) {
         //Clear canvas
         this.renderer.clear();
 
         for (const element of this.elements) {
-            this.renderer.drawElement(element);
+            const isSelected = element.id === selectedId;
+
+            this.renderer.drawElement(element, false, isSelected);
         }
 
         if (previewWall) {
@@ -48,5 +50,13 @@ export default class DrawingEngine {
                 this.renderer.drawWallLength(previewWall);
             }
         }
+    }
+
+    removeElement(id) {
+        this.elements = this.elements.filter(
+            element => element.id !== id
+        );
+
+        this.render();
     }
 }
