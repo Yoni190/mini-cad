@@ -27,6 +27,12 @@ export default class EditorController {
             this.handleMouseDown(event);
         });
 
+        this.canvas.addEventListener(
+            'wheel',
+            (event) => this.handleWheel(event),
+            { passive: false }
+        );
+
         window.addEventListener('mouseup', () => {
             this.handleMouseUp();
         });
@@ -238,6 +244,48 @@ export default class EditorController {
             this.engine.removeElement(selected.id);
             this.selectionManager.clear();
         }
+    }
+
+    handleWheel(event) {
+        event.preventDefault();
+
+        // Get mouse position relative to the Canvas
+        const rect = this.canvas.getBoundingClientRect();
+
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        // Find which world coordinate is under the cursor
+        const worldPoint = this.renderer.screenToWorld(
+            mouseX,
+            mouseY
+        );
+
+        // Zoom in or out
+        const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
+
+        // Limit zoom so the drawing can't become
+        // infinitely small or large
+        const newScale = Math.min(
+            2,
+            Math.max(0.01, this.renderer.scale * zoomFactor)
+        );
+
+        this.renderer.scale = newScale;
+
+        // Recalculate offsets so the world point
+        // remains underneath the cursor
+        this.renderer.offsetX =
+            mouseX - worldPoint.x * newScale;
+
+        this.renderer.offsetY =
+            mouseY - worldPoint.y * newScale;
+
+        // Redraw with the new scale and offsets
+        this.engine.render(
+            null,
+            this.selectionManager.selectedElement?.id ?? null
+        );
     }
 
 

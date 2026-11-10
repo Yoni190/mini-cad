@@ -16,16 +16,20 @@ export default class CanvasRenderer {
 
         ctx.beginPath();
 
-        ctx.moveTo(
-            corners[0].x * this.scale,
-            corners[0].y * this.scale
+        const firstPoint = this.worldToScreen(
+            corners[0].x,
+            corners[0].y
         );
 
+        ctx.moveTo(firstPoint.x, firstPoint.y);
+
         for (let i = 1; i < corners.length; i++) {
-            ctx.lineTo(
-                corners[i].x * this.scale,
-                corners[i].y * this.scale
+            const point = this.worldToScreen(
+                corners[i].x,
+                corners[i].y
             );
+
+            ctx.lineTo(point.x, point.y);
         }
 
         ctx.closePath();
@@ -80,8 +84,10 @@ export default class CanvasRenderer {
         const { start, end } = wall;
 
         //Calculate wall midpoints (in pixels)
-        const midX = ((start.x + end.x) / 2) * this.scale;
-        const midY = ((start.y + end.y) / 2) * this.scale;
+        const midpoint = this.worldToScreen(
+            (start.x + end.x) / 2,
+            (start.y + end.y) / 2
+        );
 
         //Get wall length
         const length = wall.getLength();
@@ -94,7 +100,7 @@ export default class CanvasRenderer {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
 
-        ctx.fillText(label, midX, midY - 10);
+        ctx.fillText(label, midpoint.x, midpoint.y - 10);
 
         ctx.restore();
     }
@@ -105,19 +111,25 @@ export default class CanvasRenderer {
 
         const ctx = this.ctx;
 
+        // Calculate where the grid begins on the screen
+        const startX = ((this.offsetX % spacing) + spacing) % spacing;
+        const startY = ((this.offsetY % spacing) + spacing) % spacing;
+
         ctx.save();
         
         ctx.strokeStyle = '#e2e8f0';
         ctx.lineWidth = 1;
 
-        for (let x = 0; x <= this.canvas.width; x += spacing) {
+        // Vertical lines
+        for (let x = startX; x <= this.canvas.width; x += spacing) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, this.canvas.height);
             ctx.stroke();
         }
 
-        for (let y = 0; y <= this.canvas.height; y += spacing) {
+        // Horizontal lines
+        for (let y = startY; y <= this.canvas.height; y += spacing) {
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(this.canvas.width, y);
