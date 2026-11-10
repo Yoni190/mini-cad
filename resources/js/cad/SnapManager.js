@@ -7,8 +7,12 @@ export default class SnapManager {
         let closestPoint = point;
         let closestDistance = this.tolerance;
 
-        for (const wall of elements) {
-            const endpoints = [wall.start, wall.end];
+        for (const element of elements) {
+            if(element.type !== 'wall') {
+                continue;
+            }
+
+            const endpoints = [element.start, element.end];
 
             for (const endpoint of endpoints) {
                 //Calculate distance from point to endpoint
