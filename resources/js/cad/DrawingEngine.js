@@ -52,6 +52,32 @@ export default class DrawingEngine {
         }
     }
 
+    updateColumnDimensions(id, width, depth) {
+        //Find element by id
+        const column = this.elements.find(
+            element => element.id === id
+        );
+
+        //Confirm that the element is a column
+        if (!column || column.type !== 'column') {
+            throw new Error('Column not found');
+        }
+
+        //Validate width and depth
+        if(!Number.isFinite(width) || width <= 0) {
+            throw new Error('Column width must be a positive number');
+        }
+        if(!Number.isFinite(depth) || depth <= 0) {
+            throw new Error('Column depth must be a positive number');
+        }
+
+        //Update dimensions
+        column.width = width;
+        column.depth = depth;
+
+        this.render();
+    }
+
     removeElement(id) {
         this.elements = this.elements.filter(
             element => element.id !== id
