@@ -12,6 +12,8 @@ export default class EditorController {
         this.selectionManager = selectionManager;
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
+        this.isPanning = false;
+        this.lastPanPoint = null;
     }
 
     init() {
@@ -32,6 +34,12 @@ export default class EditorController {
             (event) => this.handleWheel(event),
             { passive: false }
         );
+
+        this.canvas.addEventListener('auxclick', (event) => {
+            if (event.button === 1) {
+                event.preventDefault();
+            }
+        });
 
         window.addEventListener('mouseup', () => {
             this.handleMouseUp();
@@ -98,6 +106,10 @@ export default class EditorController {
     }
 
     handleClick(event) {
+        if (event.button !== 0) {
+            return;
+        }
+        
         const point = this.getMousePoint(
             event,
             this.activeTool !== 'select'
@@ -143,6 +155,27 @@ export default class EditorController {
     }
 
     handleMouseMove(event) {
+        // Handle panning
+        if (this.isPanning) {
+            const dx = event.clientX - this.lastPanPoint.x;
+            const dy = event.clientY - this.lastPanPoint.y;
+
+            this.renderer.offsetX += dx;
+            this.renderer.offsetY += dy;
+
+            this.lastPanPoint = {
+                x: event.clientX,
+                y: event.clientY
+            };
+
+            this.engine.render(
+                null,
+                this.selectionManager.selectedElement?.id ?? null
+            );
+
+            return;
+        }
+
         // Handle column dragging
         if (this.isDragging) {
             const point = this.getMousePoint(event, false);
@@ -185,6 +218,19 @@ export default class EditorController {
     }
 
     handleMouseDown(event) {
+        if (event.button === 1) {
+            event.preventDefault();
+
+            this.isPanning = true;
+
+            this.lastPanPoint = {
+                x: event.clientX,
+                y: event.clientY
+            };
+
+            return;
+        }
+
         if (this.activeTool !== 'select' || event.button !== 0) {
             return;
         }
@@ -211,6 +257,8 @@ export default class EditorController {
 
     handleMouseUp() {
         this.isDragging = false;
+        this.isPanning = false;
+        this.lastPanPoint = null;
     }
 
     handleKeyDown(event) {
