@@ -7,6 +7,7 @@ export default class EditorController {
         this.engine = engine;
         this.renderer = renderer;
         this.snapManager = snapManager;
+        this.activeTool = 'wall';
         this.directionPoint = null;
     }
 
@@ -36,10 +37,24 @@ export default class EditorController {
 
                 this.createWallWithLength(length);
             })
+        
+        document.getElementById('drawingTool')
+            .addEventListener('change', (event) => {
+                this.activeTool = event.target.value;
+
+                this.engine.startPoint = null;
+                this.directionPoint = null;
+                this.engine.render();
+            })
     }
 
     handleClick(event) {
         const point = this.getMousePoint(event);
+
+        if(this.activeTool === 'column') {
+            this.engine.addColumn(point);
+            return;
+        }
 
         if(this.engine.startPoint === null) {
             this.engine.startPoint = point;
@@ -62,7 +77,7 @@ export default class EditorController {
     }
 
     handleMouseMove(event) {
-        if (this.engine.startPoint) {
+        if (this.activeTool === 'wall' && this.engine.startPoint) {
             const point = this.getMousePoint(event);
 
             this.directionPoint = point;
