@@ -15,15 +15,8 @@ export default class SelectionManager {
 
             const { position, width, depth } = element;
 
-            const betweenX =
-                point.x >= position.x &&
-                point.x <= position.x + width;
-
-            const betweenY =
-                point.y >= position.y &&
-                point.y <= position.y + depth;
-
-            if (betweenX && betweenY) {
+            //Check if point is inside the selected column
+            if (this.isPointInsideColumn(point, element)) {
                 this.selectedElement = element;
                 return element;
             }
@@ -34,5 +27,16 @@ export default class SelectionManager {
 
     clear() {
         this.selectedElement = null;
+    }
+
+    isPointInsideColumn(point, column) {
+        const { position, width, depth } = column;
+
+        return (
+            point.x >= position.x &&
+            point.x <= position.x + width &&
+            point.y >= position.y &&
+            point.y <= position.y + depth
+        );
     }
 }
