@@ -26,6 +26,17 @@ export default class GeometryService {
 
     }   
 
+    static getColumnCorners(column) {
+        const { position, width, depth } = column;
+
+        return [
+            { x: position.x, y: position.y },
+            { x: position.x + width, y: position.y },
+            { x: position.x + width, y: position.y + depth },
+            { x: position.x, y: position.y + depth }
+        ];
+    }
+
     static getEndPoint(start, directionPoint, length) {
         //Calculate the direction vector
         const dx = directionPoint.x - start.x;
