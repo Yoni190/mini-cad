@@ -87,6 +87,34 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
+    drawGrid() {
+        const gridSize = 1000; // Millimeters
+        const spacing = gridSize * this.scale;
+
+        const ctx = this.ctx;
+
+        ctx.save();
+        
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+
+        for (let x = 0; x <= this.canvas.width; x += spacing) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, this.canvas.height);
+            ctx.stroke();
+        }
+
+        for (let y = 0; y <= this.canvas.height; y += spacing) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(this.canvas.width, y);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
     clear() {
         const ctx = this.ctx;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

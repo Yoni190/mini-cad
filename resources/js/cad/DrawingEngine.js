@@ -2,13 +2,13 @@ import Wall from "./models/Wall";
 import Column from "./models/Column";
 
 export default class DrawingEngine {
-    constructor (renderer) {
+    constructor(renderer) {
         this.renderer = renderer;
         this.elements = [];
         this.startPoint = null;
     }
 
-    addWall (start, end) {
+    addWall(start, end) {
         //Create a wall instance
         const wall = new Wall({
             start,
@@ -33,10 +33,14 @@ export default class DrawingEngine {
         this.render();
     }
 
-    render (previewWall = null, selectedId = null) {
+    render(previewWall = null, selectedId = null) {
         //Clear canvas
         this.renderer.clear();
 
+        // Draw the grid
+        this.renderer.drawGrid();
+
+        //Draw walls and columns
         for (const element of this.elements) {
             const isSelected = element.id === selectedId;
 

@@ -59,6 +59,7 @@ if (canvas && twoContainer && threeContainer) {
     );
 
     editor.init();
+    engine.render();
 
     // Create Three.js viewer only when needed
     let threeViewer = null;
