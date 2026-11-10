@@ -28,5 +28,8 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
 
     // CAD project routes
+    Route::get('/projects', [ProjectController::class, 'index']);
     Route::post('/projects', [ProjectController::class, 'store']);
+    Route::get('/projects/{project}', [ProjectController::class, 'show']);
+    Route::put('/projects/{project}', [ProjectController::class, 'update']);
 });
