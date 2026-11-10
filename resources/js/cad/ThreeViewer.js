@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import Column from './models/Column';
 
 export default class ThreeViewer {
     constructor(container) {
@@ -47,5 +48,29 @@ export default class ThreeViewer {
     render() {
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
+    }
+
+    createColumnMesh(column) {
+        const { position, width, depth, height } = column;
+
+        const geometry = new THREE.BoxGeometry(
+            width / 1000,
+            height / 1000,
+            depth / 1000
+        );
+
+        const material = new THREE.MeshNormalMaterial();
+
+        const mesh = new THREE.Mesh(geometry, material);
+
+        //Calculate the center X, Y, Z
+        const x = (position.x + (width / 2)) / 1000;
+        const y = (height / 2) / 1000;
+        const z = (position.y + (depth / 2)) / 1000;
+
+        //Set the mesh position
+        mesh.position.set(x, y, z);
+
+        return mesh;
     }
 }
