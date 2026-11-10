@@ -39,6 +39,9 @@ export default class ThreeViewer {
         const grid = new THREE.GridHelper(20, 20);
         this.scene.add(grid);
 
+        this.elementsGroup = new THREE.Group();
+        this.scene.add(this.elementsGroup);
+
         this.renderer.setAnimationLoop(() => {
             this.render();
         });
@@ -149,5 +152,32 @@ export default class ThreeViewer {
 
         // 11. Return the mesh so it can be added to the scene
         return mesh;   
+    }
+
+    clearElements() {
+        for (const mesh of [...this.elementsGroup.children]) {
+            this.elementsGroup.remove(mesh);
+
+            mesh.geometry.dispose();
+            mesh.material.dispose();
+        }
+    }
+
+    updateElements(elements) {
+        this.clearElements();
+
+        for (const element of elements) {
+            let mesh = null;
+
+            if (element.type === 'wall') {
+                mesh = this.createWallMesh(element);
+            } else if (element.type === 'column') {
+                mesh = this.createColumnMesh(element);
+            }
+
+            if (mesh) {
+                this.elementsGroup.add(mesh);
+            }
+        }
     }
 }
