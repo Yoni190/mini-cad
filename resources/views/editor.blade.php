@@ -52,5 +52,10 @@
         height="600"
         style="border: 1px solid #ccc;"
         ></canvas>
+
+    <div
+        id="threeContainer"
+        style="width: 1000px; height: 600px"
+    ></div>
 </body>
 </html>
