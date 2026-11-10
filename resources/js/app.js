@@ -216,4 +216,40 @@ if (canvas && twoContainer && threeContainer) {
             }
         });
 
+    document.getElementById('newProject')
+        .addEventListener('click', () => {
+            const confirmed = window.confirm(
+                'Create a new project? Current unsaved changes will be lost.'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            // Clear project data
+            engine.elements = [];
+
+            // Reset current project
+            currentProjectId = null;
+
+            // Reset editor state
+            engine.startPoint = null;
+            editor.directionPoint = null;
+            editor.isDragging = false;
+            selectionManager.clear();
+
+            // Clear project name and selection
+            document.getElementById('projectName').value = '';
+            projectList.value = '';
+
+            // Refresh both views
+            engine.render();
+
+            if (threeViewer) {
+                threeViewer.updateElements(engine.elements);
+            }
+
+            status.textContent = 'New project created.';
+        });
+
 }

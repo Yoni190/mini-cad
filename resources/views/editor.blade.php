@@ -90,6 +90,10 @@
         </button>
     </div>
 
+    <button type="button" id="newProject">
+        New Project
+    </button>
+
     <div>
         <button type="button" id="show2D">2D View</button>
         <button type="button" id="show3D">3D View</button>
