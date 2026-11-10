@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\SaveProjectRequest;
 
 class ProjectController extends Controller
 {
-    public function store(Request $request)
+    public function store(SaveProjectRequest $request)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -42,7 +43,7 @@ class ProjectController extends Controller
         return response()->json($project);
     }
 
-    public function update(Request $request, int $project)
+    public function update(SaveProjectRequest $request, int $project)
     {
         $project = $request->user()
             ->projects()
