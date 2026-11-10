@@ -72,6 +72,10 @@ export default class EditorController {
             );
 
             this.engine.render(null, selected?.id ?? null);
+            if(selected?.type === 'column') {
+                document.getElementById('columnWidth').value = selected.width;
+                document.getElementById('columnDepth').value = selected.depth;
+            }
             return;
         }
 

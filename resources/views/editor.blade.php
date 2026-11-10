@@ -34,6 +34,18 @@
         </select>
     </div>
 
+    <div id="columnProperties">
+        <label for="columnWidth">Width (mm)</label>
+        <input type="number" id="columnWidth" min="1">
+
+        <label for="columnDepth">Depth (mm)</label>
+        <input type="number" id="columnDepth" min="1">
+
+        <button type="button" id="updateColumn">
+            Update Dimensions
+        </button>
+    </div>
+
     <canvas
         id="cadCanvas"
         width="1000"
