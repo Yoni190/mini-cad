@@ -26,12 +26,15 @@ export default class DrawingEngine {
         this.renderer.clear();
 
         for (const element of this.elements) {
-            this.renderer.drawWall(element);
+            this.renderer.drawElement(element);
         }
 
         if (previewWall) {
-            this.renderer.drawWall(previewWall, true);
-            this.renderer.drawWallLength(previewWall);
+            this.renderer.drawElement(previewWall, true);
+
+            if(previewWall.type === 'wall'){
+                this.renderer.drawWallLength(previewWall);
+            }
         }
     }
 }
