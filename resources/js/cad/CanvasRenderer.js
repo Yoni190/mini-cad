@@ -1,5 +1,3 @@
-import GeometryService from './GeometryService'
-
 export default class CanvasRenderer {
     constructor (canvas) {
         this.canvas = canvas;
@@ -9,14 +7,12 @@ export default class CanvasRenderer {
         this.scale = 0.1;
     }
 
-    drawWall(wall, isPreview = false) {
-        const corners = GeometryService.getWallCorners(wall);
-
+    drawElement(element, isPreview = false){
+        const corners = element.getGeometry();
         const ctx = this.ctx;
 
         ctx.beginPath();
 
-        //Move to the first corner
         ctx.moveTo(
             corners[0].x * this.scale,
             corners[0].y * this.scale
@@ -31,11 +27,23 @@ export default class CanvasRenderer {
 
         ctx.closePath();
 
-        ctx.fillStyle = isPreview
+        //Default style
+        ctx.fillStyle = 'gray';
+        ctx.strokeStyle = 'black';
+
+        if(element.type === 'wall'){
+            ctx.fillStyle = isPreview
             ? 'red'
             : 'cyan';
 
-        ctx.strokeStyle = isPreview ? 'blue' : 'black';
+            ctx.strokeStyle = isPreview ? 'blue' : 'black';
+        } else if (element.type === 'column') {
+            ctx.fillStyle = isPreview
+            ? 'yellow'
+            : 'green';
+
+            ctx.strokeStyle = isPreview ? 'blue' : 'black';
+        }
 
         ctx.fill();
         ctx.stroke();
