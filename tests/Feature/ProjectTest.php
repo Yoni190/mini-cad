@@ -130,4 +130,40 @@ class ProjectTest extends TestCase
             'name' => 'Invalid Project',
         ]);
     }
+
+    public function test_user_cannot_save_wall_with_identical_start_and_end_coordinates(): void
+    {
+        // Create and authenticate a user
+        $user = User::factory()->create();
+
+        // Attempt to save invalid wall geometry
+        $response = $this->actingAs($user)
+            ->postJson('/projects', [
+                'name' => 'Invalid Project',
+                'elements' => [
+                    [
+                        'id' => '550e8400-e29b-41d4-a716-446655440000',
+                        'type' => 'wall',
+                        'start' => ['x' => 4000, 'y' => 0],
+                        'end' => ['x' => 4000, 'y' => 0],
+                        'thickness' => 200,
+                        'height' => 3000
+                    ]
+                ]
+            ]);
+
+        // Laravel must reject the identical start and end coordinates
+        $response->assertUnprocessable();
+
+        // Verify the specific validation error
+        $response->assertJsonValidationErrors([
+            'elements.0.end'
+        ]);
+
+        // Verify the invalid project was not created
+        $this->assertDatabaseMissing('projects', [
+            'user_id' => $user->id,
+            'name' => 'Invalid Project',
+        ]);
+    }
 }
