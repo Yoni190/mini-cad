@@ -9,10 +9,7 @@ class ProjectController extends Controller
 {
     public function store(SaveProjectRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'elements'  => ['required', 'array']
-        ]);
+        $validated = $request->validated();
 
         $project = $request->user()
             ->projects()
@@ -49,10 +46,7 @@ class ProjectController extends Controller
             ->projects()
             ->findOrFail($project);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'elements'  => ['required', 'array']
-        ]);
+        $validated = $request->validated();
 
         $project->update($validated);
 
