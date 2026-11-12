@@ -166,4 +166,38 @@ class ProjectTest extends TestCase
             'name' => 'Invalid Project',
         ]);
     }
+
+
+    public function test_user_can_update_own_project(): void
+    {
+        // Create a user
+        $user = User::factory()->create();
+
+        // Create a project belonging to this user
+        $project = $user->projects()->create([
+            'name' => 'Original Project',
+            'elements' => [],
+        ]);
+
+        // Update the project using its existing ID
+        $response = $this->actingAs($user)
+            ->putJson("/projects/{$project->id}", [
+                'name' => 'Updated Project',
+                'elements' => [],
+            ]);
+
+        // Verify the request succeeded
+        $response->assertOk();
+
+        // Verify the existing database record was updated
+        $this->assertDatabaseHas('projects', [
+            'id' => $project->id,
+            'user_id' => $user->id,
+            'name' => 'Updated Project',
+        ]);
+
+        // Verify Laravel didn't create a duplicate project
+        $this->assertDatabaseCount('projects', 1);
+    }
+
 }
