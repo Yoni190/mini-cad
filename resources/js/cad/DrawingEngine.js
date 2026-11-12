@@ -101,20 +101,13 @@ export default class DrawingEngine {
         this.render();
     }
 
+    
     getWallDisplayGeometry() {
-        // Collect all walls in the drawing.
         const walls = this.elements.filter(
             element => element.type === 'wall'
         );
 
-        // Store each wall's original footprint.
-        const geometryMap = new Map();
-
-        for (const wall of walls) {
-            geometryMap.set(wall.id, wall.getGeometry());
-        }
-
-        // Group walls by their endpoint coordinates.
+        // Group walls by their exact endpoint coordinates.
         const junctions = new Map();
 
         const addToJunction = (point, wall) => {
@@ -132,11 +125,11 @@ export default class DrawingEngine {
             addToJunction(wall.end, wall);
         }
 
-        // Process every endpoint junction.
-        for (const connectedWalls of junctions.values()) {
+        // Collect individually valid two-wall joins.
+        const candidates = [];
 
-            // Only join when exactly two walls meet.
-            // Three-way and four-way junctions remain unmodified.
+        for (const connectedWalls of junctions.values()) {
+            // Skip branching junctions.
             if (connectedWalls.size !== 2) {
                 continue;
             }
@@ -145,9 +138,6 @@ export default class DrawingEngine {
 
             let firstWall;
             let secondWall;
-
-            // GeometryService currently supports:
-            // firstWall.end === secondWall.start
 
             if (
                 wallA.end.x === wallB.start.x &&
@@ -162,8 +152,7 @@ export default class DrawingEngine {
                 firstWall = wallB;
                 secondWall = wallA;
             } else {
-                // Start-start or end-end joins are not
-                // supported by the current geometry algorithm.
+                // Start-start and end-end are not supported yet.
                 continue;
             }
 
@@ -176,21 +165,93 @@ export default class DrawingEngine {
                 continue;
             }
 
-            // Keep existing adjustments at OTHER endpoints.
-            // Do not replace the entire wall corner arrays.
-
-            const firstCorners = geometryMap.get(firstWall.id);
-            const secondCorners = geometryMap.get(secondWall.id);
-
-            // Outer corner at firstWall.end
-            firstCorners[2] = { ...result.wallACorners[2] };
-
-            // Outer corner at secondWall.start
-            secondCorners[3] = { ...result.wallBCorners[3] };
+            candidates.push({
+                firstWall,
+                secondWall,
+                firstCorner: { ...result.wallACorners[2] },
+                secondCorner: { ...result.wallBCorners[3] }
+            });
         }
 
-        return geometryMap;
+        // Track which joins are still allowed.
+        const activeJoins = new Set(
+            candidates.map((_, index) => index)
+        );
+
+        const buildGeometry = () => {
+            // Always start with fresh original footprints.
+            const geometryMap = new Map();
+
+            for (const wall of walls) {
+                geometryMap.set(wall.id, wall.getGeometry());
+            }
+
+            // Apply all active junction adjustments.
+            for (const index of activeJoins) {
+                const join = candidates[index];
+
+                geometryMap.get(join.firstWall.id)[2] = {
+                    ...join.firstCorner
+                };
+
+                geometryMap.get(join.secondWall.id)[3] = {
+                    ...join.secondCorner
+                };
+            }
+
+            return geometryMap;
+        };
+
+        // Rebuild until there are no invalid polygons.
+        while (true) {
+            const geometryMap = buildGeometry();
+
+            const invalidWallIds = new Set();
+
+            for (const wall of walls) {
+                const corners = geometryMap.get(wall.id);
+
+                if (!GeometryService.isSimplePolygon(corners)) {
+                    invalidWallIds.add(wall.id);
+                }
+            }
+
+            // All final wall footprints are valid.
+            if (invalidWallIds.size === 0) {
+                return geometryMap;
+            }
+
+            // Remove joins involving any invalid wall.
+            const joinsToRemove = [];
+
+            for (const index of activeJoins) {
+                const join = candidates[index];
+
+                if (
+                    invalidWallIds.has(join.firstWall.id) ||
+                    invalidWallIds.has(join.secondWall.id)
+                ) {
+                    joinsToRemove.push(index);
+                }
+            }
+
+            // Safety fallback: return unmodified footprints
+            // if no further conflicting joins can be removed.
+            if (joinsToRemove.length === 0) {
+                return new Map(
+                    walls.map(wall => [
+                        wall.id,
+                        wall.getGeometry()
+                    ])
+                );
+            }
+
+            for (const index of joinsToRemove) {
+                activeJoins.delete(index);
+            }
+        }
     }
+
 
     removeElement(id) {
         this.elements = this.elements.filter(
