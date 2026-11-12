@@ -136,5 +136,9 @@ describe('Wall Geometry', () => {
         // Verify original measured lengths remain unchanged
         expect(wallA.getLength()).toBe(4000);
         expect(wallB.getLength()).toBe(3000);
+
+        // Verify that original coordinates remain unchanged
+        expect(wallA.end).toEqual({ x: 4000, y: 0 });
+        expect(wallB.start).toEqual({ x: 4000, y: 0 });
     });
 });
