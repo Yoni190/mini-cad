@@ -153,3 +153,6 @@ For a final handoff, rerun the tests and `npm run build` after any code changes.
 - The 3D viewer extrudes the currently resolved 2D wall footprints; unsupported junction configurations remain unsupported in both views.
 - The application focuses on simple walls and columns and does not implement a full CAD/BIM feature set, such as doors, windows, parametric building components, or collaborative editing.
 - The current frontend does not offer a full revision history or conflict resolution for concurrent edits.
+
+## Notes
+Wall lengths are measured along the wall's reference edge. Wall thickness extends to the left of the drawing direction in Canvas coordinates. To use the reference edges as the inner boundary of a room, draw walls so that thickness extends outward. Automatic room-side detection is not implemented.
