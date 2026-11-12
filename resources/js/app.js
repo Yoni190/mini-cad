@@ -29,12 +29,24 @@ if (canvas && twoContainer && threeContainer) {
     function setProjectBusy(isBusy) {
         projectOperationInProgress = isBusy;
 
+        // Disable project operations
         document.getElementById('saveProject').disabled = isBusy;
         document.getElementById('loadProject').disabled = isBusy;
         document.getElementById('newProject').disabled = isBusy;
 
         // Prevent changing the selected project during an operation.
         projectList.disabled = isBusy;
+
+        // Disable drawing controls
+        document.getElementById('drawingTool').disabled = isBusy;
+        document.getElementById('wallLength').disabled = isBusy;
+        document.getElementById('applyWallLength').disabled = isBusy;
+
+        // Prevent interaction with the 2D canvas
+        canvas.style.pointerEvents = isBusy ? 'none' : '';
+
+        // Prevent keyboard shortcuts and other editor actions
+        editor.setEditingLocked(isBusy);
     }
 
 

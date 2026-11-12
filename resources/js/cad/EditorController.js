@@ -14,6 +14,7 @@ export default class EditorController {
         this.dragOffset = { x: 0, y: 0 };
         this.isPanning = false;
         this.lastPanPoint = null;
+        this.isEditingLocked = false;
     }
 
     init() {
@@ -106,6 +107,7 @@ export default class EditorController {
     }
 
     handleClick(event) {
+        if (this.isEditingLocked) return;
         if (event.button !== 0) {
             return;
         }
@@ -156,6 +158,7 @@ export default class EditorController {
     }
 
     handleMouseMove(event) {
+        if (this.isEditingLocked) return;
         // Handle panning
         if (this.isPanning) {
             const dx = event.clientX - this.lastPanPoint.x;
@@ -219,6 +222,7 @@ export default class EditorController {
     }
 
     handleMouseDown(event) {
+        if (this.isEditingLocked) return;
         if (event.button === 1) {
             event.preventDefault();
 
@@ -257,12 +261,14 @@ export default class EditorController {
     }
 
     handleMouseUp() {
+        if (this.isEditingLocked) return;
         this.isDragging = false;
         this.isPanning = false;
         this.lastPanPoint = null;
     }
 
     handleKeyDown(event) {
+        if (this.isEditingLocked) return;
         if (event.key === 'Escape') {
             this.engine.startPoint = null;
             this.directionPoint = null;
@@ -296,6 +302,7 @@ export default class EditorController {
     }
 
     handleWheel(event) {
+        if (this.isEditingLocked) return;
         event.preventDefault();
 
         // Get mouse position relative to the Canvas
@@ -378,4 +385,23 @@ export default class EditorController {
         this.engine.startPoint = null;
         this.directionPoint = null;
     }
+
+    // Disable editing during save and load
+    setEditingLocked(locked) {
+        this.isEditingLocked = locked;
+
+        if (locked) {
+            // Cancel unfinished wall drawing
+            this.engine.startPoint = null;
+            this.directionPoint = null;
+
+            // Stop any active dragging or panning
+            this.isDragging = false;
+            this.isPanning = false;
+
+            // Clear any drawing preview
+            this.engine.render();
+        }
+    }
+
 }
