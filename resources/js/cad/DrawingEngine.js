@@ -117,14 +117,35 @@ export default class DrawingEngine {
                 const wallA = walls[i];
                 const wallB = walls[j];
 
-                const joined =
-                    GeometryService.getJoinedWallCorners(wallA, wallB) ??
-                    GeometryService.getJoinedWallCorners(wallB, wallA);
+                let firstWall = wallA;
+                let secondWall = wallB;
 
-                if (joined) {
-                    geometryMap.set(wallA.id, joined.wallACorners);
-                    geometryMap.set(wallB.id, joined.wallBCorners);
+                let joined = GeometryService.getJoinedWallCorners(
+                    firstWall,
+                    secondWall
+                );
+
+                // If the walls connect in the other direction, keep track of which wall was passed as A and B.
+                if (!joined) {
+                    firstWall = wallB;
+                    secondWall = wallA;
+
+                    joined = GeometryService.getJoinedWallCorners(
+                        firstWall,
+                        secondWall
+                    );
                 }
+
+                if (!joined) {
+                    continue;
+                }
+
+                const firstCorners = geometryMap.get(firstWall.id);
+                const secondCorners = geometryMap.get(secondWall.id);
+
+                // Update only the corners involved in the join.
+                firstCorners[2] = { ...joined.wallACorners[2] };
+                secondCorners[3] = { ...joined.wallBCorners[3] };
             }
         }
 
