@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Requests\SaveProjectRequest;
+use App\Models\Project;
+use Illuminate\Support\Facades\Gate;
 
 class ProjectController extends Controller
 {
@@ -31,24 +33,18 @@ class ProjectController extends Controller
         return response()->json($projects);
     }
 
-    public function show(Request $request, int $project)
+    public function show(Request $request, Project $project)
     {
-        $project = $request->user()
-            ->projects()
-            ->findOrFail($project);
+        Gate::authorize('view', $project);
 
         return response()->json($project);
     }
 
-    public function update(SaveProjectRequest $request, int $project)
+    public function update(SaveProjectRequest $request, Project $project)
     {
-        $project = $request->user()
-            ->projects()
-            ->findOrFail($project);
+        Gate::authorize('view', $project);
 
-        $validated = $request->validated();
-
-        $project->update($validated);
+        $project->update($request->validated());
 
         return response()->json($project);
     }
