@@ -181,11 +181,101 @@ export default class GeometryService {
         cornersA[2] = { ...intersection };
         cornersB[3] = { ...intersection };
 
+
+        if (
+            !this.isSimplePolygon(cornersA) ||
+            !this.isSimplePolygon(cornersB)
+        ) {
+            return null;
+        }
+
         return {
             wallACorners: cornersA,
             wallBCorners: cornersB
         };
     }
 
+    // Check if polygon intersects itself
+    static isSimplePolygon(corners) {
+        if (!Array.isArray(corners) || corners.length < 3) {
+            return false;
+        }
 
+        if (!corners.every(point =>
+            Number.isFinite(point.x) &&
+            Number.isFinite(point.y)
+        )) {
+            return false;
+        }
+
+        const cross = (a, b, c) =>
+            (b.x - a.x) * (c.y - a.y) -
+            (b.y - a.y) * (c.x - a.x);
+
+        const onSegment = (a, b, p) =>
+            p.x >= Math.min(a.x, b.x) &&
+            p.x <= Math.max(a.x, b.x) &&
+            p.y >= Math.min(a.y, b.y) &&
+            p.y <= Math.max(a.y, b.y);
+
+        const segmentsIntersect = (a, b, c, d) => {
+            const o1 = cross(a, b, c);
+            const o2 = cross(a, b, d);
+            const o3 = cross(c, d, a);
+            const o4 = cross(c, d, b);
+
+            if ((o1 > 0 && o2 < 0 || o1 < 0 && o2 > 0) &&
+                (o3 > 0 && o4 < 0 || o3 < 0 && o4 > 0)) {
+                return true;
+            }
+
+            return (o1 === 0 && onSegment(a, b, c)) ||
+                (o2 === 0 && onSegment(a, b, d)) ||
+                (o3 === 0 && onSegment(c, d, a)) ||
+                (o4 === 0 && onSegment(c, d, b));
+        };
+
+        const n = corners.length;
+
+        // Check for zero-length edges.
+        for (let i = 0; i < n; i++) {
+            const a = corners[i];
+            const b = corners[(i + 1) % n];
+
+            if (a.x === b.x && a.y === b.y) {
+                return false;
+            }
+        }
+
+        // Check non-adjacent edges for intersections.
+        for (let i = 0; i < n; i++) {
+            const a = corners[i];
+            const b = corners[(i + 1) % n];
+
+            for (let j = i + 1; j < n; j++) {
+                // Adjacent edges share a vertex by design.
+                if (j === i + 1 || (i === 0 && j === n - 1)) {
+                    continue;
+                }
+
+                const c = corners[j];
+                const d = corners[(j + 1) % n];
+
+                if (segmentsIntersect(a, b, c, d)) {
+                    return false;
+                }
+            }
+        }
+
+        // Reject zero-area polygons.
+        let twiceArea = 0;
+
+        for (let i = 0; i < n; i++) {
+            const a = corners[i];
+            const b = corners[(i + 1) % n];
+            twiceArea += a.x * b.y - b.x * a.y;
+        }
+
+        return Number.isFinite(twiceArea) && twiceArea !== 0;
+    }
 }
