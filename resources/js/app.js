@@ -24,6 +24,20 @@ if (canvas && twoContainer && threeContainer) {
     const status = document.getElementById('saveStatus');
     let currentProjectId = null;
 
+    let projectOperationInProgress = false;
+
+    function setProjectBusy(isBusy) {
+        projectOperationInProgress = isBusy;
+
+        document.getElementById('saveProject').disabled = isBusy;
+        document.getElementById('loadProject').disabled = isBusy;
+        document.getElementById('newProject').disabled = isBusy;
+
+        // Prevent changing the selected project during an operation.
+        projectList.disabled = isBusy;
+    }
+
+
     async function refreshProjectList() {
         const projects = await projectService.getProjects();
 
@@ -91,6 +105,9 @@ if (canvas && twoContainer && threeContainer) {
     //Save a project
     document.getElementById('saveProject')
         .addEventListener('click', async () => {
+            // Check if an operation is in progress to protect against save-state race
+            if (projectOperationInProgress) return;
+
             const saveButton = document.getElementById('saveProject');
             const status = document.getElementById('saveStatus');
 
@@ -104,7 +121,7 @@ if (canvas && twoContainer && threeContainer) {
                 return;
             }
 
-            saveButton.disabled = true;
+            setProjectBusy(true);
 
             let project;
 
@@ -132,7 +149,7 @@ if (canvas && twoContainer && threeContainer) {
                 return;
 
             } finally {
-                saveButton.disabled = false;
+                setProjectBusy(false);
             }
 
             // Refresh dropdown
@@ -148,6 +165,9 @@ if (canvas && twoContainer && threeContainer) {
     //Load a project
     document.getElementById('loadProject')
         .addEventListener('click', async () => {
+            // Check if an operation is in progress to protect against save-state race
+            if (projectOperationInProgress) return;
+
             const confirmed = window.confirm(
                 'Loading a project will replace your current drawing. Continue?'
             );
@@ -163,7 +183,7 @@ if (canvas && twoContainer && threeContainer) {
                 return;
             }
 
-            loadButton.disabled = true;
+            setProjectBusy(true);
 
             try {
                 status.textContent = 'Loading project...';
@@ -219,12 +239,16 @@ if (canvas && twoContainer && threeContainer) {
                 status.textContent =
                     `Load failed: ${error.message}`;
             } finally {
-                loadButton.disabled = false;
+                setProjectBusy(false);
             }
         });
 
+    // Create a new project
     document.getElementById('newProject')
         .addEventListener('click', () => {
+            // Check if an operation is in progress to protect against save-state race
+            if (projectOperationInProgress) return;
+            
             const confirmed = window.confirm(
                 'Create a new project? Current unsaved changes will be lost.'
             );
