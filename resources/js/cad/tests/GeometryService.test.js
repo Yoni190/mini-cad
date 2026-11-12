@@ -70,5 +70,37 @@ describe('Wall Geometry', () => {
         expect(
             GeometryService.areWallsConnected(wallA, wallB)
         ).toBe(false);
-    })
+    });
+
+    it('detects walls as connected when endpoints are within tolerance', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 }
+        });
+
+        const wallB = new Wall({
+            start: { x: 4000.5, y: 0 },
+            end: { x: 4000.5, y: 3000 }
+        });
+
+        expect(
+            GeometryService.areWallsConnected(wallA, wallB, 1)
+        ).toBe(true);
+    });
+    
+    it('detects walls as disconnected when endpoints are outside tolerance', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 }
+        });
+
+        const wallB = new Wall({
+            start: { x: 4000.5, y: 0 },
+            end: { x: 4000.5, y: 3000 }
+        });
+
+        expect(
+            GeometryService.areWallsConnected(wallA, wallB, 0.1)
+        ).toBe(false);
+    });
 });
