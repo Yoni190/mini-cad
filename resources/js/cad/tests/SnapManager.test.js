@@ -36,7 +36,7 @@ describe('SnapManager', () => {
         expect(result).toEqual({ x: 3800, y: 0 });
     });
 
-    it('snap to the nearest endpoint', () => {
+    it('snaps to the nearest endpoint', () => {
         const snapManager = new SnapManager();
 
         const wallA = new Wall({
