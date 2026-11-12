@@ -72,3 +72,116 @@ describe('DrawingEngine wall display geometry', () => {
         expect(reverse.get(wallB.id)).toEqual(forward.get(wallB.id));
     });
 });
+
+describe('DrawingEngine wall junctions', () => {
+
+    it('keeps three-way junction geometry independent of wall order', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 },
+            thickness: 200
+        });
+
+        const wallB = new Wall({
+            start: { x: 4000, y: 0 },
+            end: { x: 4000, y: 3000 },
+            thickness: 200
+        });
+
+        const wallC = new Wall({
+            start: { x: 4000, y: 0 },
+            end: { x: 7000, y: 3000 },
+            thickness: 200
+        });
+
+        // No Canvas renderer is needed for geometry resolution.
+        const engine = new DrawingEngine(null);
+
+        engine.elements = [wallA, wallB, wallC];
+        const geometry1 = engine.getWallDisplayGeometry();
+
+        // Change the ordering of the same walls.
+        engine.elements = [wallC, wallA, wallB];
+        const geometry2 = engine.getWallDisplayGeometry();
+
+        // The resulting footprints must be identical.
+        for (const wall of [wallA, wallB, wallC]) {
+            expect(geometry1.get(wall.id))
+                .toEqual(geometry2.get(wall.id));
+        }
+
+        // At the unsupported branch, preserve original
+        // rectangular footprints.
+        for (const wall of [wallA, wallB, wallC]) {
+            expect(geometry1.get(wall.id))
+                .toEqual(wall.getGeometry());
+        }
+    });
+
+    it('keeps four-way junction geometry independent of wall order', () => {
+        const walls = [
+            new Wall({
+                start: { x: 0, y: 0 },
+                end: { x: 4000, y: 0 }
+            }),
+            new Wall({
+                start: { x: 4000, y: 0 },
+                end: { x: 8000, y: 0 }
+            }),
+            new Wall({
+                start: { x: 4000, y: 0 },
+                end: { x: 4000, y: 3000 }
+            }),
+            new Wall({
+                start: { x: 4000, y: 0 },
+                end: { x: 4000, y: -3000 }
+            })
+        ];
+
+        const engine = new DrawingEngine(null);
+
+        engine.elements = walls;
+        const geometry1 = engine.getWallDisplayGeometry();
+
+        engine.elements = [...walls].reverse();
+        const geometry2 = engine.getWallDisplayGeometry();
+
+        for (const wall of walls) {
+            expect(geometry1.get(wall.id))
+                .toEqual(geometry2.get(wall.id));
+
+            expect(geometry1.get(wall.id))
+                .toEqual(wall.getGeometry());
+        }
+    });
+
+    it('still resolves an ordinary two-wall L junction', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 },
+            thickness: 200
+        });
+
+        const wallB = new Wall({
+            start: { x: 4000, y: 0 },
+            end: { x: 4000, y: 3000 },
+            thickness: 200
+        });
+
+        const engine = new DrawingEngine(null);
+
+        engine.elements = [wallA, wallB];
+
+        const geometry = engine.getWallDisplayGeometry();
+
+        expect(geometry.get(wallA.id)[2]).toEqual({
+            x: 3800,
+            y: 200
+        });
+
+        expect(geometry.get(wallB.id)[3]).toEqual({
+            x: 3800,
+            y: 200
+        });
+    });
+});
