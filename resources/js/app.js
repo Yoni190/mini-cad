@@ -74,7 +74,10 @@ if (canvas && twoContainer && threeContainer) {
         }
 
         // Render the same elements used by the 2D editor
-        threeViewer.updateElements(engine.elements);
+        threeViewer.updateElements(
+            engine.elements,
+            engine.getWallDisplayGeometry()
+        );
     });
 
     // Switch back to 2D
@@ -200,7 +203,10 @@ if (canvas && twoContainer && threeContainer) {
 
                 // 6. Update the 3D viewer if it already exists
                 if (threeViewer) {
-                    threeViewer.updateElements(engine.elements);
+                    threeViewer.updateElements(
+                        engine.elements,
+                        engine.getWallDisplayGeometry()
+                    );
                 }
 
                 // 7. Display the loaded project name
@@ -247,7 +253,10 @@ if (canvas && twoContainer && threeContainer) {
             engine.render();
 
             if (threeViewer) {
-                threeViewer.updateElements(engine.elements);
+                threeViewer.updateElements(
+                    engine.elements,
+                    engine.getWallDisplayGeometry()
+                );
             }
 
             status.textContent = 'New project created.';

@@ -75,83 +75,52 @@ export default class ThreeViewer {
 
         return mesh;
     }
+ 
+    createWallMesh(wall, corners = wall.getGeometry()) {
+        // 1. Create a 2D shape representing the wall footprint.
+        // The corners are already calculated by our CAD geometry system.
+        const shape = new THREE.Shape();
 
-    createWallMesh(wall) {
-        // 1. Get the wall's actual length in millimeters
-        const length = wall.getLength();
-
-        const { start, end, thickness, height } = wall;
-
-        // 2. Convert dimensions from millimeters to meters
-        // Three.js will use 1 unit = 1 meter
-        const lengthM = length / 1000;
-        const heightM = height / 1000;
-        const thicknessM = thickness / 1000;
-
-        // 3. Create a rectangular 3D box
-        // BoxGeometry(width, height, depth)
-        // X = wall length
-        // Y = wall height
-        // Z = wall thickness
-        const geometry = new THREE.BoxGeometry(
-            lengthM,
-            heightM,
-            thicknessM
+        // Convert CAD millimeters to Three.js meters.
+        // Negate CAD Y because we will rotate the shape into the XZ plane.
+        shape.moveTo(
+            corners[0].x / 1000,
+            -corners[0].y / 1000
         );
 
-        // 4. Create a material to make the wall visible
-        // MeshNormalMaterial colors faces according to direction
-        // and doesn't require lighting
-        const material = new THREE.MeshNormalMaterial();
-
-        // 5. Combine the geometry and material into a mesh
-        const mesh = new THREE.Mesh(geometry, material);
-
-        // 6. Get the four corners of the wall's 2D footprint
-        // These account for the wall's actual thickness
-        // and its inner-face reference line
-        const corners = wall.getGeometry();
-
-        // 7. Calculate the center of the wall's footprint
-        // The center is the average of all four corners
-        let sumX = 0;
-        let sumY = 0;
-
-        for (const corner of corners) {
-            sumX += corner.x;
-            sumY += corner.y;
+        // Add the remaining corners to the shape.
+        for (let i = 1; i < corners.length; i++) {
+            shape.lineTo(
+                corners[i].x / 1000,
+                -corners[i].y / 1000
+            );
         }
 
-        const centerX = sumX / corners.length;
-        const centerY = sumY / corners.length;
+        shape.closePath();
 
-        // 8. Position the 3D wall
-        // CAD X becomes Three.js X
-        // CAD Y becomes Three.js Z
-        // Height becomes Three.js Y
+        // 2. Extrude the footprint by the wall's height.
+        // This creates a solid 3D wall.
+        const geometry = new THREE.ExtrudeGeometry(shape, {
+            depth: wall.height / 1000,
+            bevelEnabled: false
+        });
+
+        // 3. Material for visualization.
+        const material = new THREE.MeshNormalMaterial();
+
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // 4. Rotate the extrusion into the architectural coordinate system.
         //
-        // We use half the height because BoxGeometry is
-        // centered at its origin. This places its base at Y = 0.
-        mesh.position.set(
-            centerX / 1000,
-            heightM / 2,
-            centerY / 1000
-        );
+        // After rotation:
+        // CAD X becomes Three.js X.
+        // CAD Y becomes Three.js Z.
+        // Extrusion depth becomes Three.js Y (vertical).
+        mesh.rotation.x = -Math.PI / 2;
 
-        // 9. Calculate the direction of the wall
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-
-        // atan2() returns the angle in radians
-        // relative to the positive X-axis
-        const angle = Math.atan2(dy, dx);
-
-        // 10. Rotate the wall around the vertical Y-axis
-        // Negative because CAD Y maps to Three.js Z
-        mesh.rotation.y = -angle;
-
-        // 11. Return the mesh so it can be added to the scene
-        return mesh;   
+        // No separate wall position or direction rotation is needed.
+        // The footprint already contains the wall's world coordinates.
+        return mesh;
     }
 
     clearElements() {
@@ -163,14 +132,17 @@ export default class ThreeViewer {
         }
     }
 
-    updateElements(elements) {
+    updateElements(elements, wallGeometry = new Map()) {
         this.clearElements();
 
         for (const element of elements) {
             let mesh = null;
 
             if (element.type === 'wall') {
-                mesh = this.createWallMesh(element);
+                const corners = wallGeometry.get(element.id)
+                    ?? element.getGeometry();
+
+                mesh = this.createWallMesh(element, corners);
             } else if (element.type === 'column') {
                 mesh = this.createColumnMesh(element);
             }
