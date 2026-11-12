@@ -25,7 +25,7 @@ class SaveProjectRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
 
             // Allow an empty drawing, but limit its size.
-            'elements' => ['required', 'array', 'list', 'max:1000'],
+            'elements' => ['present', 'array', 'list', 'max:1000'],
 
             // Every element must be an object.
             'elements.*' => ['required', 'array'],
