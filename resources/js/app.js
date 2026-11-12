@@ -41,6 +41,7 @@ if (canvas && twoContainer && threeContainer) {
         document.getElementById('drawingTool').disabled = isBusy;
         document.getElementById('wallLength').disabled = isBusy;
         document.getElementById('applyWallLength').disabled = isBusy;
+        document.getElementById('updateColumn').disabled = isBusy;
 
         // Prevent interaction with the 2D canvas
         canvas.style.pointerEvents = isBusy ? 'none' : '';

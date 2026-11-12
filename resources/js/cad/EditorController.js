@@ -78,6 +78,8 @@ export default class EditorController {
 
         document.getElementById('updateColumn')
             .addEventListener('click', () => {
+                if (this.isEditingLocked) return;
+                
                 const selected = this.selectionManager.selectedElement;
 
                 if (!selected || selected.type !== 'column') {
