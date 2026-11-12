@@ -42,7 +42,7 @@ class ProjectController extends Controller
 
     public function update(SaveProjectRequest $request, Project $project)
     {
-        Gate::authorize('view', $project);
+        Gate::authorize('update', $project);
 
         $project->update($request->validated());
 
