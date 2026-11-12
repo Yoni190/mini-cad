@@ -1,7 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
 import Wall from '../models/Wall';
-import GeometryService from '../GeometryService';
 
 describe('Wall Geometry', () => {
 
@@ -23,4 +22,20 @@ describe('Wall Geometry', () => {
         }).toThrow();
     });
 
+    it('calculates the correct wall corner coordinates', () => {
+        const wall = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 },
+            thickness: 200
+        });
+
+        expect(wall.getGeometry()).toEqual(
+            [
+                { x: 0, y: 0 },
+                { x: 4000, y: 0 },
+                { x: 4000, y: 200 },
+                { x: 0, y: 200 }
+            ],
+        );
+    });
 });
