@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import DrawingEngine from '../DrawingEngine';
 import Wall from '../models/Wall';
+import GeometryService from '../GeometryService';
 
 describe('DrawingEngine wall display geometry', () => {
     it('preserves joins at both ends of a middle wall', () => {
@@ -184,4 +185,63 @@ describe('DrawingEngine wall junctions', () => {
             y: 200
         });
     });
+
+
+    it('rejects conflicting joins that create an invalid middle wall', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 3000 },
+            end: { x: 0, y: 0 },
+            thickness: 200
+        });
+
+        const wallB = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 300, y: 0 },
+            thickness: 200
+        });
+
+        const wallC = new Wall({
+            start: { x: 300, y: 0 },
+            end: { x: 300, y: 3000 },
+            thickness: 200
+        });
+
+        const engine = new DrawingEngine(null);
+
+        engine.elements = [wallA, wallB, wallC];
+
+        const geometry = engine.getWallDisplayGeometry();
+
+        // Every final polygon must be valid.
+        for (const wall of [wallA, wallB, wallC]) {
+            expect(
+                GeometryService.isSimplePolygon(
+                    geometry.get(wall.id)
+                )
+            ).toBe(true);
+        }
+
+        // Both joins conflict, so the safe fallback
+        // leaves the original rectangular footprints.
+        for (const wall of [wallA, wallB, wallC]) {
+            expect(geometry.get(wall.id))
+                .toEqual(wall.getGeometry());
+        }
+
+        // Original lengths remain unchanged.
+        expect(wallA.getLength()).toBe(3000);
+        expect(wallB.getLength()).toBe(300);
+        expect(wallC.getLength()).toBe(3000);
+
+        // Ensure changing the order does not change the result
+        engine.elements = [wallC, wallB, wallA];
+
+        const reversedGeometry = engine.getWallDisplayGeometry();
+
+        for (const wall of [wallA, wallB, wallC]) {
+            expect(reversedGeometry.get(wall.id))
+                .toEqual(geometry.get(wall.id));
+        }
+    });
+
 });
