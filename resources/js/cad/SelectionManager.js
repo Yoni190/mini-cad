@@ -3,7 +3,7 @@ export default class SelectionManager {
         this.selectedElement = null;
     }
 
-    select(point, elements) {
+    select(point, elements, wallGeometry = null) {
         this.selectedElement = null;
 
         for (let i = elements.length - 1; i >= 0; i--) {
@@ -17,7 +17,8 @@ export default class SelectionManager {
             }
 
             if (element.type === 'wall') {
-                const corners = element.getGeometry();
+                const corners = wallGeometry?.get(element.id)
+                    ?? element.getGeometry();
 
                 if (this.isPointInsidePolygon(point, corners)) {
                     this.selectedElement = element;

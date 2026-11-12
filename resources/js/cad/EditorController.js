@@ -118,7 +118,8 @@ export default class EditorController {
         if(this.activeTool === 'select') {
             const selected = this.selectionManager.select(
                 point,
-                this.engine.elements
+                this.engine.elements,
+                this.engine.getWallDisplayGeometry()
             );
 
             this.engine.render(null, selected?.id ?? null);
