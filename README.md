@@ -23,6 +23,18 @@ A browser-based architectural CAD prototype built with **Laravel 12**, **JavaScr
 | Build | Vite 7 |
 | Tests | PHPUnit, Vitest |
 
+## Technology Choices
+
+| Technology | Reason |
+|---|---|
+| Laravel 12 | Provides authentication, validation, routing, migrations, and project persistence. |
+| JavaScript ES6+ | Supports modular, object-oriented CAD architecture. |
+| HTML5 Canvas | Provides lightweight, direct control over 2D drawing. |
+| Three.js | Provides 3D geometry, cameras, and interactive navigation using WebGL. |
+| MySQL | Stores users and project metadata, with JSON for flexible CAD element data. |
+| Vitest | Tests geometry calculations independently of the browser. |
+| PHPUnit | Tests backend validation, ownership, and persistence. |
+
 ## Getting started
 
 ### Prerequisites
