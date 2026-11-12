@@ -36,7 +36,7 @@ A browser-based architectural CAD prototype built with **Laravel 12**, **JavaScr
 1. Clone the repository and enter its directory:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Yoni190/mini-cad.git
    cd mini-cad
    ```
 
@@ -129,6 +129,40 @@ A project belongs to one user and contains a name and JSON array of drawing elem
 
 Saved JSON is reconstructed into actual `Wall` and `Column` class instances when loaded, preserving element IDs and methods such as `getGeometry()`.
 
+
+## Object-Oriented Design
+
+The CAD editor uses JavaScript ES6+ classes and separates
+geometry calculations, rendering, interaction handling,
+and project persistence.
+
+### Encapsulation
+Wall and Column classes group geometric properties and
+their related behavior. Constructors validate element
+dimensions and coordinates.
+
+### Inheritance
+Wall and Column extend the DrawingElement base class,
+sharing common properties such as ID and element type.
+
+### Polymorphism
+The rendering system works with different element types
+through their common getGeometry() interface.
+
+### Abstraction
+DrawingElement defines a common contract for geometric
+elements without depending on Canvas or Three.js.
+
+### Separation of Concerns
+- DrawingEngine manages CAD elements and drawing state.
+- GeometryService performs mathematical calculations.
+- CanvasRenderer renders elements in 2D.
+- ThreeViewer displays the same elements in 3D.
+- EditorController manages user interactions.
+- SnapManager handles endpoint snapping.
+- SelectionManager handles element selection.
+- ProjectService communicates with Laravel APIs.
+
 ## Testing
 
 Run backend tests:
@@ -143,7 +177,7 @@ Run JavaScript tests:
 npm test
 ```
 
-The most recently reported results during development were **6 passing Laravel feature tests** and **14 passing JavaScript tests**. The backend tests cover ownership, empty projects, invalid wall dimensions/endpoints, and updates. The JavaScript tests cover lengths, corners, connection tolerances, L-junction calculations, snapping, and column validation.
+The most recently reported results during development were **8 passing Laravel feature tests** and **23 passing JavaScript tests**. The backend tests cover ownership, empty projects, invalid wall dimensions/endpoints, and updates. The JavaScript tests cover lengths, corners, connection tolerances, L-junction calculations, snapping, and column validation.
 
 For a final handoff, rerun the tests and `npm run build` after any code changes. Automated tests do not replace a browser-based check of the full editing and save/load workflow.
 
