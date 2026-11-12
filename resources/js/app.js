@@ -171,21 +171,20 @@ if (canvas && twoContainer && threeContainer) {
                 status.textContent =
                     `Project "${project.name}" saved successfully!`;
 
+                // Refresh dropdown
+                try {
+                    await refreshProjectList();
+                    projectList.value = String(currentProjectId);
+                } catch (error) {
+                    status.textContent +=
+                        ` (Project list could not refresh: ${error.message})`;
+                }
             } catch (error) {
                 status.textContent = `Save failed: ${error.message}`;
                 return;
 
             } finally {
                 setProjectBusy(false);
-            }
-
-            // Refresh dropdown
-            try {
-                await refreshProjectList();
-                projectList.value = String(currentProjectId);
-            } catch (error) {
-                status.textContent +=
-                    ` (Project list could not refresh: ${error.message})`;
             }
         });
 
