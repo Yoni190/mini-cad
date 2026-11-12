@@ -1,6 +1,7 @@
 
 import { describe, it, expect } from 'vitest';
 import Wall from '../models/Wall';
+import GeometryService from '../GeometryService';
 
 describe('Wall Geometry', () => {
 
@@ -38,4 +39,36 @@ describe('Wall Geometry', () => {
             ],
         );
     });
+
+    it('detects walls sharing an endpoint', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 }
+        });
+
+        const wallB = new Wall({
+            start: { x: 4000, y: 0 },
+            end: { x: 4000, y: 3000 }
+        });
+
+        expect(
+            GeometryService.areWallsConnected(wallA, wallB)
+        ).toBe(true);
+    });
+
+    it('detects walls not sharing an endpoint', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 }
+        });
+
+        const wallB = new Wall({
+            start: { x: 4100, y: 0 },
+            end: { x: 4100, y: 3000 }
+        });
+
+        expect(
+            GeometryService.areWallsConnected(wallA, wallB)
+        ).toBe(false);
+    })
 });
