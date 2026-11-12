@@ -1,5 +1,6 @@
 
 import './bootstrap';
+import initEditorUI from './cad/editor-ui';
 import CanvasRenderer from './cad/CanvasRenderer';
 import DrawingEngine from './cad/DrawingEngine';
 import EditorController from './cad/EditorController';
@@ -86,6 +87,7 @@ if (canvas && twoContainer && threeContainer) {
     );
 
     editor.init();
+    initEditorUI();
     engine.render();
 
     // Create Three.js viewer only when needed
