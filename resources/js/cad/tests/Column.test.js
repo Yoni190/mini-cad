@@ -16,4 +16,25 @@ describe('Column Geometry', () => {
             { x: 1000, y: 2600 }
         ]);
     });
+
+    it('rejects columns with negative width', () => {
+        expect(() => {
+            new Column({
+                position: { x: 1000, y: 2000 },
+                width: -400,
+                depth: 600
+            });
+        }).toThrow();
+    });
+
+    it('rejects columns with zero height', () => {
+        expect(() => {
+            new Column({
+                position: { x: 1000, y: 2000 },
+                width: 400,
+                depth: 600,
+                height: 0,
+            });
+        }).toThrow();
+    });
 });
