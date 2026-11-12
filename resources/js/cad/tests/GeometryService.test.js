@@ -103,4 +103,38 @@ describe('Wall Geometry', () => {
             GeometryService.areWallsConnected(wallA, wallB, 0.1)
         ).toBe(false);
     });
+
+    it('calculates an L-shaped junction without modifying wall lengths', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 },
+            thickness: 200
+        });
+
+        const wallB = new Wall({
+            start: { x: 4000, y: 0 },
+            end: { x: 4000, y: 3000 },
+            thickness: 200
+        });
+
+        const result = GeometryService.getJoinedWallCorners(
+            wallA,
+            wallB
+        );
+
+        // Verify the calculated outer corner
+        expect(result.wallACorners[2]).toEqual({
+            x: 3800,
+            y: 200
+        });
+
+        expect(result.wallBCorners[3]).toEqual({
+            x: 3800,
+            y: 200
+        });
+
+        // Verify original measured lengths remain unchanged
+        expect(wallA.getLength()).toBe(4000);
+        expect(wallB.getLength()).toBe(3000);
+    });
 });
