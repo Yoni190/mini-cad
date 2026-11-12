@@ -141,4 +141,61 @@ describe('Wall Geometry', () => {
         expect(wallA.end).toEqual({ x: 4000, y: 0 });
         expect(wallB.start).toEqual({ x: 4000, y: 0 });
     });
+
+    it('does not create invalid geometry for a short connected wall', () => {
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 100, y: 0 },
+            thickness: 200
+        });
+
+        const wallB = new Wall({
+            start: { x: 100, y: 0 },
+            end: { x: 100, y: 3000 },
+            thickness: 200
+        });
+
+        const result = GeometryService.getJoinedWallCorners(
+            wallA,
+            wallB
+        );
+
+        // If a valid junction cannot be generated,
+        // the method must safely reject it.
+        expect(result).toBeNull();
+
+        // Original reference geometry must be preserved.
+        expect(wallA.getLength()).toBe(100);
+        expect(wallB.getLength()).toBe(3000);
+        expect(wallA.end).toEqual({ x: 100, y: 0 });
+    });
+
+
+    it('accepts a valid rectangular polygon', () => {
+        const corners = [
+            { x: 0, y: 0 },
+            { x: 4000, y: 0 },
+            { x: 4000, y: 200 },
+            { x: 0, y: 200 }
+        ];
+
+        expect(
+            GeometryService.isSimplePolygon(corners)
+        ).toBe(true);
+    });
+
+    it('rejects a self-intersecting polygon', () => {
+        const corners = [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+            { x: -100, y: 200 },
+            { x: 0, y: 200 }
+        ];
+
+        expect(
+            GeometryService.isSimplePolygon(corners)
+        ).toBe(false);
+    });
+
+
 });
