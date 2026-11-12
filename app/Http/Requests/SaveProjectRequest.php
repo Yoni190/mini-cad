@@ -24,15 +24,33 @@ class SaveProjectRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
 
-            // Allow an empty drawing, but limit its size.
+            // A project may contain no elements.
             'elements' => ['present', 'array', 'list', 'max:1000'],
 
-            // Every element must be an object.
+            // Common element properties.
             'elements.*' => ['required', 'array'],
-
-            // Every element has a unique ID and valid type.
             'elements.*.id' => ['required', 'uuid', 'distinct'],
             'elements.*.type' => ['required', 'in:wall,column'],
+
+            // Wall geometry.
+            'elements.*.start' => ['sometimes', 'array'],
+            'elements.*.start.x' => ['sometimes', 'numeric'],
+            'elements.*.start.y' => ['sometimes', 'numeric'],
+
+            'elements.*.end' => ['sometimes', 'array'],
+            'elements.*.end.x' => ['sometimes', 'numeric'],
+            'elements.*.end.y' => ['sometimes', 'numeric'],
+
+            'elements.*.thickness' => ['sometimes', 'numeric'],
+            'elements.*.height' => ['sometimes', 'numeric'],
+
+            // Column geometry.
+            'elements.*.position' => ['sometimes', 'array'],
+            'elements.*.position.x' => ['sometimes', 'numeric'],
+            'elements.*.position.y' => ['sometimes', 'numeric'],
+
+            'elements.*.width' => ['sometimes', 'numeric'],
+            'elements.*.depth' => ['sometimes', 'numeric'],
         ];
     }
 
