@@ -35,4 +35,25 @@ describe('SnapManager', () => {
 
         expect(result).toEqual({ x: 3800, y: 0 });
     });
+
+    it('snap to the nearest endpoint', () => {
+        const snapManager = new SnapManager();
+
+        const wallA = new Wall({
+            start: { x: 0, y: 0 },
+            end: { x: 4000, y: 0 }
+        });
+
+        const wallB = new Wall({
+            start: { x: 4100, y: 0 },
+            end: { x: 4100, y: 3000 }
+        });
+
+        // Mouse is 70 mm from Wall A and 30 mm from Wall B
+        const point = { x: 4070, y: 0 };
+
+        const result = snapManager.snap(point, [wallA, wallB]);
+
+        expect(result).toEqual({ x: 4100, y: 0 });
+    })
 });
