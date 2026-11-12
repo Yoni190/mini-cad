@@ -24,7 +24,7 @@ describe('Column Geometry', () => {
                 width: -400,
                 depth: 600
             });
-        }).toThrow();
+        }).toThrow('Column width must be a positive number');
     });
 
     it('rejects columns with zero height', () => {
@@ -35,6 +35,6 @@ describe('Column Geometry', () => {
                 depth: 600,
                 height: 0,
             });
-        }).toThrow();
+        }).toThrow('Column height must be a positive number');
     });
 });
