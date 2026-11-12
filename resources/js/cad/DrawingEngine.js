@@ -98,55 +98,91 @@ export default class DrawingEngine {
     }
 
     getWallDisplayGeometry() {
-        // Map each wall ID to the polygon used for rendering
-        const geometryMap = new Map();
-
-        // Get only walls
+        // Collect all walls in the drawing.
         const walls = this.elements.filter(
             element => element.type === 'wall'
         );
 
-        // Start with each wall's original geometry
+        // Store each wall's original footprint.
+        const geometryMap = new Map();
+
         for (const wall of walls) {
             geometryMap.set(wall.id, wall.getGeometry());
         }
 
-        // Check each unique pair of walls
-        for (let i = 0; i < walls.length; i++) {
-            for (let j = i + 1; j < walls.length; j++) {
-                const wallA = walls[i];
-                const wallB = walls[j];
+        // Group walls by their endpoint coordinates.
+        const junctions = new Map();
 
-                let firstWall = wallA;
-                let secondWall = wallB;
+        const addToJunction = (point, wall) => {
+            const key = `${point.x},${point.y}`;
 
-                let joined = GeometryService.getJoinedWallCorners(
-                    firstWall,
-                    secondWall
-                );
-
-                // If the walls connect in the other direction, keep track of which wall was passed as A and B.
-                if (!joined) {
-                    firstWall = wallB;
-                    secondWall = wallA;
-
-                    joined = GeometryService.getJoinedWallCorners(
-                        firstWall,
-                        secondWall
-                    );
-                }
-
-                if (!joined) {
-                    continue;
-                }
-
-                const firstCorners = geometryMap.get(firstWall.id);
-                const secondCorners = geometryMap.get(secondWall.id);
-
-                // Update only the corners involved in the join.
-                firstCorners[2] = { ...joined.wallACorners[2] };
-                secondCorners[3] = { ...joined.wallBCorners[3] };
+            if (!junctions.has(key)) {
+                junctions.set(key, new Set());
             }
+
+            junctions.get(key).add(wall);
+        };
+
+        for (const wall of walls) {
+            addToJunction(wall.start, wall);
+            addToJunction(wall.end, wall);
+        }
+
+        // Process every endpoint junction.
+        for (const connectedWalls of junctions.values()) {
+
+            // Only join when exactly two walls meet.
+            // Three-way and four-way junctions remain unmodified.
+            if (connectedWalls.size !== 2) {
+                continue;
+            }
+
+            const [wallA, wallB] = [...connectedWalls];
+
+            let firstWall;
+            let secondWall;
+
+            // GeometryService currently supports:
+            // firstWall.end === secondWall.start
+
+            if (
+                wallA.end.x === wallB.start.x &&
+                wallA.end.y === wallB.start.y
+            ) {
+                firstWall = wallA;
+                secondWall = wallB;
+            } else if (
+                wallB.end.x === wallA.start.x &&
+                wallB.end.y === wallA.start.y
+            ) {
+                firstWall = wallB;
+                secondWall = wallA;
+            } else {
+                // Start-start or end-end joins are not
+                // supported by the current geometry algorithm.
+                continue;
+            }
+
+            const result = GeometryService.getJoinedWallCorners(
+                firstWall,
+                secondWall
+            );
+
+            if (!result) {
+                continue;
+            }
+
+            // Keep existing adjustments at OTHER endpoints.
+            // Do not replace the entire wall corner arrays.
+
+            const firstCorners = geometryMap.get(firstWall.id);
+            const secondCorners = geometryMap.get(secondWall.id);
+
+            // Outer corner at firstWall.end
+            firstCorners[2] = { ...result.wallACorners[2] };
+
+            // Outer corner at secondWall.start
+            secondCorners[3] = { ...result.wallBCorners[3] };
         }
 
         return geometryMap;
