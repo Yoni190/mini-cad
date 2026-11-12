@@ -19,6 +19,7 @@ export default class CanvasRenderer {
         const corners = customCorners ?? element.getGeometry();
         const ctx = this.ctx;
 
+        ctx.save();
         ctx.beginPath();
 
         const firstPoint = this.worldToScreen(
@@ -39,33 +40,17 @@ export default class CanvasRenderer {
 
         ctx.closePath();
 
-        //Default style
-        ctx.fillStyle = 'gray';
-        ctx.strokeStyle = 'black';
-
-        if(element.type === 'wall'){
-            ctx.fillStyle = isPreview
-            ? 'red'
-            : 'cyan';
-
-            ctx.strokeStyle = isPreview ? 'blue' : 'black';
-        } else if (element.type === 'column') {
-            ctx.fillStyle = isPreview
-            ? 'yellow'
-            : 'green';
-
-            ctx.strokeStyle = isPreview ? 'blue' : 'black';
-        }
-
-        if (isSelected) {
-            ctx.strokeStyle = 'blue';
-            ctx.lineWidth = 3;
-        } else {
-            ctx.lineWidth = 1;
-        }
+        ctx.fillStyle = isPreview ? 'rgba(70, 112, 164, 0.25)'
+            : element.type === 'column' ? '#9baaba' : '#c3ced8';
+        ctx.strokeStyle = isSelected ? '#245ec7'
+            : isPreview ? '#5279a8' : '#526374';
+        ctx.lineWidth = isSelected ? 3 : 1.25;
+        ctx.lineJoin = 'round';
+        if (isPreview) ctx.setLineDash([6, 4]);
 
         ctx.fill();
         ctx.stroke();
+        ctx.restore();
     }
 
     //Convert screen coordinates to world coordinates
@@ -100,11 +85,16 @@ export default class CanvasRenderer {
 
         ctx.save();
 
-        ctx.fillStyle = 'black';
-        ctx.font = '14px Arial';
+        ctx.font = '600 12px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
 
+        // A light halo keeps measurements readable over elements and grid lines.
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.strokeText(label, midpoint.x, midpoint.y - 10);
+        ctx.fillStyle = '#334155';
         ctx.fillText(label, midpoint.x, midpoint.y - 10);
 
         ctx.restore();

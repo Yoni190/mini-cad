@@ -8,6 +8,11 @@ export default class ThreeViewer {
 
         this.scene.background = new THREE.Color(0xf1f5f9);
 
+        this.scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+        const light = new THREE.DirectionalLight(0xffffff, 2);
+        light.position.set(6, 12, 8);
+        this.scene.add(light);
+
         this.camera = new THREE.PerspectiveCamera(
             60,
             container.clientWidth / container.clientHeight,
@@ -61,7 +66,10 @@ export default class ThreeViewer {
             depth / 1000
         );
 
-        const material = new THREE.MeshNormalMaterial();
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x9baaba,
+            roughness: 0.9
+        });
 
         const mesh = new THREE.Mesh(geometry, material);
 
@@ -106,7 +114,10 @@ export default class ThreeViewer {
         });
 
         // 3. Material for visualization.
-        const material = new THREE.MeshNormalMaterial();
+        const material = new THREE.MeshStandardMaterial({
+            color: 0xc3ced8,
+            roughness: 0.9
+        });
 
         const mesh = new THREE.Mesh(geometry, material);
 
