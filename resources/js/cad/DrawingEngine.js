@@ -7,6 +7,7 @@ export default class DrawingEngine {
         this.renderer = renderer;
         this.elements = [];
         this.startPoint = null;
+        this.onRender = null;
     }
 
     addWall(start, end) {
@@ -66,6 +67,9 @@ export default class DrawingEngine {
                 this.renderer.drawWallLength(previewWall);
             }
         }
+
+        // Notify components after rendering
+        this.onRender?.();
     }
 
     updateColumnDimensions(id, width, depth) {

@@ -90,6 +90,20 @@ if (canvas && twoContainer && threeContainer) {
     // Create Three.js viewer only when needed
     let threeViewer = null;
 
+    engine.onRender = () => {
+        // Only synchronize when the 3D viewer exists
+        // and the 3D container is currently visible.
+        if (
+            threeViewer &&
+            threeContainer.style.display !== 'none'
+        ) {
+            threeViewer.updateElements(
+                engine.elements,
+                engine.getWallDisplayGeometry()
+            );
+        }
+    };
+
     // Switch to 3D
     document.getElementById('show3D').addEventListener('click', () => {
         twoContainer.style.display = 'none';
