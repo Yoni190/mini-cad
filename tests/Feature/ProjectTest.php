@@ -70,4 +70,28 @@ class ProjectTest extends TestCase
             'name' => 'Private Project',
         ]);
     }
+
+    /**
+     * Verify that a user can save a project with no elements
+     */
+    public function test_user_can_create_an_empty_project(): void
+    {
+        // Create a user
+        $user = User::factory()->create();
+
+        // Create an empty project as the user
+        $response = $this->actingAs($user)
+            ->postJson('/projects', [
+                'name' => 'Empty Project',
+                'elements' => [],
+            ]);
+
+        // The Project should be created
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('projects', [
+            'user_id' => $user->id,
+            'name' => 'Empty Project',
+        ]);
+    }
 }
