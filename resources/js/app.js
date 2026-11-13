@@ -27,6 +27,12 @@ if (canvas && twoContainer && threeContainer) {
 
     let projectOperationInProgress = false;
 
+    /**
+     * Prevents overlapping project operations and locks editing while waiting.
+     *
+     * Keeping the committed drawing stable avoids edits racing with a save
+     * or with the replacement of elements during a load.
+     */
     function setProjectBusy(isBusy) {
         projectOperationInProgress = isBusy;
 
@@ -93,6 +99,10 @@ if (canvas && twoContainer && threeContainer) {
     // Create Three.js viewer only when needed
     let threeViewer = null;
 
+    /**
+     * Synchronizes visible 3D meshes from the engine's shared element data.
+     * Hidden 3D content is refreshed when the user switches back to it.
+     */
     engine.onRender = () => {
         // Only synchronize when the 3D viewer exists
         // and the 3D container is currently visible.
@@ -219,6 +229,8 @@ if (canvas && twoContainer && threeContainer) {
                 // 1. Fetch the project from Laravel
                 const project = await projectService.loadProject(projectId);
 
+                // JSON preserves properties but not class methods. Reconstructing
+                // instances restores getGeometry() and runs constructor validation.
                 // 2. Reconstruct actual Wall and Column instances
                 // Do this BEFORE modifying the current drawing.
                 const elements = project.elements.map(element => {

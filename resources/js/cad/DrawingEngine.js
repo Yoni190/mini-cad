@@ -35,6 +35,12 @@ export default class DrawingEngine {
         this.render();
     }
 
+    /**
+     * Redraws stored elements using their resolved display geometry.
+     *
+     * The preview is drawn separately without entering the element
+     * collection, so mouse movement never commits temporary walls.
+     */
     render(previewWall = null, selectedId = null) {
         const wallGeometry = this.getWallDisplayGeometry();
 
@@ -102,6 +108,13 @@ export default class DrawingEngine {
     }
 
     
+    /**
+     * Derives wall footprints with supported two-wall corner joins.
+     *
+     * Junctions require exact shared endpoints. Branching junctions
+     * and unsupported endpoint directions keep their original footprints.
+     * The returned map changes display geometry, not stored wall data.
+     */
     getWallDisplayGeometry() {
         const walls = this.elements.filter(
             element => element.type === 'wall'

@@ -57,6 +57,12 @@ export default class ThreeViewer {
         this.renderer.render(this.scene, this.camera);
     }
 
+    /**
+     * Creates a box using millimeters converted to scene meters.
+     *
+     * BoxGeometry is centered at its origin, so half-dimension offsets
+     * place its base at ground level and align it with the CAD footprint.
+     */
     createColumnMesh(column) {
         const { position, width, depth, height } = column;
 
@@ -84,6 +90,12 @@ export default class ThreeViewer {
         return mesh;
     }
  
+    /**
+     * Extrudes the resolved wall footprint to its stored height.
+     *
+     * CAD X and Y map to scene X and Z; scene Y represents height.
+     * The mesh is derived from drawing data and does not replace it.
+     */
     createWallMesh(wall, corners = wall.getGeometry()) {
         // 1. Create a 2D shape representing the wall footprint.
         // The corners are already calculated by our CAD geometry system.
@@ -134,6 +146,12 @@ export default class ThreeViewer {
         return mesh;
     }
 
+    /**
+     * Removes derived meshes and releases their GPU resources.
+     *
+     * Removing a mesh from the scene alone does not dispose of its
+     * geometry or material. The source CAD elements remain untouched.
+     */
     clearElements() {
         for (const mesh of [...this.elementsGroup.children]) {
             this.elementsGroup.remove(mesh);
@@ -143,6 +161,12 @@ export default class ThreeViewer {
         }
     }
 
+    /**
+     * Rebuilds the 3D representation from the shared CAD elements.
+     *
+     * Resolved wall corners keep supported joins consistent with 2D.
+     * This implementation recreates all meshes on each update.
+     */
     updateElements(elements, wallGeometry = new Map()) {
         this.clearElements();
 

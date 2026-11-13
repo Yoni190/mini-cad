@@ -10,6 +10,12 @@ export default class CanvasRenderer {
         this.offsetY = 0;
     }
 
+    /**
+     * Draws an element footprint after converting millimeters to pixels.
+     *
+     * Joined walls may supply custom corners; other elements provide
+     * their own geometry through the common getGeometry() interface.
+     */
     drawElement(
         element,
         isPreview = false,
@@ -53,7 +59,10 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
-    //Convert screen coordinates to world coordinates
+    /**
+     * Converts canvas pixels into drawing millimeters by reversing
+     * the current pan offset and zoom scale.
+     */
     screenToWorld(x, y) {
         return {
             x: (x - this.offsetX) / this.scale,
@@ -61,7 +70,10 @@ export default class CanvasRenderer {
         };
     }
 
-    //Convert world coordinates to screen coordinates
+    /**
+     * Converts drawing millimeters into canvas pixels using the
+     * current zoom scale and pan offset. Stored geometry is unchanged.
+     */
     worldToScreen(x, y) {
         return {
             x: (x * this.scale) + this.offsetX,
@@ -69,6 +81,12 @@ export default class CanvasRenderer {
         };
     }
 
+    /**
+     * Draws the measured reference-edge length near the wall midpoint.
+     *
+     * The upward offset is in screen pixels, so the label spacing
+     * stays constant while zooming. The white stroke adds contrast.
+     */
     drawWallLength (wall) {
         const ctx = this.ctx;
         const { start, end } = wall;
@@ -100,6 +118,12 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
+    /**
+     * Draws a grid spaced in world millimeters.
+     *
+     * Scaling the spacing and applying the pan offsets keeps grid
+     * lines aligned with the drawing while the view moves.
+     */
     drawGrid() {
         const gridSize = 1000; // Millimeters
         const spacing = gridSize * this.scale;

@@ -1,22 +1,27 @@
 export default class GeometryService {
 
+    /**
+     * Calculates the four corners of a wall based on its
+     * start point, end point, and thickness.
+     *
+     * The wall extends perpendicular to its direction.
+     */
     static getWallCorners (wall) {
         const { start, end, thickness } = wall;
-
-        //Get wall length
         const length = wall.getLength();
 
-        //Calculate dx and dy
         const dx = end.x - start.x;
         const dy = end.y - start.y;
 
-        //Calculate perpendicular vector
+        // Normalize the perpendicular vector to the wall's direction
         const nx = -dy / length;
         const ny = dx / length;
 
+        // Scale the perpendicular vector by the wall thickness
         const ox = nx * thickness;
         const oy = ny * thickness;
 
+        // Return the four corners of the wall polygon
         return [
             { x: start.x, y: start.y },
             { x: end.x, y: end.y },
@@ -26,6 +31,10 @@ export default class GeometryService {
 
     }   
 
+    /**
+     * Calculates an axis-aligned column footprint in millimeters.
+     * The stored position is one corner, rather than the center.
+     */
     static getColumnCorners(column) {
         const { position, width, depth } = column;
 
@@ -37,6 +46,12 @@ export default class GeometryService {
         ];
     }
 
+    /**
+     * Places an endpoint at an exact distance from the start.
+     *
+     * The direction point supplies only the direction; normalizing
+     * its vector allows the requested length to control the distance.
+     */
     static getEndPoint(start, directionPoint, length) {
         //Calculate the direction vector
         const dx = directionPoint.x - start.x;
@@ -63,6 +78,10 @@ export default class GeometryService {
         };
     }
 
+    /**
+     * Checks whether any pair of wall endpoints is within the
+     * given tolerance in millimeters. This does not join their shapes.
+     */
     static areWallsConnected(wallA, wallB, tolerance = 1) {
         // Collect both endpoints of each wall
         const pointsA = [wallA.start, wallA.end];
@@ -91,6 +110,12 @@ export default class GeometryService {
         return false;
     }
 
+    /**
+     * Finds the intersection of two infinite lines, not bounded segments.
+     *
+     * Outer wall edges may need extending to meet at a corner.
+     * Returns null when the lines have no stable unique intersection.
+     */
     static lineIntersection(p1, p2, p3, p4) {
         // Direction vector of the first line
         const dx1 = p2.x - p1.x;
@@ -130,6 +155,13 @@ export default class GeometryService {
     }
 
 
+    /**
+     * Builds a corner join where wall A ends exactly where wall B starts.
+     *
+     * Only the outer footprint corners change. The stored reference
+     * endpoints and measured lengths remain unchanged.
+     * Returns null for unsupported or invalid joins.
+     */
     static getJoinedWallCorners(wallA, wallB) {
         // Get independent wall footprints.
         // These are new arrays, so we can modify
@@ -195,7 +227,12 @@ export default class GeometryService {
         };
     }
 
-    // Check if polygon intersects itself
+    /**
+     * Checks that a footprint has finite coordinates, nonzero edges
+     * and area, and no intersections between non-adjacent edges.
+     *
+     * This prevents invalid joined shapes from reaching the renderers.
+     */
     static isSimplePolygon(corners) {
         if (!Array.isArray(corners) || corners.length < 3) {
             return false;

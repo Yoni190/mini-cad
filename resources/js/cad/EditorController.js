@@ -108,6 +108,12 @@ export default class EditorController {
             });
     }
 
+    /**
+     * Routes clicks to the active tool using world coordinates.
+     *
+     * Wall drawing uses two clicks: the first stores a start point,
+     * and the second commits a wall. Selection uses unsnapped points.
+     */
     handleClick(event) {
         if (this.isEditingLocked) return;
         if (event.button !== 0) {
@@ -159,6 +165,12 @@ export default class EditorController {
         }
     }
 
+    /**
+     * Updates panning, column dragging, or a temporary wall preview.
+     *
+     * Column dragging preserves the original mouse-to-column offset
+     * so the column does not jump to the cursor when movement begins.
+     */
     handleMouseMove(event) {
         if (this.isEditingLocked) return;
         // Handle panning
@@ -303,6 +315,12 @@ export default class EditorController {
         }
     }
 
+    /**
+     * Zooms around the cursor while keeping its world point fixed.
+     *
+     * After changing scale, the pan offsets are recalculated so the
+     * same drawing point remains underneath the mouse.
+     */
     handleWheel(event) {
         if (this.isEditingLocked) return;
         event.preventDefault();
@@ -347,7 +365,10 @@ export default class EditorController {
     }
 
 
-    //Calculate mouse coordinates
+    /**
+     * Converts browser mouse coordinates to canvas-local pixels,
+     * then to millimeters, optionally snapping to a wall endpoint.
+     */
     getMousePoint(event, applySnap = true) {
         //Read mouse coordinatess
         const rect = this.canvas.getBoundingClientRect();
@@ -364,6 +385,12 @@ export default class EditorController {
             : rawPoint;
     }
 
+    /**
+     * Commits a wall with the requested length in millimeters.
+     *
+     * The last preview direction determines its orientation. The
+     * calculated endpoint is not snapped again, preserving exact length.
+     */
     createWallWithLength(length) {
         if(!this.engine.startPoint || !this.directionPoint) {
             alert('Click a starting point and move the mouse to choose a direction.');
@@ -388,7 +415,12 @@ export default class EditorController {
         this.directionPoint = null;
     }
 
-    // Disable editing during save and load
+    /**
+     * Locks editor interactions during project save or load operations.
+     *
+     * Entering the locked state cancels unfinished previews and gestures;
+     * already committed elements remain in the drawing.
+     */
     setEditingLocked(locked) {
         this.isEditingLocked = locked;
 

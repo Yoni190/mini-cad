@@ -3,6 +3,13 @@ export default class SelectionManager {
         this.selectedElement = null;
     }
 
+    /**
+     * Selects the last drawn element containing the world point.
+     *
+     * Checking elements in reverse order gives overlapping elements
+     * the same priority as their drawing order. Joined wall footprints
+     * are used when supplied so selection follows the visible shape.
+     */
     select(point, elements, wallGeometry = null) {
         this.selectedElement = null;
 
@@ -45,6 +52,12 @@ export default class SelectionManager {
         );
     }
 
+    /**
+     * Uses ray casting to test whether a point lies inside a polygon.
+     *
+     * Each edge crossing toggles the result: an odd number of crossings
+     * means the point is inside.
+     */
     isPointInsidePolygon(point, corners) {
         let inside = false;
 

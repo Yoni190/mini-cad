@@ -3,6 +3,13 @@ export default class SnapManager {
         this.tolerance = tolerance;
     }
 
+    /**
+     * Returns the nearest wall endpoint strictly within the tolerance,
+     * or the original point when no endpoint qualifies.
+     *
+     * The tolerance is measured in world millimeters, so its apparent
+     * screen distance changes with zoom. Stored endpoints are not moved.
+     */
     snap (point, elements) {
         let closestPoint = point;
         let closestDistance = this.tolerance;
