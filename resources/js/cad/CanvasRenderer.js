@@ -165,21 +165,21 @@ export default class CanvasRenderer {
         ctx.strokeStyle = '#e2e8f0';
         ctx.lineWidth = 1;
 
+        ctx.beginPath();
+
         // Vertical lines
         for (let x = startX; x <= this.canvas.width; x += spacing) {
-            ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, this.canvas.height);
-            ctx.stroke();
         }
 
         // Horizontal lines
         for (let y = startY; y <= this.canvas.height; y += spacing) {
-            ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(this.canvas.width, y);
-            ctx.stroke();
         }
+
+        ctx.stroke();
 
         ctx.restore();
     }
