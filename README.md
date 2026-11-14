@@ -124,7 +124,9 @@ The editor maintains one collection of `Wall` and `Column` model instances in `D
 | `resources/js/cad/models/Column.js` | Column position and dimensions |
 | `resources/js/cad/models/DrawingElement.js` | Common element identity and type |
 | `GeometryService.js` | Wall/column corners, numeric endpoints, connections, and limited junction geometry |
-| `DrawingEngine.js` | Element collection, element mutations, and resolved wall display geometry |
+| `DrawingEngine.js` | Element collection, mutations, rendering coordination, and cached wall geometry |
+| `WallTopology.js` | Splits walls at connections and discovers closed rooms |
+| `WallGeometry.js` | Resolves wall footprints and supported junctions for display |
 | `CanvasRenderer.js` | 2D polygons, measurements, grid, and world/screen transforms |
 | `EditorController.js` | Mouse/keyboard drawing, selection, zoom, pan, and edit interactions |
 | `SelectionManager.js` | Element hit testing and selection state |
@@ -135,9 +137,15 @@ The editor maintains one collection of `Wall` and `Column` model instances in `D
 | `app/Http/Requests/SaveProjectRequest.php` | Server-side project and geometry validation |
 | `app/Http/Controllers/AuthController.php` | Registration, login, and logout |
 
+### How editor data flows
+
+`resources/js/app.js` constructs the editor and connects the 2D and 3D views. `EditorController` converts input events into changes to `DrawingEngine`, which owns the current element collection. Adding a wall uses `WallTopology.split()` to split connected reference edges; `WallTopology.rooms()` finds closed paths. The engine caches display footprints from `WallGeometry`: it starts with each wall's reference-edge footprint, resolves supported junctions, and rejects changes that produce invalid polygons. The original reference edges remain the source for dimensions and saved data. `GeometryService` provides the underlying calculations and tolerances. The 2D renderer and 3D viewer consume the same resolved footprints.
+
+Model changes must invalidate cached wall geometry and notify the 3D view. Use engine mutation methods rather than modifying its element array directly. In particular, `replaceElements()` clears the pending start point, invalidates the cache, notifies listeners, and redraws. The project load handler reconstructs model instances before calling it; saving serializes the current models as JSON. The Laravel request validates that JSON, and the project policy protects individual records. When changing the saved element shape, update both model reconstruction and server validation, and consider compatibility with existing projects.
+
 ### Project data and security
 
-A project belongs to one user and contains a name and JSON array of drawing elements. The backend validates supported element types, UUIDs, numeric geometry, positive dimensions, and wall endpoint constraints. Project queries are scoped through the authenticated user's `projects()` relationship so another user's project cannot be retrieved or updated through these endpoints.
+A project belongs to one user and contains a name and JSON array of drawing elements. The backend validates supported element types, UUIDs, numeric geometry, positive dimensions, and wall endpoint constraints. Listing and creation use the authenticated user's `projects()` relationship. For retrieval and updates, `ProjectPolicy` checks ownership and returns a not-found response for another user's project.
 
 Saved JSON is reconstructed into actual `Wall` and `Column` class instances when loaded, preserving element IDs and methods such as `getGeometry()`.
 
@@ -189,7 +197,7 @@ Run JavaScript tests:
 npm test
 ```
 
-The most recently reported results during development were **8 passing Laravel feature tests** and **23 passing JavaScript tests**. The backend tests cover ownership, empty projects, invalid wall dimensions/endpoints, and updates. The JavaScript tests cover lengths, corners, connection tolerances, L-junction calculations, snapping, and column validation.
+The backend tests cover ownership, empty projects, invalid wall dimensions/endpoints, and updates. The JavaScript tests cover lengths, corners, connection tolerances, L-junction calculations, snapping, and column validation.
 
 For a final handoff, rerun the tests and `npm run build` after any code changes. Automated tests do not replace a browser-based check of the full editing and save/load workflow.
 
@@ -201,4 +209,4 @@ For a final handoff, rerun the tests and `npm run build` after any code changes.
 - The current frontend does not offer a full revision history or conflict resolution for concurrent edits.
 
 ## Notes
-Wall lengths are measured along the wall's reference edge. Wall thickness extends to the left of the drawing direction in Canvas coordinates. To use the reference edges as the inner boundary of a room, draw walls so that thickness extends outward. Automatic room-side detection is not implemented.
+Wall lengths are measured along the wall's reference edge. The `thicknessSide` property determines which side of the directed reference edge contains the wall footprint; the editor chooses a side using nearby geometry.

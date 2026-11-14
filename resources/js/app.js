@@ -265,22 +265,15 @@ if (canvas && twoContainer && threeContainer) {
 
                 // 3. All elements were reconstructed successfully.
                 // We can now safely replace the current drawing.
-                engine.elements = elements;
-
-                // The new array may contain different walls and joins.
-                engine.invalidateWallGeometry();
+                engine.replaceElements(elements);
                 currentProjectId = project.id;
 
                 // 4. Clear temporary editor state
-                engine.startPoint = null;
                 editor.directionPoint = null;
                 editor.isDragging = false;
                 selectionManager.clear();
 
-                // 5. Update the 2D canvas
-                engine.render();
-
-                // 6. Display the loaded project name
+                // Display the loaded project name
                 document.getElementById('projectName').value = project.name;
 
                 status.textContent =
@@ -309,14 +302,12 @@ if (canvas && twoContainer && threeContainer) {
             }
 
             // Clear project data
-            engine.elements = [];
-            engine.invalidateWallGeometry();
+            engine.replaceElements([]);
 
             // Reset current project
             currentProjectId = null;
 
             // Reset editor state
-            engine.startPoint = null;
             editor.directionPoint = null;
             editor.isDragging = false;
             selectionManager.clear();
@@ -324,9 +315,6 @@ if (canvas && twoContainer && threeContainer) {
             // Clear project name and selection
             document.getElementById('projectName').value = '';
             projectList.value = '';
-
-            // Refresh both views
-            engine.render();
 
             status.textContent = 'New project created.';
         });
