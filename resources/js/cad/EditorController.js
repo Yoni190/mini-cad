@@ -15,6 +15,7 @@ export default class EditorController {
         this.isPanning = false;
         this.lastPanPoint = null;
         this.isEditingLocked = false;
+        this.orthoEnabled = false;
     }
 
     init() {
@@ -128,6 +129,9 @@ export default class EditorController {
                     alert(error.message);
                 }
             });
+
+        document.getElementById('toggleOrtho')
+            .addEventListener('click', () => this.toggleOrtho());
     }
 
     /**
@@ -192,7 +196,10 @@ export default class EditorController {
             if (Number.isFinite(length) && length > 0) {
                 this.createWallWithLength(length);
             } else {
-                this.engine.addWall(this.engine.startPoint, point);
+                this.engine.addWall(
+                    this.engine.startPoint,
+                    this.constrainWallPoint(point)
+                );
                 this.engine.startPoint = null;
                 this.directionPoint = null;
             }
@@ -307,6 +314,21 @@ export default class EditorController {
                 event.target.matches('input, textarea, select') ||
                 event.target.isContentEditable
             );
+
+        if (
+            !isTypingInField &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.altKey &&
+            !event.repeat &&
+            event.key.toLowerCase() === 'o' &&
+            this.activeTool === 'wall' &&
+            document.getElementById('threeContainer').style.display === 'none'
+        ) {
+            event.preventDefault();
+            this.toggleOrtho();
+            return;
+        }
 
         const isDrawingWall =
             this.activeTool === 'wall' &&
@@ -464,12 +486,16 @@ export default class EditorController {
      * calculated endpoint is not snapped again, preserving exact length.
      */
     createWallWithLength(length) {
-        if(!this.engine.startPoint || !this.directionPoint) {
+        const direction = this.directionPoint
+            ? this.constrainWallPoint(this.directionPoint)
+            : null;
+
+        if(!this.engine.startPoint || !direction) {
             alert('Click a starting point and move the mouse to choose a direction.');
             return;
         }
-        if(this.engine.startPoint.x === this.directionPoint.x &&
-            this.engine.startPoint.y === this.directionPoint.y
+        if(this.engine.startPoint.x === direction.x &&
+            this.engine.startPoint.y === direction.y
         ) {
             alert('Move the mouse to choose a wall direction first.');
             return;
@@ -477,7 +503,7 @@ export default class EditorController {
 
         const newEndpoint = GeometryService.getEndPoint(
             this.engine.startPoint,
-            this.directionPoint,
+            direction,
             length
         );
 
@@ -512,7 +538,9 @@ export default class EditorController {
 
     renderWallPreview() {
         const start = this.engine.startPoint;
-        const direction = this.directionPoint;
+        const direction = this.directionPoint
+            ? this.constrainWallPoint(this.directionPoint)
+            : null;
 
         if (
             !start ||
@@ -530,6 +558,37 @@ export default class EditorController {
             : direction;
 
         this.engine.render(new Wall({ start, end }));
+    }
+
+    constrainWallPoint(point) {
+        const start = this.engine.startPoint;
+
+        if (!this.orthoEnabled || !start) {
+            return point;
+        }
+
+        const dx = point.x - start.x;
+        const dy = point.y - start.y;
+
+        if (Math.abs(dx) >= Math.abs(dy)) {
+            return { x: point.x, y: start.y };
+        }
+
+        return { x: start.x, y: point.y };
+    }
+
+    toggleOrtho() {
+        if (this.isEditingLocked) return;
+
+        this.orthoEnabled = !this.orthoEnabled;
+
+        const button = document.getElementById('toggleOrtho');
+        button.setAttribute('aria-pressed', String(this.orthoEnabled));
+        button.textContent = this.orthoEnabled ? 'Ortho: On' : 'Ortho: Off';
+
+        if (this.activeTool === 'wall' && this.engine.startPoint) {
+            this.renderWallPreview();
+        }
     }
 
 }

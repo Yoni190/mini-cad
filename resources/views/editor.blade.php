@@ -95,6 +95,14 @@
             <section class="property-section" id="wallProperties">
                 <h3>Wall length</h3>
                 <p class="field-help" id="wallLengthHelp">Click a start point and move the mouse to set a direction. Enter a length to create the wall.</p>
+                <button
+                    type="button"
+                    id="toggleOrtho"
+                    aria-pressed="false"
+                    title="Toggle horizontal/vertical walls (O)"
+                >
+                    Ortho: Off
+                </button>
                 <label for="wallLength">Length (mm)</label>
                 <input type="number" id="wallLength" min="1" placeholder="e.g. 4000" aria-describedby="wallLengthHelp">
                 <button id="applyWallLength" type="button">Create Wall</button>
