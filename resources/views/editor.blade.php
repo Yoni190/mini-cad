@@ -99,6 +99,17 @@
                 <input type="number" id="wallLength" min="1" placeholder="e.g. 4000" aria-describedby="wallLengthHelp">
                 <button id="applyWallLength" type="button">Create Wall</button>
             </section>
+            <section class="property-section" id="wallThicknessProperties" hidden>
+                <h3>Wall thickness</h3>
+                <p class="field-help">Choose Select and click a wall to edit it.</p>
+
+                <label for="wallThickness">Thickness (mm)</label>
+                <input type="number" id="wallThickness" min="0" step="any">
+
+                <button type="button" id="updateWallThickness">
+                    Update Thickness
+                </button>
+            </section>
             <section class="property-section" id="columnProperties" hidden>
                 <h3>Column dimensions</h3>
                 <p class="field-help" id="columnDimensionsHelp">Select a column in the drawing to edit its dimensions.</p>
