@@ -98,6 +98,43 @@
 .tool-group + .tool-group { border-top: 1px solid var(--cad-border); margin-top: 16px; padding-top: 16px; }
 .group-label { padding-left: 8px; color: var(--cad-muted); font-size: 11px; margin-bottom: 8px !important; }
 .cad-editor .tool-button { justify-content: start; width: 100%; min-height: 44px; margin-bottom: 6px; padding-inline: 7px; gap: 6px; border-color: transparent; font-size: 12px; }
+.cad-editor .tool-button { position: relative; }
+.tool-tooltip {
+    position: absolute;
+    z-index: 20;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f1f5f9;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, .18);
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .12s ease;
+}
+.tool-button:hover .tool-tooltip, .tool-button:focus-visible .tool-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+.tool-tooltip kbd {
+    padding: 3px 5px;
+    border: 1px solid #aeb9c6;
+    border-radius: 4px;
+    background: #dce3eb;
+    color: #334155;
+    font: 600 10px/1 system-ui, sans-serif;
+}
 .tool-button svg { width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .tool-note { font-size: 11px; color: var(--cad-muted); margin-top: 24px !important; }
 .drawing-workspace { min-width: 0; padding: 18px; }

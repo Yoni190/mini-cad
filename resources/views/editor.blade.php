@@ -53,20 +53,23 @@
             </select>
             <div class="tool-group" role="group" aria-label="Draw">
                 <p class="group-label">Draw</p>
-                <button type="button" class="tool-button" data-tool="wall" aria-pressed="true" title="Wall">
+                <button type="button" class="tool-button" data-tool="wall" aria-pressed="true" aria-keyshortcuts="W">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM4 12h16M12 5v7M8 12v7M16 12v7"/></svg>
                     <span>Wall</span>
+                    <span class="tool-tooltip" aria-hidden="true">Draw wall <kbd>W</kbd></span>
                 </button>
-                <button type="button" class="tool-button" data-tool="column" aria-pressed="false" title="Column">
+                <button type="button" class="tool-button" data-tool="column" aria-pressed="false" aria-keyshortcuts="C">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v3H6zM8 7v10M16 7v10M6 17h12v3H6z"/></svg>
                     <span>Column</span>
+                    <span class="tool-tooltip" aria-hidden="true">Place column <kbd>C</kbd></span>
                 </button>
             </div>
             <div class="tool-group" role="group" aria-label="Edit">
                 <p class="group-label">Edit</p>
-                <button type="button" class="tool-button" data-tool="select" aria-pressed="false" title="Select">
+                <button type="button" class="tool-button" data-tool="select" aria-pressed="false" aria-keyshortcuts="S">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 14 10-7 1-3 7z"/></svg>
                     <span>Select</span>
+                    <span class="tool-tooltip" aria-hidden="true">Select / move <kbd>S</kbd></span>
                 </button>
             </div>
             <p class="tool-note">Dimensions in mm</p>
