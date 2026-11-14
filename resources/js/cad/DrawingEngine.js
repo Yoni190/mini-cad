@@ -107,7 +107,7 @@ export default class DrawingEngine {
         column.width = width;
         column.depth = depth;
 
-        this.render();
+        this.render(null, column.id);
     }
 
     updateWallThickness(id, thickness) {

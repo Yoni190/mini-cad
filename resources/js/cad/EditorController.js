@@ -107,8 +107,6 @@ export default class EditorController {
                     }
 
                     this.engine.updateColumnDimensions(selected.id, width, depth);
-
-                    this.engine.render(null, selected.id);
                 }
             });
 
