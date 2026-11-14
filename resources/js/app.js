@@ -17,6 +17,8 @@ const threeContainer = document.getElementById('threeContainer');
 
 if (canvas && twoContainer && threeContainer) {
     const renderer = new CanvasRenderer(canvas);
+    const previewCanvas = document.getElementById('previewCanvas');
+    const previewRenderer = new CanvasRenderer(previewCanvas);
     const engine = new DrawingEngine(renderer);
     const snapManager = new SnapManager();
     const selectionManager = new SelectionManager();
@@ -94,6 +96,8 @@ if (canvas && twoContainer && threeContainer) {
         selectionManager
     );
 
+    editor.previewRenderer = previewRenderer;
+
     editor.init();
     initEditorUI();
     engine.render();
@@ -106,6 +110,9 @@ if (canvas && twoContainer && threeContainer) {
      * Hidden 3D content is refreshed when the user switches back to it.
      */
     engine.onRender = () => {
+        // Clears the old preview
+        previewRenderer.clear();
+        
         // Only synchronize when the 3D viewer exists
         // and the 3D container is currently visible.
         if (

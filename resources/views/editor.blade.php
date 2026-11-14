@@ -81,6 +81,8 @@
                 <!-- Keep both drawing surfaces at their original dimensions; scroll instead of scaling. -->
                 <div id="twoContainer">
                     <canvas id="cadCanvas" width="1000" height="600" aria-label="2D drawing canvas" aria-describedby="activeToolHelp">Your browser must support HTML Canvas to use the drawing editor.</canvas>
+                    <canvas id="previewCanvas" width="1000" height="600"
+                        aria-hidden="true"></canvas>
                 </div>
                 <div id="threeContainer" style="display: none;" aria-label="3D model viewer"></div>
             </div>

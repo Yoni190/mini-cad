@@ -107,6 +107,18 @@
 .canvas-viewport { max-width: 100%; overflow: auto; border: 1px solid #cbd4df; border-radius: 4px; background: #e9edf2; }
 /* No CSS scaling or canvas borders: one displayed pixel stays one drawing pixel. */
 #twoContainer, #threeContainer { width: 1000px; height: 600px; }
+#twoContainer {
+    position: relative;
+}
+
+#previewCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1000px;
+    height: 600px;
+    pointer-events: none;
+}
 #cadCanvas { display: block; width: 1000px; height: 600px; max-width: none; border: 0; background: #fff; cursor: crosshair; }
 .cad-editor[data-active-tool="select"] #cadCanvas { cursor: default; }
 .workspace-help { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; padding-top: 12px; font-size: 12px; }

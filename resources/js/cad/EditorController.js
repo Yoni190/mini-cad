@@ -658,6 +658,16 @@ export default class EditorController {
     }
 
     renderWallPreview() {
+        const previewRenderer = this.previewRenderer;
+
+        // Match the main canvas's current zoom and pan.
+        previewRenderer.scale = this.renderer.scale;
+        previewRenderer.offsetX = this.renderer.offsetX;
+        previewRenderer.offsetY = this.renderer.offsetY;
+
+        // Erase the previous temporary wall and guides.
+        previewRenderer.clear();
+
         const start = this.engine.startPoint;
         const direction = this.directionPoint
             ? this.constrainWallPoint(this.directionPoint)
@@ -668,7 +678,6 @@ export default class EditorController {
             !direction ||
             (start.x === direction.x && start.y === direction.y)
         ) {
-            this.engine.render();
             return;
         }
 
@@ -680,8 +689,9 @@ export default class EditorController {
 
         const preview = new Wall({ start, end });
 
-        this.engine.render(preview);
-        this.renderer.drawWallGuides(preview, this.engine.elements);
+        previewRenderer.drawElement(preview, true);
+        previewRenderer.drawWallLength(preview);
+        previewRenderer.drawWallGuides(preview, this.engine.elements);
 
         const isAtEndpoint = this.engine.elements.some(element =>
             element.type === 'wall' &&
@@ -691,7 +701,7 @@ export default class EditorController {
         );
 
         if (isAtEndpoint) {
-            this.renderer.drawSnapMarker(end);
+            previewRenderer.drawSnapMarker(end);
         }
     }
 
