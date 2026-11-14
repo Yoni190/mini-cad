@@ -22,7 +22,6 @@ export default class DrawingEngine {
         //Add the wall to this.elements
         this.elements.push(wall);
         this.invalidateWallGeometry();
-        this.render();
 
         //Render all elements
         this.render();
