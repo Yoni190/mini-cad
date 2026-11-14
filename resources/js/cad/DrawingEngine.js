@@ -59,15 +59,19 @@ export default class DrawingEngine {
         for (const element of this.elements) {
             const isSelected = element.id === selectedId;
 
-            const customCorners = element.type === 'wall'
-                ? wallGeometry.get(element.id)
-                : null;
+            const corners = element.type === 'wall'
+                ? wallGeometry.get(element.id) ?? element.getGeometry()
+                : element.getGeometry();
+
+            if (!this.renderer.isGeometryVisible(corners)) {
+                continue;
+            }
 
             this.renderer.drawElement(
                 element,
                 false,
                 isSelected,
-                customCorners
+                corners
             );
         }
 

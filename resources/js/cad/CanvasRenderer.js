@@ -59,6 +59,32 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
+    isGeometryVisible(corners) {
+        // Include a small margin for the element's stroke.
+        const margin = 4;
+
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        for (const corner of corners) {
+            const point = this.worldToScreen(corner.x, corner.y);
+
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+        }
+
+        return (
+            maxX >= -margin &&
+            maxY >= -margin &&
+            minX <= this.canvas.width + margin &&
+            minY <= this.canvas.height + margin
+        );
+    }
+
     /**
      * Converts canvas pixels into drawing millimeters by reversing
      * the current pan offset and zoom scale.
