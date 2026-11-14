@@ -130,6 +130,25 @@ if (canvas && twoContainer && threeContainer) {
         previewRenderer.clear();
     };
 
+    // Keep the backing buffers in step with the displayed viewport so that
+    // one canvas pixel continues to match one pointer coordinate.
+    function resizeViews() {
+        const viewport = document.querySelector('.canvas-viewport');
+        const width = viewport.clientWidth;
+        const height = 600;
+        if (!width) return;
+
+        if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = previewCanvas.width = width;
+            canvas.height = previewCanvas.height = height;
+            engine.render(null, selectionManager.selectedElement?.id ?? null);
+        }
+        threeViewer?.resize();
+    }
+
+    new ResizeObserver(resizeViews).observe(document.querySelector('.canvas-viewport'));
+    resizeViews();
+
     // Model changes can require new 3D geometry.
     engine.onModelChange = () => {
         threeNeedsSync = true;
@@ -145,6 +164,7 @@ if (canvas && twoContainer && threeContainer) {
         }
 
         threeViewer.setVisible(true);
+        threeViewer.resize();
         syncThreeIfVisible();
     });
 

@@ -54,6 +54,17 @@ export default class ThreeViewer {
         this.requestRender();
     }
 
+    resize() {
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+        if (!width || !height) return;
+
+        this.renderer.setSize(width, height);
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+        this.requestRender();
+    }
+
     requestRender() {
         if (!this.visible || this.pendingFrame !== null) return;
 
