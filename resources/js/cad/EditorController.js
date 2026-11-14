@@ -170,23 +170,32 @@ export default class EditorController {
             return;
         }
 
-        if(this.engine.startPoint === null) {
+        if (this.engine.startPoint === null) {
             this.engine.startPoint = point;
             this.directionPoint = null;
+
+            // Start each wall without a leftover length from the previous one.
+            document.getElementById('wallLength').value = '';
         } else {
             if (
                 this.engine.startPoint.x === point.x &&
                 this.engine.startPoint.y === point.y
             ) {
-                this.engine.startPoint = null;
-                this.directionPoint = null;
-                this.engine.render();
                 return;
             }
 
-            this.engine.addWall(this.engine.startPoint, point);
-            this.engine.startPoint = null;
-            this.directionPoint = null;
+            // The second click determines the direction.
+            this.directionPoint = point;
+
+            const length = Number(document.getElementById('wallLength').value);
+
+            if (Number.isFinite(length) && length > 0) {
+                this.createWallWithLength(length);
+            } else {
+                this.engine.addWall(this.engine.startPoint, point);
+                this.engine.startPoint = null;
+                this.directionPoint = null;
+            }
         }
     }
 
@@ -239,24 +248,8 @@ export default class EditorController {
         }
 
         if (this.activeTool === 'wall' && this.engine.startPoint) {
-            const point = this.getMousePoint(event);
-
-            this.directionPoint = point;
-
-            if (
-                this.engine.startPoint.x === point.x &&
-                this.engine.startPoint.y === point.y
-            ) {
-                this.engine.render();
-                return;
-            }
-
-            const wall = new Wall({
-                start: this.engine.startPoint,
-                end: point
-            });
-
-            this.engine.render(wall);
+            this.directionPoint = this.getMousePoint(event);
+            this.renderWallPreview();
         }
     }
 
@@ -308,6 +301,60 @@ export default class EditorController {
 
     handleKeyDown(event) {
         if (this.isEditingLocked) return;
+        const isTypingInField =
+            event.target instanceof HTMLElement &&
+            (
+                event.target.matches('input, textarea, select') ||
+                event.target.isContentEditable
+            );
+
+        const isDrawingWall =
+            this.activeTool === 'wall' &&
+            this.engine.startPoint !== null &&
+            document.getElementById('threeContainer').style.display === 'none';
+
+        if (
+            isDrawingWall &&
+            !isTypingInField &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.altKey
+        ) {
+            const input = document.getElementById('wallLength');
+
+            if (/^[0-9]$/.test(event.key)) {
+                event.preventDefault();
+                input.value += event.key;
+                this.renderWallPreview();
+                return;
+            }
+
+            if (event.key === '.' && !input.value.includes('.')) {
+                event.preventDefault();
+                // A number input cannot retain a trailing decimal point reliably,
+                // so type whole millimeters with this shortcut.
+                return;
+            }
+
+            if (event.key === 'Backspace') {
+                event.preventDefault();
+                input.value = input.value.slice(0, -1);
+                this.renderWallPreview();
+                return;
+            }
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+
+                const length = Number(input.value);
+                if (Number.isFinite(length) && length > 0) {
+                    this.createWallWithLength(length);
+                }
+
+                return;
+            }
+        }
+        
         if (event.key === 'Escape') {
             this.engine.startPoint = null;
             this.directionPoint = null;
@@ -461,6 +508,28 @@ export default class EditorController {
             // Clear any drawing preview
             this.engine.render();
         }
+    }
+
+    renderWallPreview() {
+        const start = this.engine.startPoint;
+        const direction = this.directionPoint;
+
+        if (
+            !start ||
+            !direction ||
+            (start.x === direction.x && start.y === direction.y)
+        ) {
+            this.engine.render();
+            return;
+        }
+
+        const length = Number(document.getElementById('wallLength').value);
+
+        const end = Number.isFinite(length) && length > 0
+            ? GeometryService.getEndPoint(start, direction, length)
+            : direction;
+
+        this.engine.render(new Wall({ start, end }));
     }
 
 }
