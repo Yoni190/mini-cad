@@ -782,7 +782,10 @@ export default class EditorController {
     }
 
     scheduleWallPreview() {
-        if (this.pendingPreviewFrame !== null) {
+        if (
+            this.pendingPreviewFrame !== null ||
+            this.pendingRenderFrame !== null
+        ) {
             return;
         }
 
@@ -805,6 +808,11 @@ export default class EditorController {
     }
 
     scheduleCanvasRender() {
+        if (this.pendingPreviewFrame !== null) {
+            cancelAnimationFrame(this.pendingPreviewFrame);
+            this.pendingPreviewFrame = null;
+        }
+        
         // A redraw is already scheduled for the next frame.
         if (this.pendingRenderFrame !== null) return;
 
