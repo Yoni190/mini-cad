@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import DrawingEngine from '../DrawingEngine';
 import Wall from '../models/Wall';
 import GeometryService from '../GeometryService';
+import SelectionManager from '../SelectionManager';
 
 describe('DrawingEngine wall creation', () => {
     it('uses the requested thickness and retains the default when omitted', () => {
@@ -139,11 +140,17 @@ describe('DrawingEngine wall junctions', () => {
         expect(b[3]).toEqual(a[2]);
 
         expect(a[1]).toEqual(c[0]);
-        expect(b[0]).toEqual(c[3]);
+        expect(b[0]).toEqual({ x: 4000, y: 0 });
 
         // The diagonal wall meets the vertical wall here.
-        expect(b[0].x).toBeCloseTo(4000);
-        expect(b[0].y).toBeCloseTo(200 * Math.SQRT2);
+        expect(c[3].x).toBeCloseTo(4000);
+        expect(c[3].y).toBeCloseTo(200 * Math.SQRT2);
+
+        // The area between the diagonal and vertical walls is filled.
+        const selection = new SelectionManager();
+        expect([a, b, c].some(corners =>
+            selection.isPointInsidePolygon({ x: 3990, y: 100 }, corners)
+        )).toBe(true);
     });
 
     it('keeps four-way junction geometry independent of wall order', () => {
@@ -188,18 +195,17 @@ describe('DrawingEngine wall junctions', () => {
             geometry1.get(wall.id)
         );
 
-        // Check all four seams around the crossing.
-        expect(a[2]).toEqual({ x: 3800, y: 200 });
-        expect(c[3]).toEqual(a[2]);
+        // The horizontal host remains continuous.
+        expect(a).toEqual(walls[0].getGeometry());
+        expect(b).toEqual(walls[1].getGeometry());
 
-        expect(b[3]).toEqual({ x: 4000, y: 200 });
-        expect(c[0]).toEqual(b[3]);
+        // The downward branch meets the lower face of the host.
+        expect(c[0]).toEqual({ x: 4000, y: 200 });
+        expect(c[3]).toEqual({ x: 3800, y: 200 });
 
-        expect(b[0]).toEqual({ x: 4200, y: 0 });
-        expect(d[3]).toEqual(b[0]);
-
-        expect(a[1]).toEqual({ x: 4000, y: 0 });
-        expect(d[0]).toEqual(a[1]);
+        // The upward branch meets the upper face.
+        expect(d[0]).toEqual({ x: 4000, y: 0 });
+        expect(d[3]).toEqual({ x: 4200, y: 0 });
     });
 
     it('still resolves an ordinary two-wall L junction', () => {

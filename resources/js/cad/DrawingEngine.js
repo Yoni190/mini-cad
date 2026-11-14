@@ -229,9 +229,24 @@ export default class DrawingEngine {
         };
 
         const candidates = [];
+        const branchEndpoints = [];
 
         for (const rays of junctions.values()) {
             if (rays.length < 2) continue;
+
+            if (rays.length >= 3) {
+                const branchChanges = this.getBranchJoinChanges(rays, base);
+
+                if (branchChanges !== null) {
+                    if (branchChanges.length > 0) {
+                        candidates.push(branchChanges);
+                    }
+
+                    continue;
+                }
+
+                branchEndpoints.push(...rays);
+            }
 
             rays.sort((a, b) => a.angle - b.angle);
 
@@ -312,6 +327,23 @@ export default class DrawingEngine {
                 }
             }
 
+            // Keep each branch connected to the shared reference point.
+            // A trimmed reference corner can otherwise leave a triangular
+            // hole between three or more individually valid footprints.
+            for (const ray of branchEndpoints) {
+                const corners = result.get(ray.wall.id);
+                const atStart = ray.point.x === ray.wall.start.x &&
+                    ray.point.y === ray.wall.start.y;
+                const index = atStart ? 0 : 1;
+                const corner = corners[index];
+                const distance = (corner.x - ray.point.x) * Math.cos(ray.angle) +
+                    (corner.y - ray.point.y) * Math.sin(ray.angle);
+
+                if (distance > 1e-6) {
+                    corners[index] = { ...ray.point };
+                }
+            }
+
             const invalid = new Set(
                 [...result]
                     .filter(([, corners]) =>
@@ -334,6 +366,142 @@ export default class DrawingEngine {
 
             if (!removed) return base;
         }
+    }
+
+    getBranchJoinChanges(rays, base) {
+        const epsilon = 1e-6;
+
+        const direction = ray => ({
+            x: Math.cos(ray.angle),
+            y: Math.sin(ray.angle)
+        });
+
+        // The offset from a wall's reference edge to its other face.
+        const offset = ray => {
+            const corners = base.get(ray.wall.id);
+
+            return {
+                x: corners[3].x - corners[0].x,
+                y: corners[3].y - corners[0].y
+            };
+        };
+
+        const pairs = [];
+
+        for (let i = 0; i < rays.length; i++) {
+            for (let j = i + 1; j < rays.length; j++) {
+                const a = rays[i];
+                const b = rays[j];
+
+                const da = direction(a);
+                const db = direction(b);
+
+                const dot = da.x * db.x + da.y * db.y;
+                const oa = offset(a);
+                const ob = offset(b);
+
+                const sameOffset =
+                    Math.hypot(oa.x - ob.x, oa.y - ob.y) <= epsilon;
+
+                // Two opposite rays with matching offsets form one
+                // continuous wall through the junction.
+                if (dot < -1 + 1e-8 && sameOffset) {
+                    const axisAngle =
+                        ((a.angle % Math.PI) + Math.PI) % Math.PI;
+
+                    pairs.push({
+                        a,
+                        b,
+                        axisAngle,
+                        thickness: a.wall.thickness
+                    });
+                }
+            }
+        }
+
+        // No straight host wall: use the existing junction algorithm.
+        if (pairs.length === 0) return null;
+
+        // At an X-junction, use the thicker wall as the host.
+        // The angle provides a consistent choice for equal thicknesses.
+        pairs.sort((a, b) =>
+            b.thickness - a.thickness ||
+            a.axisAngle - b.axisAngle
+        );
+
+        const host = pairs[0];
+        const hostCorners = base.get(host.a.wall.id);
+        const hostOffset = offset(host.a);
+
+        const changes = [];
+
+        for (const branch of rays) {
+            if (branch === host.a || branch === host.b) continue;
+
+            const branchDirection = direction(branch);
+
+            const pointsTowardOffset =
+                branchDirection.x * hostOffset.x +
+                branchDirection.y * hostOffset.y > 0;
+
+            // Choose the host face nearest the body of the branch.
+            const hostFace = pointsTowardOffset
+                ? [hostCorners[3], hostCorners[2]]
+                : [hostCorners[0], hostCorners[1]];
+
+            const corners = base.get(branch.wall.id);
+
+            const referenceHit = GeometryService.lineIntersection(
+                corners[0], corners[1],
+                ...hostFace
+            );
+
+            const offsetHit = GeometryService.lineIntersection(
+                corners[3], corners[2],
+                ...hostFace
+            );
+
+            if (!referenceHit || !offsetHit) {
+                // Keep the original footprints if this junction
+                // cannot be resolved safely.
+                return [];
+            }
+
+            const limit = Math.max(
+                host.thickness,
+                branch.wall.thickness
+            ) * 4;
+
+            if (
+                [referenceHit, offsetHit].some(point =>
+                    Math.hypot(
+                        point.x - branch.point.x,
+                        point.y - branch.point.y
+                    ) > limit
+                )
+            ) {
+                return [];
+            }
+
+            const atStart =
+                branch.point.x === branch.wall.start.x &&
+                branch.point.y === branch.wall.start.y;
+
+            changes.push(
+                {
+                    id: branch.wall.id,
+                    index: atStart ? 0 : 1,
+                    point: referenceHit
+                },
+                {
+                    id: branch.wall.id,
+                    index: atStart ? 3 : 2,
+                    point: offsetHit
+                }
+            );
+        }
+
+        return changes;
     }
 
     invalidateWallGeometry() {
