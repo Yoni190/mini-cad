@@ -746,7 +746,18 @@ export default class EditorController {
         const thickness = Number(thicknessInput.value);
         if (!Number.isFinite(thickness) || thickness <= 0 || !thicknessInput.checkValidity()) return;
 
-        const preview = new Wall({ start, end, thickness });
+        const thicknessSide = GeometryService.resolveWallThicknessSide(
+            start,
+            end,
+            this.engine.elements
+        );
+
+        const preview = new Wall({
+            start,
+            end,
+            thickness,
+            thicknessSide
+        });
 
         previewRenderer.drawElement(preview, true);
         previewRenderer.drawWallLength(preview);

@@ -17,9 +17,11 @@ export default class GeometryService {
         const nx = -dy / length;
         const ny = dx / length;
 
+        const side = wall.thicknessSide ?? 1;
+
         // Scale the perpendicular vector by the wall thickness
-        const ox = nx * thickness;
-        const oy = ny * thickness;
+        const ox = nx * thickness * side;
+        const oy = ny * thickness * side;
 
         // Return the four corners of the wall polygon
         return [
@@ -314,5 +316,78 @@ export default class GeometryService {
         }
 
         return Number.isFinite(twiceArea) && twiceArea !== 0;
+    }
+
+    static resolveWallThicknessSide(start, end, walls, fallback = 1) {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const length = Math.hypot(dx, dy);
+
+        if (length === 0) return fallback;
+
+        const ux = dx / length;
+        const uy = dy / length;
+
+        const samePoint = (a, b) =>
+            Math.hypot(a.x - b.x, a.y - b.y) < 1e-6;
+
+        const alignedSides = new Set();
+        const continuations = [];
+
+        for (const wall of walls) {
+            if (wall.type !== 'wall') continue;
+
+            const startStart = samePoint(start, wall.start);
+            const startEnd = samePoint(start, wall.end);
+            const endStart = samePoint(end, wall.start);
+            const endEnd = samePoint(end, wall.end);
+
+            if (!startStart && !startEnd && !endStart && !endEnd) {
+                continue;
+            }
+
+            const wx = wall.end.x - wall.start.x;
+            const wy = wall.end.y - wall.start.y;
+            const wallLength = Math.hypot(wx, wy);
+
+            if (wallLength === 0) continue;
+
+            const vx = wx / wallLength;
+            const vy = wy / wallLength;
+            const existingSide = wall.thicknessSide ?? 1;
+
+            // Parallel walls sharing an endpoint:
+            // preserve the same physical side, even if drawn in reverse.
+            if (Math.abs(ux * vy - uy * vx) < 1e-8) {
+                const sameDirection = ux * vx + uy * vy > 0;
+
+                alignedSides.add(
+                    existingSide * (sameDirection ? 1 : -1)
+                );
+                continue;
+            }
+
+            // At a simple corner, preserve the boundary's orientation.
+            const continuesDirection = startEnd || endStart;
+
+            continuations.push(
+                existingSide * (continuesDirection ? 1 : -1)
+            );
+        }
+
+        // Aligned existing walls take priority over corner neighbors.
+        if (alignedSides.size === 1) {
+            return [...alignedSides][0];
+        }
+
+        // Conflicting aligned walls need an explicit user choice.
+        if (alignedSides.size > 1) return fallback;
+
+        // A single neighbor provides an unambiguous continuation.
+        if (continuations.length === 1) {
+            return continuations[0];
+        }
+
+        return fallback;
     }
 }

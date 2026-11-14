@@ -13,12 +13,20 @@ export default class DrawingEngine {
         this.wallGeometryElements = null;
     }
 
-    addWall(start, end, thickness = 200) {
+    addWall(start, end, thickness = 200, thicknessSide = null) {
+        const side = thicknessSide
+        ?? GeometryService.resolveWallThicknessSide(
+            start,
+            end,
+            this.elements
+        );
+
         //Create a wall instance
         const wall = new Wall({
             start,
             end,
-            thickness
+            thickness,
+            thicknessSide: side
         });
 
         //Add the wall to this.elements

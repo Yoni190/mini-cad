@@ -42,6 +42,7 @@ class SaveProjectRequest extends FormRequest
             'elements.*.end.y' => ['sometimes', 'numeric'],
 
             'elements.*.thickness' => ['sometimes', 'numeric'],
+            'elements.*.thicknessSide' => ['sometimes', 'integer', 'in:-1,1'],
             'elements.*.height' => ['sometimes', 'numeric'],
 
             // Column geometry.
@@ -104,7 +105,7 @@ class SaveProjectRequest extends FormRequest
     ): void {
         $this->checkAllowedKeys(
             $wall,
-            ['id', 'type', 'start', 'end', 'thickness', 'height'],
+            ['id', 'type', 'start', 'end', 'thickness', 'height', 'thicknessSide'],
             $path,
             $validator
         );

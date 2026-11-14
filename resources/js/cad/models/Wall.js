@@ -3,7 +3,7 @@ import DrawingElement from "./DrawingElement";
 
 export default class Wall extends DrawingElement {
     
-    constructor ({ start, end, thickness = 200, height = 3000, id }) {
+    constructor ({ start, end, thickness = 200, height = 3000, thicknessSide = 1, id }) {
         super('wall', id);
 
         const validPoint = (point) =>
@@ -26,10 +26,15 @@ export default class Wall extends DrawingElement {
         if(start.x === end.x && start.y === end.y) {
             throw new Error('Start and end points must not be identical.')
         }
+        if (![1, -1].includes(thicknessSide)) {
+            throw new Error('Wall thickness side must be 1 or -1');
+        }
+
         this.start = { ...start };
         this.end = { ...end };
         this.thickness = thickness;
         this.height = height;
+        this.thicknessSide = thicknessSide;
     }
 
     /**
