@@ -17,6 +17,39 @@ export default function initEditorUI() {
         syncUI();
     });
 
+    // Shortcuts for selecting a tool
+    document.addEventListener('keydown', (event) => {
+        // Leave typing and browser shortcuts alone.
+        if (
+            event.target instanceof HTMLElement &&
+            (
+                event.target.matches('input, textarea, select') ||
+                event.target.isContentEditable
+            )
+        ) {
+            return;
+        }
+
+        if (event.ctrlKey || event.metaKey || event.altKey) {
+            return;
+        }
+
+        const shortcuts = {
+            w: 'wall',
+            c: 'column',
+            s: 'select',
+        };
+
+        const tool = shortcuts[event.key.toLowerCase()];
+
+        if (!tool || toolSelect.disabled || toolSelect.value === tool) {
+            return;
+        }
+
+        toolSelect.value = tool;
+        toolSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
     function syncUI() {
         const tool = toolSelect.value;
         const is3D = threeContainer.style.display !== 'none';
