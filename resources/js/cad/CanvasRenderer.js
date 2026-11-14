@@ -188,7 +188,9 @@ export default class CanvasRenderer {
         const ctx = this.ctx;
         const threshold = 8; // Screen pixels
         const end = this.worldToScreen(preview.end.x, preview.end.y);
-        const start = this.worldToScreen(preview.start.x, preview.start.y);
+        const start = preview.start
+            ? this.worldToScreen(preview.start.x, preview.start.y)
+            : null;
 
         let closestX = null;
         let closestY = null;
@@ -250,14 +252,14 @@ export default class CanvasRenderer {
         }
 
         // Indicate when the preview itself is nearly horizontal or vertical.
-        if (Math.abs(end.y - start.y) <= threshold) {
+        if (start && Math.abs(end.y - start.y) <= threshold) {
             ctx.beginPath();
             ctx.moveTo(0, start.y);
             ctx.lineTo(this.canvas.width, start.y);
             ctx.stroke();
         }
 
-        if (Math.abs(end.x - start.x) <= threshold) {
+        if (start && Math.abs(end.x - start.x) <= threshold) {
             ctx.beginPath();
             ctx.moveTo(start.x, 0);
             ctx.lineTo(start.x, this.canvas.height);

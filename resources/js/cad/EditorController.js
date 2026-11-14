@@ -38,6 +38,12 @@ export default class EditorController {
             this.handleMouseDown(event);
         });
 
+        this.canvas.addEventListener('mouseleave', () => {
+            if (this.activeTool === 'wall' && !this.engine.startPoint) {
+                this.previewRenderer.clear();
+            }
+        });
+
         this.canvas.addEventListener(
             'wheel',
             (event) => this.handleWheel(event),
@@ -197,6 +203,7 @@ export default class EditorController {
 
         if (this.engine.startPoint === null) {
             this.alignmentHold = { x: null, y: null };
+            this.previewRenderer.clear();
             this.engine.startPoint = point;
             this.wallChainStart = { ...point };
             this.wallChainCount = 0;
@@ -328,13 +335,17 @@ export default class EditorController {
             return;
         }
 
-        // Wall Preview
-        if (this.activeTool === 'wall' && this.engine.startPoint) {
-            this.directionPoint = this.alignWallPoint(this.getMousePoint(event));
-            
-            // Mouse movement takes control of the wall length again.
-            document.getElementById('wallLength').value = '';
-            this.scheduleWallPreview();
+        // Wall preview and hints before the first click.
+        if (this.activeTool === 'wall') {
+            if (this.engine.startPoint) {
+                this.directionPoint = this.alignWallPoint(this.getMousePoint(event));
+
+                // Mouse movement takes control of the wall length again.
+                document.getElementById('wallLength').value = '';
+                this.scheduleWallPreview();
+            } else {
+                this.renderWallStartHints(this.getMousePoint(event));
+            }
         }
     }
 
@@ -670,6 +681,34 @@ export default class EditorController {
 
             // Clear any drawing preview
             this.engine.render();
+        }
+    }
+
+    renderWallStartHints(point) {
+        const previewRenderer = this.previewRenderer;
+
+        // Use the same view as the main canvas.
+        previewRenderer.scale = this.renderer.scale;
+        previewRenderer.offsetX = this.renderer.offsetX;
+        previewRenderer.offsetY = this.renderer.offsetY;
+        previewRenderer.clear();
+
+        // Show alignment hints for existing endpoints and midpoints.
+        previewRenderer.drawWallGuides(
+            { start: null, end: point },
+            this.engine.elements
+        );
+
+        // getMousePoint already snaps to nearby wall endpoints.
+        const isAtEndpoint = this.engine.elements.some(element =>
+            element.type === 'wall' &&
+            [element.start, element.end].some(endpoint =>
+                endpoint.x === point.x && endpoint.y === point.y
+            )
+        );
+
+        if (isAtEndpoint) {
+            previewRenderer.drawSnapMarker(point);
         }
     }
 
