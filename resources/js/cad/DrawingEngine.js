@@ -109,6 +109,11 @@ export default class DrawingEngine {
             throw new Error('Column depth must be a positive number');
         }
 
+        // Skip redraws if dimensions didn't change
+        if (column.width === width && column.depth === depth) {
+            return;
+        }
+
         //Update dimensions
         column.width = width;
         column.depth = depth;
@@ -131,6 +136,11 @@ export default class DrawingEngine {
 
         if (!Number.isFinite(thickness) || thickness <= 0) {
             throw new Error('Wall thickness must be a positive number.');
+        }
+
+        // Skip redrawing if thickness didn't change
+        if (wall.thickness === thickness) {
+            return;
         }
 
         wall.thickness = thickness;

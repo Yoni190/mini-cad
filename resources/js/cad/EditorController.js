@@ -558,6 +558,11 @@ export default class EditorController {
             Math.max(0.01, this.renderer.scale * zoomFactor)
         );
 
+        // Skip redraws when zoom is at limit
+        if (newScale === this.renderer.scale) {
+            return;
+        }
+
         this.renderer.scale = newScale;
 
         // Recalculate offsets so the world point
