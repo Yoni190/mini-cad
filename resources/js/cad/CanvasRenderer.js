@@ -158,6 +158,104 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
+    drawWallGuides(preview, elements) {
+        const ctx = this.ctx;
+        const threshold = 8; // Screen pixels
+        const end = this.worldToScreen(preview.end.x, preview.end.y);
+        const start = this.worldToScreen(preview.start.x, preview.start.y);
+
+        let closestX = null;
+        let closestY = null;
+        let closestMidpoint = null;
+
+        const considerPoint = (point, isMidpoint = false) => {
+            const screen = this.worldToScreen(point.x, point.y);
+            const dx = Math.abs(screen.x - end.x);
+            const dy = Math.abs(screen.y - end.y);
+            const distance = Math.hypot(dx, dy);
+
+            if (dx <= threshold && (!closestX || dx < closestX.distance)) {
+                closestX = { point: screen, distance: dx };
+            }
+
+            if (dy <= threshold && (!closestY || dy < closestY.distance)) {
+                closestY = { point: screen, distance: dy };
+            }
+
+            if (
+                isMidpoint &&
+                distance <= threshold &&
+                (!closestMidpoint || distance < closestMidpoint.distance)
+            ) {
+                closestMidpoint = { point: screen, distance };
+            }
+        };
+
+        for (const element of elements) {
+            if (element.type !== 'wall') continue;
+
+            considerPoint(element.start);
+            considerPoint(element.end);
+            considerPoint({
+                x: (element.start.x + element.end.x) / 2,
+                y: (element.start.y + element.end.y) / 2,
+            }, true);
+        }
+
+        ctx.save();
+        ctx.strokeStyle = '#d97706';
+        ctx.fillStyle = '#92400e';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+
+        // Draw a guide through the nearby reference point.
+        if (closestX) {
+            ctx.beginPath();
+            ctx.moveTo(closestX.point.x, 0);
+            ctx.lineTo(closestX.point.x, this.canvas.height);
+            ctx.stroke();
+        }
+
+        if (closestY) {
+            ctx.beginPath();
+            ctx.moveTo(0, closestY.point.y);
+            ctx.lineTo(this.canvas.width, closestY.point.y);
+            ctx.stroke();
+        }
+
+        // Indicate when the preview itself is nearly horizontal or vertical.
+        if (Math.abs(end.y - start.y) <= threshold) {
+            ctx.beginPath();
+            ctx.moveTo(0, start.y);
+            ctx.lineTo(this.canvas.width, start.y);
+            ctx.stroke();
+        }
+
+        if (Math.abs(end.x - start.x) <= threshold) {
+            ctx.beginPath();
+            ctx.moveTo(start.x, 0);
+            ctx.lineTo(start.x, this.canvas.height);
+            ctx.stroke();
+        }
+
+        // Mark a nearby wall midpoint with a small diamond.
+        if (closestMidpoint) {
+            const { x, y } = closestMidpoint.point;
+            const size = 6;
+
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x + size, y);
+            ctx.lineTo(x, y + size);
+            ctx.lineTo(x - size, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+
     clear() {
         const ctx = this.ctx;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

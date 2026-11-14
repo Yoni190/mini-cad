@@ -549,7 +549,10 @@ export default class EditorController {
             ? GeometryService.getEndPoint(start, direction, length)
             : direction;
 
-        this.engine.render(new Wall({ start, end }));
+        const preview = new Wall({ start, end });
+
+        this.engine.render(preview);
+        this.renderer.drawWallGuides(preview, this.engine.elements);
     }
 
     constrainWallPoint(point) {
