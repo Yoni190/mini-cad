@@ -288,6 +288,8 @@ export default class EditorController {
                 };
             }
 
+            this.engine.invalidateWallGeometry();
+
             if (Math.hypot(mouseDx, mouseDy) * this.renderer.scale > 2) {
                 drag.moved = true;
             }

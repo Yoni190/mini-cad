@@ -8,6 +8,8 @@ export default class DrawingEngine {
         this.elements = [];
         this.startPoint = null;
         this.onRender = null;
+        this.wallGeometryCache = null;
+        this.wallGeometryElements = null;
     }
 
     addWall(start, end) {
@@ -19,6 +21,8 @@ export default class DrawingEngine {
 
         //Add the wall to this.elements
         this.elements.push(wall);
+        this.invalidateWallGeometry();
+        this.render();
 
         //Render all elements
         this.render();
@@ -123,6 +127,7 @@ export default class DrawingEngine {
         }
 
         wall.thickness = thickness;
+        this.invalidateWallGeometry();
 
         // Recalculate footprints and joins, preserving the selection.
         this.render(null, wall.id);
@@ -136,7 +141,7 @@ export default class DrawingEngine {
      * and unsupported endpoint directions keep their original footprints.
      * The returned map changes display geometry, not stored wall data.
      */
-    getWallDisplayGeometry() {
+    calculateWallDisplayGeometry() {
         const walls = this.elements.filter(
             element => element.type === 'wall'
         );
@@ -286,12 +291,30 @@ export default class DrawingEngine {
         }
     }
 
+    invalidateWallGeometry() {
+        this.wallGeometryCache = null;
+        this.wallGeometryElements = null;
+    }
+
+    getWallDisplayGeometry() {
+        if (
+            this.wallGeometryCache === null ||
+            this.wallGeometryElements !== this.elements
+        ) {
+            this.wallGeometryCache = this.calculateWallDisplayGeometry();
+            this.wallGeometryElements = this.elements;
+        }
+
+        return this.wallGeometryCache;
+    }
+
 
     removeElement(id) {
         this.elements = this.elements.filter(
             element => element.id !== id
         );
 
+        this.invalidateWallGeometry();
         this.render();
     }
 }
