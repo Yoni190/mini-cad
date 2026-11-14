@@ -20,6 +20,7 @@ export default function initEditorUI() {
             button.disabled = toolSelect.disabled;
         });
         document.getElementById('wallProperties').hidden = tool !== 'wall';
+        document.getElementById('wallThicknessProperties').hidden = tool !== 'select';
         document.getElementById('columnProperties').hidden = tool !== 'select';
         document.getElementById('columnPlacementHelp').hidden = tool !== 'column';
         document.getElementById('show2D').setAttribute('aria-pressed', String(!is3D));

@@ -106,6 +106,28 @@ export default class EditorController {
                     this.engine.render(null, selected.id);
                 }
             });
+
+        document.getElementById('updateWallThickness')
+            .addEventListener('click', () => {
+                if (this.isEditingLocked || this.activeTool !== 'select') {
+                    return;
+                }
+
+                const selected = this.selectionManager.selectedElement;
+
+                if (selected?.type !== 'wall') {
+                    alert('Please select a wall first.');
+                    return;
+                }
+
+                const thickness = document.getElementById('wallThickness').value;
+
+                try {
+                    this.engine.updateWallThickness(selected.id, thickness);
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
     }
 
     /**
@@ -137,6 +159,9 @@ export default class EditorController {
                 document.getElementById('columnWidth').value = selected.width;
                 document.getElementById('columnDepth').value = selected.depth;
             }
+
+            document.getElementById('wallThickness').value =
+                selected?.type === 'wall' ? selected.thickness : '';
             return;
         }
 
