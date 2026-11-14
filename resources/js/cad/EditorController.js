@@ -1,5 +1,6 @@
 import GeometryService from "./GeometryService";
 import Wall from "./models/Wall";
+import WallTopology from './WallTopology';
 
 export default class EditorController {
     constructor(canvas, engine, renderer, snapManager, selectionManager) {
@@ -174,10 +175,6 @@ export default class EditorController {
             this.activeTool !== 'select'
         );
 
-        if (this.activeTool === 'wall' && this.engine.startPoint) {
-            point = this.alignWallPoint(point);
-        }
-
         if(this.activeTool === 'select') {
             const selected = this.selectionManager.select(
                 point,
@@ -338,7 +335,7 @@ export default class EditorController {
         // Wall preview and hints before the first click.
         if (this.activeTool === 'wall') {
             if (this.engine.startPoint) {
-                this.directionPoint = this.alignWallPoint(this.getMousePoint(event));
+                this.directionPoint = this.getMousePoint(event);
 
                 // Mouse movement takes control of the wall length again.
                 document.getElementById('wallLength').value = '';
@@ -607,26 +604,40 @@ export default class EditorController {
      * then to millimeters, optionally snapping to a wall endpoint.
      */
     getMousePoint(event, applySnap = true) {
-        //Read mouse coordinatess
         const rect = this.canvas.getBoundingClientRect();
 
-        const screenX = event.clientX - rect.left;
-        const screenY = event.clientY - rect.top;
+        const rawPoint = this.renderer.screenToWorld(
+            event.clientX - rect.left,
+            event.clientY - rect.top
+        );
 
-        //Convert pixels to millimeters
-        const rawPoint = this.renderer.screenToWorld(screenX, screenY);
+        if (!applySnap) return rawPoint;
 
-        //Apply snapping (for walls)
-        const snapRadiusPixels = 20;
-        const snapRadiusWorld = snapRadiusPixels / this.renderer.scale;
+        const start = this.engine.startPoint;
+        const drawingWall = this.activeTool === 'wall' && start;
 
-        return applySnap
-            ? this.snapManager.snap(
-                rawPoint,
-                this.engine.elements,
-                snapRadiusWorld
-            )
+        // Apply guides and Ortho before choosing a wall connection.
+        const point = drawingWall
+            ? this.constrainWallPoint(this.alignWallPoint(rawPoint))
             : rawPoint;
+
+        let constraint = null;
+
+        if (drawingWall && this.orthoEnabled) {
+            const axis = point.x === start.x ? 'x' : 'y';
+
+            constraint = {
+                axis,
+                value: start[axis]
+            };
+        }
+
+        return this.snapManager.snap(
+            point,
+            this.engine.elements,
+            20 / this.renderer.scale,
+            constraint
+        );
     }
 
     /**
@@ -700,11 +711,9 @@ export default class EditorController {
         );
 
         // getMousePoint already snaps to nearby wall endpoints.
-        const isAtEndpoint = this.engine.elements.some(element =>
-            element.type === 'wall' &&
-            [element.start, element.end].some(endpoint =>
-                endpoint.x === point.x && endpoint.y === point.y
-            )
+        const isAtEndpoint = this.snapManager.isOnWall(
+            point,
+            this.engine.elements
         );
 
         if (isAtEndpoint) {
@@ -763,11 +772,9 @@ export default class EditorController {
         previewRenderer.drawWallLength(preview);
         previewRenderer.drawWallGuides(preview, this.engine.elements);
 
-        const isAtEndpoint = this.engine.elements.some(element =>
-            element.type === 'wall' &&
-            [element.start, element.end].some(point =>
-                point.x === end.x && point.y === end.y
-            )
+        const isAtEndpoint = this.snapManager.isOnWall(
+            end,
+            this.engine.elements
         );
 
         if (isAtEndpoint) {
@@ -912,9 +919,20 @@ export default class EditorController {
 
         // An existing path between the endpoints also completes a room,
         // even when the chain began on an existing wall.
-        const closesExistingPath = this.hasWallPath(start, finalEnd, samePoint);
+        let closesExistingPath;
 
-        this.engine.addWall(start, finalEnd, thickness);
+        try {
+            closesExistingPath = this.hasWallPath(
+                start,
+                finalEnd,
+                samePoint
+            );
+
+            this.engine.addWall(start, finalEnd, thickness);
+        } catch (error) {
+            alert(error.message);
+            return;
+        }
         this.wallChainCount++;
 
         document.getElementById('wallLength').value = '';
@@ -933,7 +951,13 @@ export default class EditorController {
     }
 
     hasWallPath(start, end, samePoint) {
-        const walls = this.engine.elements.filter(element => element.type === 'wall');
+        // Temporarily split at the proposed connection points so the
+        // path search recognizes points inside existing walls.
+        const walls = WallTopology.split(
+            this.engine.elements,
+            [start, end]
+        ).filter(element => element.type === 'wall');
+
         const queue = [{ point: start, depth: 0 }];
         const visited = [start];
 

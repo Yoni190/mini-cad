@@ -1,40 +1,95 @@
+import WallTopology from './WallTopology';
+
 export default class SnapManager {
     constructor(tolerance = 150) {
         this.tolerance = tolerance;
     }
 
-    /**
-     * Returns the nearest wall endpoint strictly within the tolerance,
-     * or the original point when no endpoint qualifies.
-     *
-     * The tolerance is measured in world millimeters, so its apparent
-     * screen distance changes with zoom. Stored endpoints are not moved.
-     */
-    snap (point, elements, tolerance = this.tolerance) {
-        let closestPoint = point;
-        let closestDistance = tolerance;
+    snap(
+        point,
+        elements,
+        tolerance = this.tolerance,
+        constraint = null
+    ) {
+        const walls = elements.filter(e => e.type === 'wall');
 
-        for (const element of elements) {
-            if(element.type !== 'wall') {
+        const allowed = p =>
+            !constraint ||
+            Math.abs(
+                p[constraint.axis] - constraint.value
+            ) <= 1e-6;
+
+        const nearest = points => {
+            let best = null;
+            let bestDistance = tolerance;
+
+            for (const p of points) {
+                if (!allowed(p)) continue;
+
+                const distance = Math.hypot(
+                    p.x - point.x,
+                    p.y - point.y
+                );
+
+                if (distance < bestDistance) {
+                    best = p;
+                    bestDistance = distance;
+                }
+            }
+
+            return best;
+        };
+
+        const endpoint = nearest(
+            walls.flatMap(w => [w.start, w.end])
+        );
+
+        if (endpoint) return { ...endpoint };
+
+        const candidates = [];
+
+        for (const wall of walls) {
+            if (!constraint) {
+                candidates.push(
+                    WallTopology.project(point, wall).point
+                );
                 continue;
             }
 
-            const endpoints = [element.start, element.end];
+            const { axis, value } = constraint;
+            const delta = wall.end[axis] - wall.start[axis];
 
-            for (const endpoint of endpoints) {
-                //Calculate distance from point to endpoint
-                const distance = Math.hypot(
-                    point.x - endpoint.x,
-                    point.y - endpoint.y
-                );
-
-                if (distance < closestDistance) {
-                    closestDistance = distance;
-                    closestPoint = endpoint;
+            if (Math.abs(delta) < 1e-9) {
+                if (
+                    Math.abs(wall.start[axis] - value) <= 1e-6
+                ) {
+                    candidates.push(
+                        WallTopology.project(point, wall).point
+                    );
                 }
+
+                continue;
+            }
+
+            const t = (value - wall.start[axis]) / delta;
+
+            if (t >= 0 && t <= 1) {
+                candidates.push({
+                    x: wall.start.x +
+                        t * (wall.end.x - wall.start.x),
+                    y: wall.start.y +
+                        t * (wall.end.y - wall.start.y)
+                });
             }
         }
 
-        return closestPoint;
+        return nearest(candidates) ?? point;
+    }
+
+    isOnWall(point, elements) {
+        return elements.some(element =>
+            element.type === 'wall' &&
+            WallTopology.project(point, element).distance <= 1e-6
+        );
     }
 }
