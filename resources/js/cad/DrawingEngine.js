@@ -233,7 +233,9 @@ export default class DrawingEngine {
             candidates.push({
                 firstWall,
                 secondWall,
+                firstReferenceCorner: { ...result.wallACorners[1] },
                 firstCorner: { ...result.wallACorners[2] },
+                secondReferenceCorner: { ...result.wallBCorners[0] },
                 secondCorner: { ...result.wallBCorners[3] }
             });
         }
@@ -255,13 +257,14 @@ export default class DrawingEngine {
             for (const index of activeJoins) {
                 const join = candidates[index];
 
-                geometryMap.get(join.firstWall.id)[2] = {
-                    ...join.firstCorner
-                };
+                const first = geometryMap.get(join.firstWall.id);
+                const second = geometryMap.get(join.secondWall.id);
 
-                geometryMap.get(join.secondWall.id)[3] = {
-                    ...join.secondCorner
-                };
+                first[1] = { ...join.firstReferenceCorner };
+                first[2] = { ...join.firstCorner };
+
+                second[0] = { ...join.secondReferenceCorner };
+                second[3] = { ...join.secondCorner };
             }
 
             return geometryMap;

@@ -165,14 +165,6 @@ export default class GeometryService {
      * Returns null for unsupported or invalid joins.
      */
     static getJoinedWallCorners(wallA, wallB) {
-        // Get independent wall footprints.
-        // These are new arrays, so we can modify
-        // the returned corners without altering the walls.
-        const cornersA = wallA.getGeometry().map(p => ({ ...p }));
-        const cornersB = wallB.getGeometry().map(p => ({ ...p }));
-
-        // This first implementation only supports
-        // A.end joining B.start.
         if (
             wallA.end.x !== wallB.start.x ||
             wallA.end.y !== wallB.start.y
@@ -180,52 +172,59 @@ export default class GeometryService {
             return null;
         }
 
-        // Find the intersection of the OUTER edges.
-        // For A: outerStart -> outerEnd
-        // For B: outerStart -> outerEnd
-        const intersection = this.lineIntersection(
-            cornersA[3],
-            cornersA[2],
-            cornersB[3],
-            cornersB[2]
+        const a = wallA.getGeometry().map(p => ({ ...p }));
+        const b = wallB.getGeometry().map(p => ({ ...p }));
+
+        const sameSide =
+            (wallA.thicknessSide ?? 1) ===
+            (wallB.thicknessSide ?? 1);
+
+        // Match the physical faces, accounting for thickness direction.
+        const referenceJoin = this.lineIntersection(
+            a[0], a[1],
+            ...(sameSide ? [b[0], b[1]] : [b[3], b[2]])
         );
 
-        if (!intersection) {
+        const offsetJoin = this.lineIntersection(
+            a[3], a[2],
+            ...(sameSide ? [b[3], b[2]] : [b[0], b[1]])
+        );
+
+        if (!referenceJoin || !offsetJoin) {
             return null;
         }
 
-        // Avoid excessively long corners at sharp angles.
-        // A production implementation would handle
-        // such cases with a bevel or another join style.
-        const maxMiter = Math.max(
-            wallA.thickness,
-            wallB.thickness
-        ) * 4;
+        const maxMiter =
+            Math.max(wallA.thickness, wallB.thickness) * 4;
 
         if (
-            Math.hypot(
-                intersection.x - wallA.end.x,
-                intersection.y - wallA.end.y
-            ) > maxMiter
+            [referenceJoin, offsetJoin].some(point =>
+                Math.hypot(
+                    point.x - wallA.end.x,
+                    point.y - wallA.end.y
+                ) > maxMiter
+            )
         ) {
             return null;
         }
 
-        // Replace only the outer endpoint corners.
-        cornersA[2] = { ...intersection };
-        cornersB[3] = { ...intersection };
+        // Adjust display corners only; stored endpoints stay unchanged.
+        a[1] = { ...referenceJoin };
+        a[2] = { ...offsetJoin };
 
+        b[0] = { ...(sameSide ? referenceJoin : offsetJoin) };
+        b[3] = { ...(sameSide ? offsetJoin : referenceJoin) };
 
         if (
-            !this.isSimplePolygon(cornersA) ||
-            !this.isSimplePolygon(cornersB)
+            !this.isSimplePolygon(a) ||
+            !this.isSimplePolygon(b)
         ) {
             return null;
         }
 
         return {
-            wallACorners: cornersA,
-            wallBCorners: cornersB
+            wallACorners: a,
+            wallBCorners: b
         };
     }
 
