@@ -16,6 +16,8 @@ export default class EditorController {
         this.lastPanPoint = null;
         this.isEditingLocked = false;
         this.orthoEnabled = false;
+        this.wallChainStart = null;
+        this.wallChainCount = 0;
     }
 
     init() {
@@ -176,18 +178,13 @@ export default class EditorController {
 
         if (this.engine.startPoint === null) {
             this.engine.startPoint = point;
+            this.wallChainStart = { ...point };
+            this.wallChainCount = 0;
             this.directionPoint = null;
 
             // Start each wall without a leftover length from the previous one.
             document.getElementById('wallLength').value = '';
         } else {
-            if (
-                this.engine.startPoint.x === point.x &&
-                this.engine.startPoint.y === point.y
-            ) {
-                return;
-            }
-
             // The second click determines the direction.
             this.directionPoint = point;
 
@@ -196,12 +193,7 @@ export default class EditorController {
             if (Number.isFinite(length) && length > 0) {
                 this.createWallWithLength(length);
             } else {
-                this.engine.addWall(
-                    this.engine.startPoint,
-                    this.constrainWallPoint(point)
-                );
-                this.engine.startPoint = null;
-                this.directionPoint = null;
+                this.commitWall(this.constrainWallPoint(point));
             }
         }
     }
@@ -507,10 +499,7 @@ export default class EditorController {
             length
         );
 
-        this.engine.addWall(this.engine.startPoint, newEndpoint);
-
-        this.engine.startPoint = null;
-        this.directionPoint = null;
+        this.commitWall(newEndpoint);
     }
 
     /**
@@ -588,6 +577,48 @@ export default class EditorController {
 
         if (this.activeTool === 'wall' && this.engine.startPoint) {
             this.renderWallPreview();
+        }
+    }
+
+    commitWall(end) {
+        const start = this.engine.startPoint;
+
+        if (!start || !end) return;
+
+        // Treat tiny floating-point differences as the same point.
+        const samePoint = (a, b) =>
+            Math.hypot(a.x - b.x, a.y - b.y) < 0.000001;
+
+        if (samePoint(start, end)) return;
+
+        const closesChain =
+            this.wallChainStart && samePoint(end, this.wallChainStart);
+
+        // A closed chain needs at least three walls.
+        if (closesChain && this.wallChainCount < 2) {
+            alert('A room needs at least three walls.');
+            return;
+        }
+
+        // Use the exact original coordinates when closing the chain.
+        const finalEnd = closesChain
+            ? { ...this.wallChainStart }
+            : { ...end };
+
+        this.engine.addWall(start, finalEnd);
+        this.wallChainCount++;
+
+        document.getElementById('wallLength').value = '';
+        this.directionPoint = null;
+
+        if (closesChain) {
+            // The last wall reached the first point: finish the chain.
+            this.engine.startPoint = null;
+            this.wallChainStart = null;
+            this.wallChainCount = 0;
+        } else {
+            // Start the next wall at the endpoint just created.
+            this.engine.startPoint = finalEnd;
         }
     }
 
