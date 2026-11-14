@@ -10,9 +10,9 @@ export default class SnapManager {
      * The tolerance is measured in world millimeters, so its apparent
      * screen distance changes with zoom. Stored endpoints are not moved.
      */
-    snap (point, elements) {
+    snap (point, elements, tolerance = this.tolerance) {
         let closestPoint = point;
-        let closestDistance = this.tolerance;
+        let closestDistance = tolerance;
 
         for (const element of elements) {
             if(element.type !== 'wall') {

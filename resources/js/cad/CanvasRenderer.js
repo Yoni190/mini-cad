@@ -256,6 +256,22 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
+    drawSnapMarker(point) {
+        const screen = this.worldToScreen(point.x, point.y);
+        const ctx = this.ctx;
+
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fill();
+        ctx.strokeStyle = '#16a34a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+    }
+
     clear() {
         const ctx = this.ctx;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

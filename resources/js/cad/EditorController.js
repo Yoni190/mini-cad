@@ -590,8 +590,15 @@ export default class EditorController {
         const rawPoint = this.renderer.screenToWorld(screenX, screenY);
 
         //Apply snapping (for walls)
+        const snapRadiusPixels = 20;
+        const snapRadiusWorld = snapRadiusPixels / this.renderer.scale;
+
         return applySnap
-            ? this.snapManager.snap(rawPoint, this.engine.elements)
+            ? this.snapManager.snap(
+                rawPoint,
+                this.engine.elements,
+                snapRadiusWorld
+            )
             : rawPoint;
     }
 
@@ -675,6 +682,17 @@ export default class EditorController {
 
         this.engine.render(preview);
         this.renderer.drawWallGuides(preview, this.engine.elements);
+
+        const isAtEndpoint = this.engine.elements.some(element =>
+            element.type === 'wall' &&
+            [element.start, element.end].some(point =>
+                point.x === end.x && point.y === end.y
+            )
+        );
+
+        if (isAtEndpoint) {
+            this.renderer.drawSnapMarker(end);
+        }
     }
 
     constrainWallPoint(point) {
