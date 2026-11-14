@@ -9,6 +9,7 @@ export default class EditorController {
         this.snapManager = snapManager;
         this.activeTool = 'wall';
         this.directionPoint = null;
+        this.alignmentHold = { x: null, y: null };
         this.selectionManager = selectionManager;
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
@@ -162,10 +163,14 @@ export default class EditorController {
             return;
         }
         
-        const point = this.getMousePoint(
+        let point = this.getMousePoint(
             event,
             this.activeTool !== 'select'
         );
+
+        if (this.activeTool === 'wall' && this.engine.startPoint) {
+            point = this.alignWallPoint(point);
+        }
 
         if(this.activeTool === 'select') {
             const selected = this.selectionManager.select(
@@ -191,6 +196,7 @@ export default class EditorController {
         }
 
         if (this.engine.startPoint === null) {
+            this.alignmentHold = { x: null, y: null };
             this.engine.startPoint = point;
             this.wallChainStart = { ...point };
             this.wallChainCount = 0;
@@ -324,7 +330,7 @@ export default class EditorController {
 
         // Wall Preview
         if (this.activeTool === 'wall' && this.engine.startPoint) {
-            this.directionPoint = this.getMousePoint(event);
+            this.directionPoint = this.alignWallPoint(this.getMousePoint(event));
             
             // Mouse movement takes control of the wall length again.
             document.getElementById('wallLength').value = '';
@@ -719,6 +725,77 @@ export default class EditorController {
         }
     }
 
+    alignWallPoint(point) {
+        const start = this.engine.startPoint;
+
+        if (!start) return point;
+
+        const threshold = 8 / this.renderer.scale;
+        const holdDuration = 250; // milliseconds
+        const now = performance.now();
+
+        // The guides use wall endpoints and midpoints as references.
+        const references = [start];
+
+        for (const element of this.engine.elements) {
+            if (element.type !== 'wall') continue;
+
+            references.push(
+                element.start,
+                element.end,
+                {
+                    x: (element.start.x + element.end.x) / 2,
+                    y: (element.start.y + element.end.y) / 2,
+                }
+            );
+        }
+
+        const aligned = { ...point };
+
+        for (const axis of ['x', 'y']) {
+            const hold = this.alignmentHold[axis];
+
+            if (hold && now < hold.until) {
+                aligned[axis] = hold.value;
+                continue;
+            }
+
+            // After the pause, release the coordinate once the pointer
+            // moves outside the guide's threshold.
+            if (hold) {
+                if (Math.abs(point[axis] - hold.value) <= threshold) {
+                    aligned[axis] = hold.value;
+                    continue;
+                }
+
+                this.alignmentHold[axis] = null;
+            }
+
+            let nearest = null;
+
+            for (const reference of references) {
+                const distance = Math.abs(point[axis] - reference[axis]);
+
+                if (
+                    distance <= threshold &&
+                    (!nearest || distance < nearest.distance)
+                ) {
+                    nearest = { value: reference[axis], distance };
+                }
+            }
+
+            if (nearest) {
+                aligned[axis] = nearest.value;
+                this.alignmentHold[axis] = {
+                    value: nearest.value,
+                    until: now + holdDuration,
+                };
+            }
+        }
+
+        return aligned;
+    }
+
     constrainWallPoint(point) {
         const start = this.engine.startPoint;
 
@@ -787,6 +864,7 @@ export default class EditorController {
         this.wallChainCount++;
 
         document.getElementById('wallLength').value = '';
+        this.alignmentHold = { x: null, y: null };
         this.directionPoint = null;
 
         if (closesChain) {
