@@ -123,12 +123,27 @@ describe('DrawingEngine wall junctions', () => {
                 .toEqual(geometry2.get(wall.id));
         }
 
-        // At the unsupported branch, preserve original
-        // rectangular footprints.
+        // Joined wall footprints must remain valid.
         for (const wall of [wallA, wallB, wallC]) {
-            expect(geometry1.get(wall.id))
-                .toEqual(wall.getGeometry());
+            expect(
+                GeometryService.isSimplePolygon(geometry1.get(wall.id))
+            ).toBe(true);
         }
+
+        const a = geometry1.get(wallA.id);
+        const b = geometry1.get(wallB.id);
+        const c = geometry1.get(wallC.id);
+
+        // Neighboring walls must share the same join points.
+        expect(a[2]).toEqual({ x: 3800, y: 200 });
+        expect(b[3]).toEqual(a[2]);
+
+        expect(a[1]).toEqual(c[0]);
+        expect(b[0]).toEqual(c[3]);
+
+        // The diagonal wall meets the vertical wall here.
+        expect(b[0].x).toBeCloseTo(4000);
+        expect(b[0].y).toBeCloseTo(200 * Math.SQRT2);
     });
 
     it('keeps four-way junction geometry independent of wall order', () => {
@@ -160,12 +175,31 @@ describe('DrawingEngine wall junctions', () => {
         const geometry2 = engine.getWallDisplayGeometry();
 
         for (const wall of walls) {
+            // Reordering walls must not change their geometry.
             expect(geometry1.get(wall.id))
                 .toEqual(geometry2.get(wall.id));
 
-            expect(geometry1.get(wall.id))
-                .toEqual(wall.getGeometry());
+            expect(
+                GeometryService.isSimplePolygon(geometry1.get(wall.id))
+            ).toBe(true);
         }
+
+        const [a, b, c, d] = walls.map(wall =>
+            geometry1.get(wall.id)
+        );
+
+        // Check all four seams around the crossing.
+        expect(a[2]).toEqual({ x: 3800, y: 200 });
+        expect(c[3]).toEqual(a[2]);
+
+        expect(b[3]).toEqual({ x: 4000, y: 200 });
+        expect(c[0]).toEqual(b[3]);
+
+        expect(b[0]).toEqual({ x: 4200, y: 0 });
+        expect(d[3]).toEqual(b[0]);
+
+        expect(a[1]).toEqual({ x: 4000, y: 0 });
+        expect(d[0]).toEqual(a[1]);
     });
 
     it('still resolves an ordinary two-wall L junction', () => {

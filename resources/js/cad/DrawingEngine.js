@@ -1,6 +1,7 @@
 import Wall from "./models/Wall";
 import Column from "./models/Column";
 import GeometryService from "./GeometryService";
+import WallTopology from './WallTopology';
 
 export default class DrawingEngine {
     constructor(renderer) {
@@ -29,8 +30,14 @@ export default class DrawingEngine {
             thicknessSide: side
         });
 
+        // Build the result before changing the current model.
+        const nextElements = WallTopology.split([
+            ...this.elements,
+            wall
+        ]);
+
         //Add the wall to this.elements
-        this.elements.push(wall);
+        this.elements = nextElements;
         this.invalidateWallGeometry();
 
         //Render all elements
@@ -47,6 +54,10 @@ export default class DrawingEngine {
 
         //Render all elements
         this.render();
+    }
+
+    getRooms() {
+        return WallTopology.rooms(this.elements);
     }
 
     /**
@@ -168,155 +179,160 @@ export default class DrawingEngine {
      * The returned map changes display geometry, not stored wall data.
      */
     calculateWallDisplayGeometry() {
-        const walls = this.elements.filter(
-            element => element.type === 'wall'
+        const walls = this.elements.filter(e => e.type === 'wall');
+
+        const base = new Map(
+            walls.map(wall => [wall.id, wall.getGeometry()])
         );
 
-        // Group walls by their exact endpoint coordinates.
         const junctions = new Map();
 
-        const addToJunction = (point, wall) => {
-            const key = `${point.x},${point.y}`;
-
-            if (!junctions.has(key)) {
-                junctions.set(key, new Set());
-            }
-
-            junctions.get(key).add(wall);
-        };
-
         for (const wall of walls) {
-            addToJunction(wall.start, wall);
-            addToJunction(wall.end, wall);
+            for (const atStart of [true, false]) {
+                const point = atStart ? wall.start : wall.end;
+                const other = atStart ? wall.end : wall.start;
+
+                const angle = Math.atan2(
+                    other.y - point.y,
+                    other.x - point.x
+                );
+
+                // Orient each wall away from the junction.
+                const side =
+                    (wall.thicknessSide ?? 1) *
+                    (atStart ? 1 : -1);
+
+                const reference = atStart ? 0 : 1;
+                const offset = atStart ? 3 : 2;
+                const key = `${point.x},${point.y}`;
+
+                if (!junctions.has(key)) {
+                    junctions.set(key, []);
+                }
+
+                junctions.get(key).push({
+                    wall,
+                    point,
+                    angle,
+                    left: side > 0 ? offset : reference,
+                    right: side > 0 ? reference : offset
+                });
+            }
         }
 
-        // Collect individually valid two-wall joins.
+        const edgeLine = (ray, index) => {
+            const corners = base.get(ray.wall.id);
+
+            return index < 2
+                ? [corners[0], corners[1]]
+                : [corners[3], corners[2]];
+        };
+
         const candidates = [];
 
-        for (const connectedWalls of junctions.values()) {
-            // Skip branching junctions.
-            if (connectedWalls.size !== 2) {
-                continue;
-            }
+        for (const rays of junctions.values()) {
+            if (rays.length < 2) continue;
 
-            const [wallA, wallB] = [...connectedWalls];
+            rays.sort((a, b) => a.angle - b.angle);
 
-            let firstWall;
-            let secondWall;
+            const changes = [];
+            let supported = true;
 
-            if (
-                wallA.end.x === wallB.start.x &&
-                wallA.end.y === wallB.start.y
-            ) {
-                firstWall = wallA;
-                secondWall = wallB;
-            } else if (
-                wallB.end.x === wallA.start.x &&
-                wallB.end.y === wallA.start.y
-            ) {
-                firstWall = wallB;
-                secondWall = wallA;
-            } else {
-                // Start-start and end-end are not supported yet.
-                continue;
-            }
+            for (let i = 0; i < rays.length; i++) {
+                const a = rays[i];
+                const b = rays[(i + 1) % rays.length];
 
-            const result = GeometryService.getJoinedWallCorners(
-                firstWall,
-                secondWall
-            );
+                const gap = (
+                    b.angle - a.angle + Math.PI * 2
+                ) % (Math.PI * 2);
 
-            if (!result) {
-                continue;
-            }
-
-            candidates.push({
-                firstWall,
-                secondWall,
-                firstReferenceCorner: { ...result.wallACorners[1] },
-                firstCorner: { ...result.wallACorners[2] },
-                secondReferenceCorner: { ...result.wallBCorners[0] },
-                secondCorner: { ...result.wallBCorners[3] }
-            });
-        }
-
-        // Track which joins are still allowed.
-        const activeJoins = new Set(
-            candidates.map((_, index) => index)
-        );
-
-        const buildGeometry = () => {
-            // Always start with fresh original footprints.
-            const geometryMap = new Map();
-
-            for (const wall of walls) {
-                geometryMap.set(wall.id, wall.getGeometry());
-            }
-
-            // Apply all active junction adjustments.
-            for (const index of activeJoins) {
-                const join = candidates[index];
-
-                const first = geometryMap.get(join.firstWall.id);
-                const second = geometryMap.get(join.secondWall.id);
-
-                first[1] = { ...join.firstReferenceCorner };
-                first[2] = { ...join.firstCorner };
-
-                second[0] = { ...join.secondReferenceCorner };
-                second[3] = { ...join.secondCorner };
-            }
-
-            return geometryMap;
-        };
-
-        // Rebuild until there are no invalid polygons.
-        while (true) {
-            const geometryMap = buildGeometry();
-
-            const invalidWallIds = new Set();
-
-            for (const wall of walls) {
-                const corners = geometryMap.get(wall.id);
-
-                if (!GeometryService.isSimplePolygon(corners)) {
-                    invalidWallIds.add(wall.id);
+                // Overlapping rays cannot form a normal junction.
+                if (gap < 1e-8) {
+                    supported = false;
+                    break;
                 }
-            }
 
-            // All final wall footprints are valid.
-            if (invalidWallIds.size === 0) {
-                return geometryMap;
-            }
+                const hit = GeometryService.lineIntersection(
+                    ...edgeLine(a, a.left),
+                    ...edgeLine(b, b.right)
+                );
 
-            // Remove joins involving any invalid wall.
-            const joinsToRemove = [];
+                // Parallel faces keep their original endpoints.
+                if (!hit) continue;
 
-            for (const index of activeJoins) {
-                const join = candidates[index];
+                const limit = Math.max(
+                    a.wall.thickness,
+                    b.wall.thickness
+                ) * 4;
 
                 if (
-                    invalidWallIds.has(join.firstWall.id) ||
-                    invalidWallIds.has(join.secondWall.id)
+                    Math.hypot(
+                        hit.x - a.point.x,
+                        hit.y - a.point.y
+                    ) > limit
                 ) {
-                    joinsToRemove.push(index);
+                    supported = false;
+                    break;
                 }
-            }
 
-            // Safety fallback: return unmodified footprints
-            // if no further conflicting joins can be removed.
-            if (joinsToRemove.length === 0) {
-                return new Map(
-                    walls.map(wall => [
-                        wall.id,
-                        wall.getGeometry()
-                    ])
+                changes.push(
+                    {
+                        id: a.wall.id,
+                        index: a.left,
+                        point: hit
+                    },
+                    {
+                        id: b.wall.id,
+                        index: b.right,
+                        point: hit
+                    }
                 );
             }
 
-            for (const index of joinsToRemove) {
-                activeJoins.delete(index);
+            if (supported && changes.length) {
+                candidates.push(changes);
             }
+        }
+
+        const active = new Set(candidates);
+
+        while (true) {
+            const result = new Map(
+                [...base].map(([id, corners]) => [
+                    id,
+                    corners.map(point => ({ ...point }))
+                ])
+            );
+
+            for (const changes of active) {
+                for (const change of changes) {
+                    result.get(change.id)[change.index] = {
+                        ...change.point
+                    };
+                }
+            }
+
+            const invalid = new Set(
+                [...result]
+                    .filter(([, corners]) =>
+                        !GeometryService.isSimplePolygon(corners)
+                    )
+                    .map(([id]) => id)
+            );
+
+            if (!invalid.size) return result;
+
+            // Reject junction changes that invalidate a wall.
+            let removed = false;
+
+            for (const changes of active) {
+                if (changes.some(change => invalid.has(change.id))) {
+                    active.delete(changes);
+                    removed = true;
+                }
+            }
+
+            if (!removed) return base;
         }
     }
 
