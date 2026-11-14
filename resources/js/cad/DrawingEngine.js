@@ -107,6 +107,27 @@ export default class DrawingEngine {
         this.render();
     }
 
+    updateWallThickness(id, thickness) {
+        const wall = this.elements.find(
+            element => element.id === id && element.type === 'wall'
+        );
+
+        if (!wall) {
+            throw new Error('Wall not found.');
+        }
+
+        thickness = Number(thickness);
+
+        if (!Number.isFinite(thickness) || thickness <= 0) {
+            throw new Error('Wall thickness must be a positive number.');
+        }
+
+        wall.thickness = thickness;
+
+        // Recalculate footprints and joins, preserving the selection.
+        this.render(null, wall.id);
+    }
+
     
     /**
      * Derives wall footprints with supported two-wall corner joins.
