@@ -21,6 +21,7 @@ export default class EditorController {
         this.wallDrag = null;
         this.suppressNextClick = false;
         this.pendingRenderFrame = null;
+        this.pendingPreviewFrame = null;
     }
 
     init() {
@@ -290,7 +291,7 @@ export default class EditorController {
                 drag.moved = true;
             }
 
-            this.engine.render(null, drag.wall.id);
+            this.scheduleCanvasRender();
             return;
         }
 
@@ -314,12 +315,13 @@ export default class EditorController {
             return;
         }
 
+        // Wall Preview
         if (this.activeTool === 'wall' && this.engine.startPoint) {
             this.directionPoint = this.getMousePoint(event);
             
             // Mouse movement takes control of the wall length again.
             document.getElementById('wallLength').value = '';
-            this.renderWallPreview();
+            this.scheduleWallPreview();
         }
     }
 
@@ -567,10 +569,7 @@ export default class EditorController {
             mouseY - worldPoint.y * newScale;
 
         // Redraw with the new scale and offsets
-        this.engine.render(
-            null,
-            this.selectionManager.selectedElement?.id ?? null
-        );
+        this.scheduleCanvasRender();
     }
 
 
@@ -777,30 +776,53 @@ export default class EditorController {
         }
     }
 
-    scheduleCanvasRender() {
-    // A redraw is already scheduled for the next frame.
-    if (this.pendingRenderFrame !== null) return;
-
-    this.pendingRenderFrame = requestAnimationFrame(() => {
-        this.pendingRenderFrame = null;
-
-        // Use the current selection and current element positions.
-        this.engine.render(
-            null,
-            this.selectionManager.selectedElement?.id ?? null
-        );
-
-        // A full redraw clears the preview overlay. Restore an active
-        // preview using the current zoom and pan.
-        if (
-            !this.isEditingLocked &&
-            this.activeTool === 'wall' &&
-            this.engine.startPoint &&
-            this.directionPoint &&
-            document.getElementById('threeContainer').style.display === 'none'
-        ) {
-            this.renderWallPreview();
+    scheduleWallPreview() {
+        if (this.pendingPreviewFrame !== null) {
+            return;
         }
-    });
-}
+
+        this.pendingPreviewFrame = requestAnimationFrame(() => {
+            this.pendingPreviewFrame = null;
+
+            // The drawing operation may have ended while the frame was pending.
+            if (
+                this.isEditingLocked ||
+                this.activeTool !== 'wall' ||
+                !this.engine.startPoint ||
+                !this.directionPoint ||
+                document.getElementById('threeContainer').style.display !== 'none'
+            ) {
+                return;
+            }
+
+            this.renderWallPreview();
+        });
+    }
+
+    scheduleCanvasRender() {
+        // A redraw is already scheduled for the next frame.
+        if (this.pendingRenderFrame !== null) return;
+
+        this.pendingRenderFrame = requestAnimationFrame(() => {
+            this.pendingRenderFrame = null;
+
+            // Use the current selection and current element positions.
+            this.engine.render(
+                null,
+                this.selectionManager.selectedElement?.id ?? null
+            );
+
+            // A full redraw clears the preview overlay. Restore an active
+            // preview using the current zoom and pan.
+            if (
+                !this.isEditingLocked &&
+                this.activeTool === 'wall' &&
+                this.engine.startPoint &&
+                this.directionPoint &&
+                document.getElementById('threeContainer').style.display === 'none'
+            ) {
+                this.renderWallPreview();
+            }
+        });
+    }
 }
