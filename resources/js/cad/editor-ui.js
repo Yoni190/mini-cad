@@ -5,11 +5,17 @@ export default function initEditorUI() {
     const help = document.getElementById('activeToolHelp');
     const twoContainer = document.getElementById('twoContainer');
     const threeContainer = document.getElementById('threeContainer');
+    let selectedElement = null;
     const instructions = {
         wall: 'Wall: Click a start point, then an end point. Use Properties for an exact length.',
         column: 'Column: Click to place a column. Choose Select to move or resize it.',
         select: 'Select: Click an element. Drag a selected column to move it. Delete to remove.',
     };
+
+    document.addEventListener('cad-selection-change', (event) => {
+        selectedElement = event.detail;
+        syncUI();
+    });
 
     function syncUI() {
         const tool = toolSelect.value;
@@ -20,8 +26,11 @@ export default function initEditorUI() {
             button.disabled = toolSelect.disabled;
         });
         document.getElementById('wallProperties').hidden = tool !== 'wall';
-        document.getElementById('wallThicknessProperties').hidden = tool !== 'select';
-        document.getElementById('columnProperties').hidden = tool !== 'select';
+        document.getElementById('columnProperties').hidden =
+            tool !== 'select' || selectedElement?.type !== 'column';
+
+        document.getElementById('wallThicknessProperties').hidden =
+            tool !== 'select' || selectedElement?.type !== 'wall';
         document.getElementById('columnPlacementHelp').hidden = tool !== 'column';
         document.getElementById('show2D').setAttribute('aria-pressed', String(!is3D));
         document.getElementById('show3D').setAttribute('aria-pressed', String(is3D));

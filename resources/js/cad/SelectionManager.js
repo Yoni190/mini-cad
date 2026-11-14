@@ -33,12 +33,20 @@ export default class SelectionManager {
                 }
             }
         }
+
+        document.dispatchEvent(new CustomEvent('cad-selection-change', {
+            detail: this.selectedElement
+        }));
         
         return this.selectedElement;
     }
 
     clear() {
         this.selectedElement = null;
+
+        document.dispatchEvent(new CustomEvent('cad-selection-change', {
+            detail: null
+        }));
     }
 
     isPointInsideColumn(point, column) {
