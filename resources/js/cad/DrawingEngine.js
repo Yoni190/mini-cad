@@ -332,11 +332,22 @@ export default class DrawingEngine {
     }
 
     removeElement(id) {
-        this.elements = this.elements.filter(
-            element => element.id !== id
+        const index = this.elements.findIndex(
+            element => element.id === id
         );
 
-        this.invalidateWallGeometry();
+        if (index === -1) {
+            return;
+        }
+
+        const [removed] = this.elements.splice(index, 1);
+
+        if (removed.type === 'wall') {
+            this.invalidateWallGeometry();
+        } else {
+            this.notifyModelChange();
+        }
+
         this.render();
     }
 }
