@@ -18,6 +18,8 @@ export default class EditorController {
         this.orthoEnabled = false;
         this.wallChainStart = null;
         this.wallChainCount = 0;
+        this.wallDrag = null;
+        this.suppressNextClick = false;
     }
 
     init() {
@@ -144,6 +146,11 @@ export default class EditorController {
      */
     handleClick(event) {
         if (this.isEditingLocked) return;
+        if (this.suppressNextClick) {
+            this.suppressNextClick = false;
+            return;
+        }
+
         if (event.button !== 0) {
             return;
         }
@@ -227,6 +234,68 @@ export default class EditorController {
             return;
         }
 
+        if (this.wallDrag) {
+            const drag = this.wallDrag;
+            const point = this.getMousePoint(event, false);
+
+            const mouseDx = point.x - drag.mouseStart.x;
+            const mouseDy = point.y - drag.mouseStart.y;
+
+            // Project the mouse movement onto the wall's perpendicular direction.
+            const distance =
+                mouseDx * drag.normal.x +
+                mouseDy * drag.normal.y;
+
+            const offset = {
+                x: drag.normal.x * distance,
+                y: drag.normal.y * distance,
+            };
+
+            const newStart = {
+                x: drag.start.x + offset.x,
+                y: drag.start.y + offset.y,
+            };
+
+            const newEnd = {
+                x: drag.end.x + offset.x,
+                y: drag.end.y + offset.y,
+            };
+
+            // Check all connected walls before changing any geometry.
+            // A wall cannot have identical start and end points.
+            for (const connection of drag.connections) {
+                const otherKey = connection.key === 'start' ? 'end' : 'start';
+                const otherConnection = drag.connections.find(
+                    item => item.wall === connection.wall && item.key === otherKey
+                );
+
+                const candidate = connection.junction === 'start' ? newStart : newEnd;
+                const other = otherConnection
+                    ? (otherConnection.junction === 'start' ? newStart : newEnd)
+                    : connection.wall[otherKey];
+
+                if (Math.hypot(candidate.x - other.x, candidate.y - other.y) < 0.001) {
+                    return;
+                }
+            }
+
+            drag.wall.start = newStart;
+            drag.wall.end = newEnd;
+
+            for (const connection of drag.connections) {
+                connection.wall[connection.key] = {
+                    ...(connection.junction === 'start' ? newStart : newEnd),
+                };
+            }
+
+            if (Math.hypot(mouseDx, mouseDy) * this.renderer.scale > 2) {
+                drag.moved = true;
+            }
+
+            this.engine.render(null, drag.wall.id);
+            return;
+        }
+
         // Handle column dragging
         if (this.isDragging) {
             const point = this.getMousePoint(event, false);
@@ -274,6 +343,54 @@ export default class EditorController {
             return;
         }
 
+        const selected = this.selectionManager.selectedElement;
+
+        if (selected?.type === 'wall') {
+            const point = this.getMousePoint(event, false);
+            const corners = this.engine.getWallDisplayGeometry().get(selected.id)
+                ?? selected.getGeometry();
+
+            if (!this.selectionManager.isPointInsidePolygon(point, corners)) {
+                return;
+            }
+
+            const start = { ...selected.start };
+            const end = { ...selected.end };
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const length = Math.hypot(dx, dy);
+
+            if (length === 0) return;
+
+            // Record endpoints that exactly share a junction with this wall.
+            const connections = [];
+
+            for (const wall of this.engine.elements) {
+                if (wall.type !== 'wall' || wall.id === selected.id) continue;
+
+                for (const key of ['start', 'end']) {
+                    const endpoint = wall[key];
+
+                    if (endpoint.x === start.x && endpoint.y === start.y) {
+                        connections.push({ wall, key, junction: 'start' });
+                    } else if (endpoint.x === end.x && endpoint.y === end.y) {
+                        connections.push({ wall, key, junction: 'end' });
+                    }
+                }
+            }
+
+            this.wallDrag = {
+                wall: selected,
+                mouseStart: point,
+                start,
+                end,
+                normal: { x: -dy / length, y: dx / length },
+                connections,
+                moved: false,
+            };
+
+            return;
+        }
         const column = this.selectionManager.selectedElement;
 
         if (!column || column.type !== 'column') {
@@ -296,6 +413,10 @@ export default class EditorController {
 
     handleMouseUp() {
         if (this.isEditingLocked) return;
+        if (this.wallDrag) {
+            this.suppressNextClick = this.wallDrag.moved;
+            this.wallDrag = null;
+        }
         this.isDragging = false;
         this.isPanning = false;
         this.lastPanPoint = null;
@@ -522,6 +643,7 @@ export default class EditorController {
             // Stop any active dragging or panning
             this.isDragging = false;
             this.isPanning = false;
+            this.wallDrag = null;
 
             // Clear any drawing preview
             this.engine.render();
