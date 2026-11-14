@@ -95,7 +95,9 @@
         <aside class="properties-panel" aria-label="Tool properties">
             <h2 class="panel-label">Properties</h2>
             <section class="property-section" id="wallProperties">
-                <h3>Wall length</h3>
+                <h3>New wall</h3>
+                <label for="newWallThickness">Thickness (mm)</label>
+                <input type="number" id="newWallThickness" min="0.001" step="any" value="200" required>
                 <p class="field-help" id="wallLengthHelp">Click a start point and move the mouse to set a direction. Enter a length to create the wall.</p>
                 <button
                     type="button"

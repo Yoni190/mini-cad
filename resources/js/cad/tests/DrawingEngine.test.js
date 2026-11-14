@@ -3,6 +3,18 @@ import DrawingEngine from '../DrawingEngine';
 import Wall from '../models/Wall';
 import GeometryService from '../GeometryService';
 
+describe('DrawingEngine wall creation', () => {
+    it('uses the requested thickness and retains the default when omitted', () => {
+        const engine = new DrawingEngine(null);
+        engine.render = () => {};
+        engine.addWall({ x: 0, y: 0 }, { x: 1000, y: 0 }, 350);
+        engine.addWall({ x: 1000, y: 0 }, { x: 2000, y: 0 });
+
+        expect(engine.elements.map(wall => wall.thickness)).toEqual([350, 200]);
+        expect(engine.elements[0].getGeometry()[2].y).toBe(350);
+    });
+});
+
 describe('DrawingEngine wall display geometry', () => {
     it('preserves joins at both ends of a middle wall', () => {
         const wallA = new Wall({

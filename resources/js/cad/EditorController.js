@@ -136,6 +136,13 @@ export default class EditorController {
 
         document.getElementById('toggleOrtho')
             .addEventListener('click', () => this.toggleOrtho());
+
+        document.getElementById('newWallThickness')
+            .addEventListener('input', () => {
+                if (this.activeTool === 'wall' && this.engine.startPoint && this.directionPoint) {
+                    this.renderWallPreview();
+                }
+            });
     }
 
     /**
@@ -690,7 +697,11 @@ export default class EditorController {
             ? GeometryService.getEndPoint(start, direction, length)
             : direction;
 
-        const preview = new Wall({ start, end });
+        const thicknessInput = document.getElementById('newWallThickness');
+        const thickness = Number(thicknessInput.value);
+        if (!Number.isFinite(thickness) || thickness <= 0 || !thicknessInput.checkValidity()) return;
+
+        const preview = new Wall({ start, end, thickness });
 
         previewRenderer.drawElement(preview, true);
         previewRenderer.drawWallLength(preview);
@@ -764,7 +775,15 @@ export default class EditorController {
             ? { ...this.wallChainStart }
             : { ...end };
 
-        this.engine.addWall(start, finalEnd);
+        const thicknessInput = document.getElementById('newWallThickness');
+        const thickness = Number(thicknessInput.value);
+        if (!Number.isFinite(thickness) || thickness <= 0 || !thicknessInput.checkValidity()) {
+            thicknessInput.reportValidity();
+            thicknessInput.focus();
+            return;
+        }
+
+        this.engine.addWall(start, finalEnd, thickness);
         this.wallChainCount++;
 
         document.getElementById('wallLength').value = '';
