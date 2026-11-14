@@ -8,6 +8,7 @@ export default class DrawingEngine {
         this.elements = [];
         this.startPoint = null;
         this.onRender = null;
+        this.onModelChange = null;
         this.wallGeometryCache = null;
         this.wallGeometryElements = null;
     }
@@ -33,6 +34,7 @@ export default class DrawingEngine {
 
         //Add the column to this.elements
         this.elements.push(column);
+        this.notifyModelChange();
 
         //Render all elements
         this.render();
@@ -106,6 +108,8 @@ export default class DrawingEngine {
         //Update dimensions
         column.width = width;
         column.depth = depth;
+
+        this.notifyModelChange();
 
         this.render(null, column.id);
     }
@@ -293,6 +297,8 @@ export default class DrawingEngine {
     invalidateWallGeometry() {
         this.wallGeometryCache = null;
         this.wallGeometryElements = null;
+
+        this.notifyModelChange();
     }
 
     getWallDisplayGeometry() {
@@ -307,6 +313,9 @@ export default class DrawingEngine {
         return this.wallGeometryCache;
     }
 
+    notifyModelChange() {
+        this.onModelChange?.();
+    }
 
     removeElement(id) {
         this.elements = this.elements.filter(

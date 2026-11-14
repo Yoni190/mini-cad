@@ -309,6 +309,7 @@ export default class EditorController {
                 y: point.y - this.dragOffset.y
             };
 
+            this.engine.notifyModelChange();
             this.scheduleCanvasRender();
             return;
         }

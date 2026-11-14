@@ -46,6 +46,7 @@ export default class ThreeViewer {
 
         this.elementsGroup = new THREE.Group();
         this.scene.add(this.elementsGroup);
+        this.elementMeshes = new Map();
 
         this.visible = true;
         this.pendingFrame = null;
@@ -172,12 +173,13 @@ export default class ThreeViewer {
      * geometry or material. The source CAD elements remain untouched.
      */
     clearElements() {
-        for (const mesh of [...this.elementsGroup.children]) {
+        for (const { mesh } of this.elementMeshes.values()) {
             this.elementsGroup.remove(mesh);
-
             mesh.geometry.dispose();
             mesh.material.dispose();
         }
+
+        this.elementMeshes.clear();
     }
 
     /**
@@ -187,24 +189,76 @@ export default class ThreeViewer {
      * This implementation recreates all meshes on each update.
      */
     updateElements(elements, wallGeometry = new Map()) {
-        this.clearElements();
+        const currentIds = new Set();
+        let sceneChanged = false;
 
         for (const element of elements) {
-            let mesh = null;
+            currentIds.add(element.id);
+
+            let corners = null;
+            let signature;
 
             if (element.type === 'wall') {
-                const corners = wallGeometry.get(element.id)
+                corners = wallGeometry.get(element.id)
                     ?? element.getGeometry();
 
-                mesh = this.createWallMesh(element, corners);
+                // The resolved corners include changes caused by joined walls.
+                signature = JSON.stringify([
+                    'wall',
+                    element.height,
+                    corners.map(point => [point.x, point.y])
+                ]);
             } else if (element.type === 'column') {
-                mesh = this.createColumnMesh(element);
+                signature = JSON.stringify([
+                    'column',
+                    element.position.x,
+                    element.position.y,
+                    element.width,
+                    element.depth,
+                    element.height
+                ]);
+            } else {
+                continue;
             }
 
-            if (mesh) {
-                this.elementsGroup.add(mesh);
+            const existing = this.elementMeshes.get(element.id);
+
+            // The existing mesh already represents this element.
+            if (existing?.signature === signature) {
+                continue;
             }
+
+            // Build the replacement before removing the old mesh.
+            const mesh = element.type === 'wall'
+                ? this.createWallMesh(element, corners)
+                : this.createColumnMesh(element);
+
+            if (existing) {
+                this.elementsGroup.remove(existing.mesh);
+                existing.mesh.geometry.dispose();
+                existing.mesh.material.dispose();
+            }
+
+            this.elementsGroup.add(mesh);
+            this.elementMeshes.set(element.id, { mesh, signature });
+            sceneChanged = true;
         }
-        this.requestRender();
+
+        // Remove meshes for elements that no longer exist.
+        for (const [id, existing] of this.elementMeshes) {
+            if (currentIds.has(id)) {
+                continue;
+            }
+
+            this.elementsGroup.remove(existing.mesh);
+            existing.mesh.geometry.dispose();
+            existing.mesh.material.dispose();
+            this.elementMeshes.delete(id);
+            sceneChanged = true;
+        }
+
+        if (sceneChanged) {
+            this.requestRender();
+        }
     }
 }

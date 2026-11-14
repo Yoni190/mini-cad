@@ -102,31 +102,40 @@ if (canvas && twoContainer && threeContainer) {
     initEditorUI();
     engine.render();
 
-    // Create Three.js viewer only when needed
+    // Create the 3D viewer only when it is first opened.
     let threeViewer = null;
 
-    /**
-     * Synchronizes visible 3D meshes from the engine's shared element data.
-     * Hidden 3D content is refreshed when the user switches back to it.
-     */
-    engine.onRender = () => {
-        // Clears the old preview
-        previewRenderer.clear();
-        
-        // Only synchronize when the 3D viewer exists
-        // and the 3D container is currently visible.
+    // The first time 3D opens, it needs the current drawing.
+    let threeNeedsSync = true;
+
+    function syncThreeIfVisible() {
         if (
-            threeViewer &&
-            threeContainer.style.display !== 'none'
+            !threeViewer ||
+            threeContainer.style.display === 'none' ||
+            !threeNeedsSync
         ) {
-            threeViewer.updateElements(
-                engine.elements,
-                engine.getWallDisplayGeometry()
-            );
+            return;
         }
+
+        threeViewer.updateElements(
+            engine.elements,
+            engine.getWallDisplayGeometry()
+        );
+
+        threeNeedsSync = false;
+    }
+
+    // A 2D redraw only needs to clear the temporary preview.
+    engine.onRender = () => {
+        previewRenderer.clear();
     };
 
-    // Switch to 3D
+    // Model changes can require new 3D geometry.
+    engine.onModelChange = () => {
+        threeNeedsSync = true;
+        syncThreeIfVisible();
+    };
+
     document.getElementById('show3D').addEventListener('click', () => {
         twoContainer.style.display = 'none';
         threeContainer.style.display = 'block';
@@ -134,13 +143,9 @@ if (canvas && twoContainer && threeContainer) {
         if (!threeViewer) {
             threeViewer = new ThreeViewer(threeContainer);
         }
-        threeViewer.setVisible(true);
 
-        // Render the same elements used by the 2D editor
-        threeViewer.updateElements(
-            engine.elements,
-            engine.getWallDisplayGeometry()
-        );
+        threeViewer.setVisible(true);
+        syncThreeIfVisible();
     });
 
     // Switch back to 2D
@@ -261,6 +266,9 @@ if (canvas && twoContainer && threeContainer) {
                 // 3. All elements were reconstructed successfully.
                 // We can now safely replace the current drawing.
                 engine.elements = elements;
+
+                // The new array may contain different walls and joins.
+                engine.invalidateWallGeometry();
                 currentProjectId = project.id;
 
                 // 4. Clear temporary editor state
@@ -272,15 +280,7 @@ if (canvas && twoContainer && threeContainer) {
                 // 5. Update the 2D canvas
                 engine.render();
 
-                // 6. Update the 3D viewer if it already exists
-                if (threeViewer) {
-                    threeViewer.updateElements(
-                        engine.elements,
-                        engine.getWallDisplayGeometry()
-                    );
-                }
-
-                // 7. Display the loaded project name
+                // 6. Display the loaded project name
                 document.getElementById('projectName').value = project.name;
 
                 status.textContent =
@@ -310,6 +310,7 @@ if (canvas && twoContainer && threeContainer) {
 
             // Clear project data
             engine.elements = [];
+            engine.invalidateWallGeometry();
 
             // Reset current project
             currentProjectId = null;
@@ -326,13 +327,6 @@ if (canvas && twoContainer && threeContainer) {
 
             // Refresh both views
             engine.render();
-
-            if (threeViewer) {
-                threeViewer.updateElements(
-                    engine.elements,
-                    engine.getWallDisplayGeometry()
-                );
-            }
 
             status.textContent = 'New project created.';
         });
