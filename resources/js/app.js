@@ -134,6 +134,7 @@ if (canvas && twoContainer && threeContainer) {
         if (!threeViewer) {
             threeViewer = new ThreeViewer(threeContainer);
         }
+        threeViewer.setVisible(true);
 
         // Render the same elements used by the 2D editor
         threeViewer.updateElements(
@@ -144,6 +145,7 @@ if (canvas && twoContainer && threeContainer) {
 
     // Switch back to 2D
     document.getElementById('show2D').addEventListener('click', () => {
+        threeViewer?.setVisible(false);
         threeContainer.style.display = 'none';
         twoContainer.style.display = 'block';
 

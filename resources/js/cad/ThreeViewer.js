@@ -47,9 +47,28 @@ export default class ThreeViewer {
         this.elementsGroup = new THREE.Group();
         this.scene.add(this.elementsGroup);
 
-        this.renderer.setAnimationLoop(() => {
-            this.render();
+        this.visible = true;
+        this.pendingFrame = null;
+        this.controls.addEventListener('change', () => this.requestRender());
+        this.requestRender();
+    }
+
+    requestRender() {
+        if (!this.visible || this.pendingFrame !== null) return;
+
+        this.pendingFrame = requestAnimationFrame(() => {
+            this.pendingFrame = null;
+            if (this.visible) this.render();
         });
+    }
+
+    setVisible(visible) {
+        this.visible = visible;
+        if (!visible && this.pendingFrame !== null) {
+            cancelAnimationFrame(this.pendingFrame);
+            this.pendingFrame = null;
+        }
+        if (visible) this.requestRender();
     }
 
     render() {
@@ -186,5 +205,6 @@ export default class ThreeViewer {
                 this.elementsGroup.add(mesh);
             }
         }
+        this.requestRender();
     }
 }
