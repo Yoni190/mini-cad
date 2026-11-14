@@ -248,6 +248,9 @@ export default class EditorController {
 
         if (this.activeTool === 'wall' && this.engine.startPoint) {
             this.directionPoint = this.getMousePoint(event);
+            
+            // Mouse movement takes control of the wall length again.
+            document.getElementById('wallLength').value = '';
             this.renderWallPreview();
         }
     }
