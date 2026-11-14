@@ -860,6 +860,10 @@ export default class EditorController {
             return;
         }
 
+        // An existing path between the endpoints also completes a room,
+        // even when the chain began on an existing wall.
+        const closesExistingPath = this.hasWallPath(start, finalEnd, samePoint);
+
         this.engine.addWall(start, finalEnd, thickness);
         this.wallChainCount++;
 
@@ -867,8 +871,8 @@ export default class EditorController {
         this.alignmentHold = { x: null, y: null };
         this.directionPoint = null;
 
-        if (closesChain) {
-            // The last wall reached the first point: finish the chain.
+        if (closesChain || closesExistingPath) {
+            // The new wall completed a loop: finish the chain.
             this.engine.startPoint = null;
             this.wallChainStart = null;
             this.wallChainCount = 0;
@@ -876,6 +880,27 @@ export default class EditorController {
             // Start the next wall at the endpoint just created.
             this.engine.startPoint = finalEnd;
         }
+    }
+
+    hasWallPath(start, end, samePoint) {
+        const walls = this.engine.elements.filter(element => element.type === 'wall');
+        const queue = [{ point: start, depth: 0 }];
+        const visited = [start];
+
+        for (let i = 0; i < queue.length; i++) {
+            const { point, depth } = queue[i];
+            for (const wall of walls) {
+                const next = samePoint(point, wall.start) ? wall.end
+                    : samePoint(point, wall.end) ? wall.start : null;
+                if (!next) continue;
+                if (samePoint(next, end) && depth + 1 >= 2) return true;
+                if (!visited.some(visitedPoint => samePoint(visitedPoint, next))) {
+                    visited.push(next);
+                    queue.push({ point: next, depth: depth + 1 });
+                }
+            }
+        }
+        return false;
     }
 
     scheduleWallPreview() {
