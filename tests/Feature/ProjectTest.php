@@ -56,6 +56,7 @@ class ProjectTest extends TestCase
         // Try to update User A's project
         $response = $this->putJson("/projects/{$project->id}", [
             'name' => 'Modified Project',
+            'version' => 1,
             'elements' => []
         ]);
 
@@ -181,6 +182,7 @@ class ProjectTest extends TestCase
         $response = $this->actingAs($user)
             ->putJson("/projects/{$project->id}", [
                 'name' => 'Updated Project',
+                'version' => 1,
                 'elements' => [],
             ]);
 
@@ -296,6 +298,7 @@ class ProjectTest extends TestCase
             "/projects/{$projectId}",
             [
                 'name' => 'Updated Project',
+                'version' => 1,
                 'elements' => $elements,
             ]
         );
@@ -330,6 +333,21 @@ class ProjectTest extends TestCase
 
         // 10. Verify no duplicate project was created
         $this->assertDatabaseCount('projects', 1);
+    }
+
+    public function test_stale_save_does_not_overwrite_newer_work(): void
+    {
+        $user = User::factory()->create();
+        $project = $user->projects()->create(['name' => 'Original', 'elements' => []]);
+        $this->actingAs($user);
+
+        $this->putJson("/projects/{$project->id}", ['name' => 'Newer', 'elements' => [], 'version' => 1])
+            ->assertOk()->assertJsonPath('version', 2);
+        $this->putJson("/projects/{$project->id}", ['name' => 'Stale', 'elements' => [], 'version' => 1])
+            ->assertStatus(409);
+        $this->putJson("/projects/{$project->id}", ['name' => 'No version', 'elements' => []])
+            ->assertUnprocessable()->assertJsonValidationErrors('version');
+        $this->assertDatabaseHas('projects', ['id' => $project->id, 'name' => 'Newer', 'version' => 2]);
     }
 
 }

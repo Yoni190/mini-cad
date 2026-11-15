@@ -119,6 +119,7 @@ class ProjectNavigationTest extends TestCase
         $data = json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR);
         $this->assertSame($project->id, $data['id']);
         $this->assertSame($elements, $data['elements']);
+        $this->assertSame($project->fresh()->version, $data['version']);
     }
 
     public function test_another_users_project_editor_is_not_accessible(): void
