@@ -94,6 +94,9 @@ export default class GeometryService {
      * given tolerance in millimeters. This does not join their shapes.
      */
     static areWallsConnected(wallA, wallB, tolerance = 1) {
+        if (!Number.isFinite(tolerance) || tolerance < 0) {
+            throw new RangeError('tolerance must be a non-negative finite number');
+        }
         // Collect both endpoints of each wall
         const pointsA = [wallA.start, wallA.end];
         const pointsB = [wallB.start, wallB.end];
