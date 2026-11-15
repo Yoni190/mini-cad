@@ -1,19 +1,14 @@
-import GeometryService from "../geometry/GeometryService";
-import Wall from "../models/Wall";
-import WallTopology from '../geometry/WallTopology';
+import WallDrawingTool from './tools/WallDrawingTool';
 import CanvasNavigation from './CanvasNavigation';
 
 export default class EditorController {
-    constructor(canvas, engine, renderer, snapManager, selectionManager, view) {
+    constructor(canvas, engine, renderer, snapManager, selectionManager, view, wallInputs) {
         this.canvas = canvas;
         this.engine = engine;
         this.view = view;
         this.renderer = renderer;
         this.snapManager = snapManager;
         this.activeTool = 'wall';
-        this.startPoint = null;
-        this.directionPoint = null;
-        this.alignmentHold = { x: null, y: null };
         this.selectionManager = selectionManager;
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
@@ -23,13 +18,21 @@ export default class EditorController {
             requestRender: () => this.scheduleCanvasRender(),
         });
         this.isEditingLocked = false;
-        this.orthoEnabled = false;
-        this.wallChainStart = null;
-        this.wallChainCount = 0;
         this.wallDrag = null;
         this.suppressNextClick = false;
         this.pendingRenderFrame = null;
         this.pendingPreviewFrame = null;
+        this.wallTool = new WallDrawingTool({
+            engine, snapManager, inputs: wallInputs,
+            getScale: () => this.renderer.scale,
+            showMessage: message => alert(message),
+            preview: {
+                clear: () => this.previewRenderer.clear(),
+                render: () => this.renderWallPreview(),
+                request: () => this.scheduleWallPreview(),
+                showStartHints: point => this.renderWallStartHints(point),
+            },
+        });
     }
 
     init() {
@@ -46,7 +49,7 @@ export default class EditorController {
         });
 
         this.canvas.addEventListener('mouseleave', () => {
-            if (this.activeTool === 'wall' && !this.startPoint) {
+            if (this.activeTool === 'wall' && !this.wallTool.startPoint) {
                 this.previewRenderer.clear();
             }
         });
@@ -124,28 +127,7 @@ export default class EditorController {
             return;
         }
 
-        if (this.startPoint === null) {
-            this.alignmentHold = { x: null, y: null };
-            this.previewRenderer.clear();
-            this.startPoint = point;
-            this.wallChainStart = { ...point };
-            this.wallChainCount = 0;
-            this.directionPoint = null;
-
-            // Start each wall without a leftover length from the previous one.
-            document.getElementById('wallLength').value = '';
-        } else {
-            // The second click determines the direction.
-            this.directionPoint = point;
-
-            const length = Number(document.getElementById('wallLength').value);
-
-            if (Number.isFinite(length) && length > 0) {
-                this.createWallWithLength(length);
-            } else {
-                this.commitWall(this.constrainWallPoint(point));
-            }
-        }
+        this.wallTool.handleClick(point);
     }
 
     /**
@@ -231,17 +213,8 @@ export default class EditorController {
             return;
         }
 
-        // Wall preview and hints before the first click.
         if (this.activeTool === 'wall') {
-            if (this.startPoint) {
-                this.directionPoint = this.getMousePoint(event);
-
-                // Mouse movement takes control of the wall length again.
-                document.getElementById('wallLength').value = '';
-                this.scheduleWallPreview();
-            } else {
-                this.renderWallStartHints(this.getMousePoint(event));
-            }
+            this.wallTool.handleMouseMove(this.getMousePoint(event));
         }
     }
 
@@ -360,7 +333,7 @@ export default class EditorController {
 
         const isDrawingWall =
             this.activeTool === 'wall' &&
-            this.startPoint !== null &&
+            this.wallTool.startPoint !== null &&
             document.getElementById('threeContainer').style.display === 'none';
 
         if (
@@ -370,39 +343,7 @@ export default class EditorController {
             !event.metaKey &&
             !event.altKey
         ) {
-            const input = document.getElementById('wallLength');
-
-            if (/^[0-9]$/.test(event.key)) {
-                event.preventDefault();
-                input.value += event.key;
-                this.renderWallPreview();
-                return;
-            }
-
-            if (event.key === '.' && !input.value.includes('.')) {
-                event.preventDefault();
-                // A number input cannot retain a trailing decimal point reliably,
-                // so type whole millimeters with this shortcut.
-                return;
-            }
-
-            if (event.key === 'Backspace') {
-                event.preventDefault();
-                input.value = input.value.slice(0, -1);
-                this.renderWallPreview();
-                return;
-            }
-
-            if (event.key === 'Enter') {
-                event.preventDefault();
-
-                const length = Number(input.value);
-                if (Number.isFinite(length) && length > 0) {
-                    this.createWallWithLength(length);
-                }
-
-                return;
-            }
+            if (this.wallTool.handleKeyDown(event)) return;
         }
         
         if (event.key === 'Escape') {
@@ -455,71 +396,12 @@ export default class EditorController {
 
         if (!applySnap) return rawPoint;
 
-        const start = this.startPoint;
-        const drawingWall = this.activeTool === 'wall' && start;
-
-        // Apply guides and Ortho before choosing a wall connection.
-        const point = drawingWall
-            ? this.constrainWallPoint(this.alignWallPoint(rawPoint))
-            : rawPoint;
-
-        let constraint = null;
-
-        if (drawingWall && this.orthoEnabled) {
-            const axis = point.x === start.x ? 'x' : 'y';
-
-            constraint = {
-                axis,
-                value: start[axis]
-            };
-        }
-
-        return this.snapManager.snap(
-            point,
-            this.engine.elements,
-            20 / this.renderer.scale,
-            constraint
-        );
+        if (this.activeTool === 'wall') return this.wallTool.getSnappedPoint(rawPoint);
+        return this.snapManager.snap(rawPoint, this.engine.elements, 20 / this.renderer.scale, null);
     }
 
-    /**
-     * Commits a wall with the requested length in millimeters.
-     *
-     * The last preview direction determines its orientation. The
-     * calculated endpoint is not snapped again, preserving exact length.
-     */
-    createWallWithLength(length) {
-        const direction = this.directionPoint
-            ? this.constrainWallPoint(this.directionPoint)
-            : null;
-
-        if(!this.startPoint || !direction) {
-            alert('Click a starting point and move the mouse to choose a direction.');
-            return;
-        }
-        if(this.startPoint.x === direction.x &&
-            this.startPoint.y === direction.y
-        ) {
-            alert('Move the mouse to choose a wall direction first.');
-            return;
-        }
-
-        const newEndpoint = GeometryService.getEndPoint(
-            this.startPoint,
-            direction,
-            length
-        );
-
-        this.commitWall(newEndpoint);
-    }
-
-    /** Clears the unfinished wall and its chain without changing saved elements. */
     cancelWallDrawing() {
-        this.startPoint = null;
-        this.directionPoint = null;
-        this.wallChainStart = null;
-        this.wallChainCount = 0;
-        this.alignmentHold = { x: null, y: null };
+        this.wallTool.cancel();
     }
 
     /**
@@ -582,222 +464,27 @@ export default class EditorController {
         // Erase the previous temporary wall and guides.
         previewRenderer.clear();
 
-        const start = this.startPoint;
-        const direction = this.directionPoint
-            ? this.constrainWallPoint(this.directionPoint)
-            : null;
-
-        if (
-            !start ||
-            !direction ||
-            (start.x === direction.x && start.y === direction.y)
-        ) {
-            return;
-        }
-
-        const length = Number(document.getElementById('wallLength').value);
-
-        const end = Number.isFinite(length) && length > 0
-            ? GeometryService.getEndPoint(start, direction, length)
-            : direction;
-
-        const thicknessInput = document.getElementById('newWallThickness');
-        const thickness = Number(thicknessInput.value);
-        if (!Number.isFinite(thickness) || thickness <= 0 || !thicknessInput.checkValidity()) return;
-
-        const thicknessSide = GeometryService.resolveWallThicknessSide(
-            start,
-            end,
-            this.engine.elements
-        );
-
-        const preview = new Wall({
-            start,
-            end,
-            thickness,
-            thicknessSide
-        });
+        const preview = this.wallTool.getPreview();
+        if (!preview) return;
 
         previewRenderer.drawElement(preview, true);
         previewRenderer.drawWallLength(preview);
         previewRenderer.drawWallGuides(preview, this.engine.elements);
 
         const isAtEndpoint = this.snapManager.isOnWall(
-            end,
+            preview.end,
             this.engine.elements
         );
 
         if (isAtEndpoint) {
-            previewRenderer.drawSnapMarker(end);
+            previewRenderer.drawSnapMarker(preview.end);
         }
-    }
-
-    alignWallPoint(point) {
-        const start = this.startPoint;
-
-        if (!start) return point;
-
-        const threshold = 8 / this.renderer.scale;
-        const holdDuration = 250; // milliseconds
-        const now = performance.now();
-
-        // The guides use wall endpoints and midpoints as references.
-        const references = [start];
-
-        for (const element of this.engine.elements) {
-            if (element.type !== 'wall') continue;
-
-            references.push(
-                element.start,
-                element.end,
-                {
-                    x: (element.start.x + element.end.x) / 2,
-                    y: (element.start.y + element.end.y) / 2,
-                }
-            );
-        }
-
-        const aligned = { ...point };
-
-        for (const axis of ['x', 'y']) {
-            const hold = this.alignmentHold[axis];
-
-            if (hold && now < hold.until) {
-                aligned[axis] = hold.value;
-                continue;
-            }
-
-            // After the pause, release the coordinate once the pointer
-            // moves outside the guide's threshold.
-            if (hold) {
-                if (Math.abs(point[axis] - hold.value) <= threshold) {
-                    aligned[axis] = hold.value;
-                    continue;
-                }
-
-                this.alignmentHold[axis] = null;
-            }
-
-            let nearest = null;
-
-            for (const reference of references) {
-                const distance = Math.abs(point[axis] - reference[axis]);
-
-                if (
-                    distance <= threshold &&
-                    (!nearest || distance < nearest.distance)
-                ) {
-                    nearest = { value: reference[axis], distance };
-                }
-            }
-
-            if (nearest) {
-                aligned[axis] = nearest.value;
-                this.alignmentHold[axis] = {
-                    value: nearest.value,
-                    until: now + holdDuration,
-                };
-            }
-        }
-
-        return aligned;
-    }
-
-    constrainWallPoint(point) {
-        const start = this.startPoint;
-
-        if (!this.orthoEnabled || !start) {
-            return point;
-        }
-
-        const dx = point.x - start.x;
-        const dy = point.y - start.y;
-
-        if (Math.abs(dx) >= Math.abs(dy)) {
-            return { x: point.x, y: start.y };
-        }
-
-        return { x: start.x, y: point.y };
     }
 
     toggleOrtho() {
         if (this.isEditingLocked) return;
-
-        this.orthoEnabled = !this.orthoEnabled;
-
-        const button = document.getElementById('toggleOrtho');
-        button.setAttribute('aria-pressed', String(this.orthoEnabled));
-        button.textContent = this.orthoEnabled ? 'Ortho: On' : 'Ortho: Off';
-
-        if (this.activeTool === 'wall' && this.startPoint) {
-            this.renderWallPreview();
-        }
-    }
-
-    commitWall(end) {
-        const start = this.startPoint;
-
-        if (!start || !end) return;
-
-        // Treat tiny floating-point differences as the same point.
-        const samePoint = (a, b) =>
-            Math.hypot(a.x - b.x, a.y - b.y) < 0.000001;
-
-        if (samePoint(start, end)) return;
-
-        const closesChain =
-            this.wallChainStart && samePoint(end, this.wallChainStart);
-
-        // A closed chain needs at least three walls.
-        if (closesChain && this.wallChainCount < 2) {
-            alert('A room needs at least three walls.');
-            return;
-        }
-
-        // Use the exact original coordinates when closing the chain.
-        const finalEnd = closesChain
-            ? { ...this.wallChainStart }
-            : { ...end };
-
-        const thicknessInput = document.getElementById('newWallThickness');
-        const thickness = Number(thicknessInput.value);
-        if (!Number.isFinite(thickness) || thickness <= 0 || !thicknessInput.checkValidity()) {
-            thicknessInput.reportValidity();
-            thicknessInput.focus();
-            return;
-        }
-
-        // An existing path between the endpoints also completes a room,
-        // even when the chain began on an existing wall.
-        let closesExistingPath;
-
-        try {
-            closesExistingPath = WallTopology.hasPath(
-                this.engine.elements,
-                start,
-                finalEnd
-            );
-
-            this.engine.addWall(start, finalEnd, thickness);
-        } catch (error) {
-            alert(error.message);
-            return;
-        }
-        this.wallChainCount++;
-
-        document.getElementById('wallLength').value = '';
-        this.alignmentHold = { x: null, y: null };
-        this.directionPoint = null;
-
-        if (closesChain || closesExistingPath) {
-            // The new wall completed a loop: finish the chain.
-            this.startPoint = null;
-            this.wallChainStart = null;
-            this.wallChainCount = 0;
-        } else {
-            // Start the next wall at the endpoint just created.
-            this.startPoint = finalEnd;
-        }
+        this.wallTool.toggleOrtho();
+        if (this.activeTool === 'wall' && this.wallTool.startPoint) this.renderWallPreview();
     }
 
     scheduleWallPreview() {
@@ -815,8 +502,7 @@ export default class EditorController {
             if (
                 this.isEditingLocked ||
                 this.activeTool !== 'wall' ||
-                !this.startPoint ||
-                !this.directionPoint ||
+                !this.wallTool.hasPreview ||
                 document.getElementById('threeContainer').style.display !== 'none'
             ) {
                 return;
@@ -848,8 +534,7 @@ export default class EditorController {
             if (
                 !this.isEditingLocked &&
                 this.activeTool === 'wall' &&
-                this.startPoint &&
-                this.directionPoint &&
+                this.wallTool.hasPreview &&
                 document.getElementById('threeContainer').style.display === 'none'
             ) {
                 this.renderWallPreview();
@@ -864,7 +549,7 @@ export default class EditorController {
         if (!Number.isFinite(length) || length <= 0) {
             throw new Error('Please enter a positive wall length.');
         }
-        this.createWallWithLength(length);
+        this.wallTool.createWallWithLength(length);
     }
 
     updateSelectedColumnDimensions(width, depth) {
@@ -891,7 +576,7 @@ export default class EditorController {
 
     refreshWallPreview() {
         if (this.isEditingLocked) return;
-        if (this.activeTool === 'wall' && this.startPoint && this.directionPoint) {
+        if (this.activeTool === 'wall' && this.wallTool.hasPreview) {
             this.renderWallPreview();
         }
     }
