@@ -4,6 +4,8 @@ import GeometryService from "./geometry/GeometryService";
 import WallTopology from './geometry/WallTopology';
 import WallGeometry from './geometry/WallGeometry';
 
+const MAX_ELEMENTS = 1000;
+
 export default class DrawingEngine {
     constructor() {
         this.elements = [];
@@ -39,12 +41,20 @@ export default class DrawingEngine {
             wall
         ]);
 
+        if (nextElements.length > MAX_ELEMENTS) {
+            throw new Error('A project can contain at most 1,000 elements. Remove elements before adding this wall.');
+        }
+
         //Add the wall to this.elements
         this.elements = nextElements;
         this.handleModelChange({ wallsChanged: true });
     }
 
     addColumn(position) {
+        if (this.elements.length >= MAX_ELEMENTS) {
+            throw new Error('A project can contain at most 1,000 elements. Remove elements before adding a column.');
+        }
+
         //Create a column instance
         const column = new Column({ position });
 

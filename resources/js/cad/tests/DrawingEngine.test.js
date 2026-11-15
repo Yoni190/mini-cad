@@ -15,6 +15,29 @@ describe('DrawingEngine wall creation', () => {
     });
 });
 
+describe('project element limit', () => {
+    it('allows the thousandth column and rejects another without changing the drawing', () => {
+        const engine = new DrawingEngine();
+        engine.elements = Array.from({ length: 999 }, () => ({ type: 'column' }));
+        engine.addColumn({ x: 0, y: 0 });
+        expect(engine.elements).toHaveLength(1000);
+        expect(() => engine.addColumn({ x: 1, y: 1 })).toThrow('at most 1,000 elements');
+        expect(engine.elements).toHaveLength(1000);
+    });
+
+    it('rejects a wall whose intersections would split the drawing over the limit', () => {
+        const engine = new DrawingEngine();
+        const wall = new Wall({ start: { x: 0, y: 0 }, end: { x: 1000, y: 0 } });
+        engine.elements = [...Array.from({ length: 998 }, () => ({ type: 'column' })), wall];
+        const original = engine.elements;
+        expect(() => engine.addWall({ x: 500, y: -500 }, { x: 500, y: 500 }))
+            .toThrow('at most 1,000 elements');
+        expect(engine.elements).toBe(original);
+        expect(engine.elements).toHaveLength(999);
+        expect(engine.elements[998]).toBe(wall);
+    });
+});
+
 describe('DrawingEngine wall display geometry', () => {
     it('preserves joins at both ends of a middle wall', () => {
         const wallA = new Wall({

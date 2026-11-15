@@ -24,6 +24,15 @@ describe('pending wall input', () => {
         return { controller, engine, inputs };
     }
 
+    it('shows the column limit error', () => {
+        const { controller, engine } = setup();
+        vi.stubGlobal('alert', vi.fn());
+        controller.activeTool = 'column';
+        engine.addColumn = vi.fn(() => { throw new Error('Element limit reached'); });
+        controller.handleClick({ button: 0, point: { x: 0, y: 0 } });
+        expect(alert).toHaveBeenCalledWith('Element limit reached');
+    });
+
     it('keeps the first click in the controller until a wall is committed', () => {
         const { controller, engine } = setup();
         const point = { x: 1000, y: 2000 };

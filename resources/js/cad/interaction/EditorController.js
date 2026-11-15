@@ -116,7 +116,11 @@ export default class EditorController {
         }
 
         if(this.activeTool === 'column') {
-            this.engine.addColumn(point);
+            try {
+                this.engine.addColumn(point);
+            } catch (error) {
+                alert(error.message);
+            }
             return;
         }
 
