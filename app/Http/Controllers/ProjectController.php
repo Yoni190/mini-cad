@@ -25,12 +25,25 @@ class ProjectController extends Controller
 
     public function index(Request $request)
     {
-        $projects = $request->user()
+        $query = $request->user()
             ->projects()
-            ->latest()
-            ->get(['id', 'name', 'created_at', 'updated_at']);
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id');
 
-        return response()->json($projects);
+        if ($request->expectsJson()) {
+            return response()->json($query->get(['id', 'name', 'created_at', 'updated_at']));
+        }
+
+        return view('projects.index', [
+            'projects' => $query->paginate(24, ['id', 'name', 'created_at', 'updated_at']),
+        ]);
+    }
+
+    public function edit(Project $project)
+    {
+        Gate::authorize('view', $project);
+
+        return view('editor', ['project' => $project]);
     }
 
     public function show(Request $request, Project $project)
