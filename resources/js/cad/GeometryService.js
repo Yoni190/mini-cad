@@ -1,34 +1,43 @@
 export default class GeometryService {
 
     /**
-     * Calculates the four corners of a wall based on its
-     * start point, end point, and thickness.
+     * Calculates the four corners of a wall polygon.
      *
-     * The wall extends perpendicular to its direction.
+     * The wall is NOT centered on the start→end line: it extends
+     * `thickness` to one side of it, chosen by `thicknessSide`
+     * (1 or -1, default 1).
+     *
+     * Corner order: start, end, end+offset, start+offset.
+     * Units: same as the wall coordinates (mm).
+     *
+     * @throws {Error} if the wall has zero length
      */
     static getWallCorners (wall) {
         const { start, end, thickness } = wall;
         const length = wall.getLength();
+        if (length === 0) {
+            throw new Error('Cannot compute corners of a zero-length wall');
+        }
 
         const dx = end.x - start.x;
         const dy = end.y - start.y;
 
         // Normalize the perpendicular vector to the wall's direction
-        const nx = -dy / length;
-        const ny = dx / length;
+        const normalX = -dy / length;
+        const normalY = dx / length;
 
         const side = wall.thicknessSide ?? 1;
 
         // Scale the perpendicular vector by the wall thickness
-        const ox = nx * thickness * side;
-        const oy = ny * thickness * side;
+        const offsetX = normalX * thickness * side;
+        const offsetY = normalY * thickness * side;
 
         // Return the four corners of the wall polygon
         return [
             { x: start.x, y: start.y },
             { x: end.x, y: end.y },
-            { x: end.x + ox, y: end.y + oy },
-            { x: start.x + ox, y: start.y + oy },
+            { x: end.x + offsetX, y: end.y + offsetY },
+            { x: start.x + offsetX, y: start.y + offsetY },
         ];
 
     }   
