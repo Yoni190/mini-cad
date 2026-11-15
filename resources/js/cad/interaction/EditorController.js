@@ -251,7 +251,8 @@ export default class EditorController {
 
         if(
             this.activeTool === 'select' &&
-            (event.key === 'Delete' || event.key === 'Backspace')
+            (event.key === 'Delete' || event.key === 'Backspace') &&
+            document.getElementById('threeContainer').style.display === 'none'
         ) {
             const tag = event.target?.tagName;
 

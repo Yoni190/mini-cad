@@ -324,9 +324,10 @@ describe('selection routing and cancellation', () => {
     function setup() {
         const canvas = new EventTarget();
         const selectInput = Object.assign(new EventTarget(), { value: 'wall' });
+        const threeContainer = { style: { display: 'none' } };
         vi.stubGlobal('window', new EventTarget());
         vi.stubGlobal('document', Object.assign(new EventTarget(), {
-            getElementById: id => id === 'drawingTool' ? selectInput : new EventTarget(),
+            getElementById: id => id === 'drawingTool' ? selectInput : id === 'threeContainer' ? threeContainer : new EventTarget(),
         }));
         vi.stubGlobal('HTMLElement', class {});
         const selected = { id: 'column', type: 'column', position: { x: 100, y: 100 } };
@@ -342,7 +343,7 @@ describe('selection routing and cancellation', () => {
         controller.getMousePoint = vi.fn(event => event.point);
         controller.scheduleCanvasRender = vi.fn();
         controller.init();
-        return { controller, engine, selectionManager, selectInput };
+        return { controller, engine, selectionManager, selectInput, threeContainer };
     }
 
     it('uses unsnapped selection coordinates and consumes a post-drag click only once', () => {
@@ -402,6 +403,21 @@ describe('selection routing and cancellation', () => {
         expect(selectionManager.select).not.toHaveBeenCalled();
         expect(engine.moveColumn).not.toHaveBeenCalled();
         expect(engine.removeElement).not.toHaveBeenCalled();
+    });
+
+    it.each(['Delete', 'Backspace'])('does not delete the hidden selection in 3D with %s', key => {
+        const { controller, engine, selectionManager, threeContainer } = setup();
+        threeContainer.style.display = 'block';
+        const event = { key, preventDefault: vi.fn() };
+        controller.handleKeyDown(event);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(engine.removeElement).not.toHaveBeenCalled();
+        expect(selectionManager.selectedElement).not.toBeNull();
+
+        threeContainer.style.display = 'none';
+        controller.handleKeyDown(event);
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(engine.removeElement).toHaveBeenCalledWith('column');
     });
 
     it.each(['Delete', 'Backspace'])('routes %s to deletion while preserving typing in form fields', key => {
