@@ -10,6 +10,8 @@ export default class GeometryService {
      * Corner order: start, end, end+offset, start+offset.
      * Units: same as the wall coordinates (mm).
      *
+     * @param {Wall} wall
+     * @returns {{x: number, y: number}[]}
      * @throws {Error} if the wall has zero length
      */
     static getWallCorners (wall) {
@@ -45,6 +47,11 @@ export default class GeometryService {
     /**
      * Calculates an axis-aligned column footprint in millimeters.
      * The stored position is one corner, rather than the center.
+     * 
+     * Corner order: (x, y), (x+width, y), (x+width, y+depth), (x, y+depth).
+     * 
+     * @param {Column} column
+     * @returns {{x: number, y: number}[]}
      */
     static getColumnCorners(column) {
         const { position, width, depth } = column;
