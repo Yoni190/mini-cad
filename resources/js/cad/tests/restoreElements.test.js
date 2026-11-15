@@ -21,6 +21,14 @@ describe('restoring saved drawing elements', () => {
         expect(restored[0].start).not.toBe(data[0].start);
     });
 
+    it.each(['1', '-1'])('restores a previously saved string thickness side %s', side => {
+        const data = [{ type: 'wall', start: { x: 0, y: 0 }, end: { x: 1000, y: 0 }, thicknessSide: side }];
+        const [wall] = restoreElements(data);
+        expect(wall.thicknessSide).toBe(Number(side));
+        expect(JSON.parse(JSON.stringify(wall)).thicknessSide).toBe(Number(side));
+        expect(data[0].thicknessSide).toBe(side);
+    });
+
     it('restores empty projects', () => {
         expect(restoreElements([])).toEqual([]);
     });

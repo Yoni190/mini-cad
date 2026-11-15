@@ -350,4 +350,32 @@ class ProjectTest extends TestCase
         $this->assertDatabaseHas('projects', ['id' => $project->id, 'name' => 'Newer', 'version' => 2]);
     }
 
+    public function test_thickness_side_must_be_an_integer_on_create_and_update(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $wall = [
+            'id' => '550e8400-e29b-41d4-a716-446655440001',
+            'type' => 'wall',
+            'start' => ['x' => 0, 'y' => 0],
+            'end' => ['x' => 1000, 'y' => 0],
+            'thickness' => 200,
+            'height' => 3000,
+            'thicknessSide' => '1',
+        ];
+        $this->postJson('/projects', ['name' => 'Plan', 'elements' => [$wall]])
+            ->assertUnprocessable()->assertJsonValidationErrors('elements.0.thicknessSide');
+
+        $wall['thicknessSide'] = -1;
+        $created = $this->postJson('/projects', ['name' => 'Plan', 'elements' => [$wall]])
+            ->assertCreated()->assertJsonPath('project.elements.0.thicknessSide', -1);
+        $id = $created->json('project.id');
+        $this->getJson("/projects/{$id}")->assertOk()->assertJsonPath('elements.0.thicknessSide', -1);
+
+        $wall['thicknessSide'] = '-1';
+        $this->putJson("/projects/{$id}", ['name' => 'Plan', 'elements' => [$wall], 'version' => 1])
+            ->assertUnprocessable()->assertJsonValidationErrors('elements.0.thicknessSide');
+        $this->getJson("/projects/{$id}")->assertOk()->assertJsonPath('elements.0.thicknessSide', -1);
+    }
+
 }
