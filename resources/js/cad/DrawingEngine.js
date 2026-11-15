@@ -62,6 +62,64 @@ export default class DrawingEngine {
         this.render();
     }
 
+    /** Moves a column; the caller schedules the redraw during dragging. */
+    moveColumn(id, position) {
+        const column = this.elements.find(element => element.id === id && element.type === 'column');
+        if (!column) throw new Error('Column not found');
+
+        const candidate = new Column({ ...column, position });
+        if (column.position.x === candidate.position.x && column.position.y === candidate.position.y) {
+            return false;
+        }
+
+        column.position = candidate.position;
+        this.notifyModelChange();
+        return true;
+    }
+
+    /**
+     * Validates a group of endpoint changes before committing any of them.
+     * Keeps element instances stable for selection and active drag gestures.
+     * Returns false for a collapsed wall or an unchanged batch. The caller
+     * schedules the redraw, so mouse events can share one animation frame.
+     */
+    updateWallEndpoints(changes) {
+        const pending = new Map();
+
+        for (const { id, start, end } of changes) {
+            const wall = this.elements.find(element => element.id === id && element.type === 'wall');
+            if (!wall) throw new Error('Wall not found');
+            if (pending.has(id)) throw new Error('Duplicate wall update');
+
+            if (!start || !end ||
+                !Number.isFinite(start.x) || !Number.isFinite(start.y) ||
+                !Number.isFinite(end.x) || !Number.isFinite(end.y)) {
+                throw new Error('Invalid wall start or end point');
+            }
+
+            // Preserve the minimum length used when dragging connected walls.
+            if (Math.hypot(end.x - start.x, end.y - start.y) < 0.001) {
+                return false;
+            }
+
+            pending.set(id, { wall, start: { ...start }, end: { ...end } });
+        }
+
+        const changed = [...pending.values()].filter(({ wall, start, end }) =>
+            wall.start.x !== start.x || wall.start.y !== start.y ||
+            wall.end.x !== end.x || wall.end.y !== end.y
+        );
+        if (!changed.length) return false;
+
+        for (const { wall, start, end } of changed) {
+            wall.start = start;
+            wall.end = end;
+        }
+
+        this.invalidateWallGeometry();
+        return true;
+    }
+
     getRooms() {
         return WallTopology.rooms(this.elements);
     }

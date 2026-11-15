@@ -275,34 +275,20 @@ export default class EditorController {
                 y: drag.end.y + offset.y,
             };
 
-            // Check all connected walls before changing any geometry.
-            // A wall cannot have identical start and end points.
+            const changes = new Map([
+                [drag.wall.id, { id: drag.wall.id, start: newStart, end: newEnd }],
+            ]);
+
             for (const connection of drag.connections) {
-                const otherKey = connection.key === 'start' ? 'end' : 'start';
-                const otherConnection = drag.connections.find(
-                    item => item.wall === connection.wall && item.key === otherKey
-                );
-
-                const candidate = connection.junction === 'start' ? newStart : newEnd;
-                const other = otherConnection
-                    ? (otherConnection.junction === 'start' ? newStart : newEnd)
-                    : connection.wall[otherKey];
-
-                if (Math.hypot(candidate.x - other.x, candidate.y - other.y) < 0.001) {
-                    return;
+                const wall = connection.wall;
+                if (!changes.has(wall.id)) {
+                    changes.set(wall.id, { id: wall.id, start: wall.start, end: wall.end });
                 }
+                changes.get(wall.id)[connection.key] =
+                    connection.junction === 'start' ? newStart : newEnd;
             }
 
-            drag.wall.start = newStart;
-            drag.wall.end = newEnd;
-
-            for (const connection of drag.connections) {
-                connection.wall[connection.key] = {
-                    ...(connection.junction === 'start' ? newStart : newEnd),
-                };
-            }
-
-            this.engine.invalidateWallGeometry();
+            if (!this.engine.updateWallEndpoints([...changes.values()])) return;
 
             if (Math.hypot(mouseDx, mouseDy) * this.renderer.scale > 2) {
                 drag.moved = true;
@@ -322,13 +308,12 @@ export default class EditorController {
                 return;
             }
 
-            column.position = {
+            const moved = this.engine.moveColumn(column.id, {
                 x: point.x - this.dragOffset.x,
                 y: point.y - this.dragOffset.y
-            };
+            });
 
-            this.engine.notifyModelChange();
-            this.scheduleCanvasRender();
+            if (moved) this.scheduleCanvasRender();
             return;
         }
 
