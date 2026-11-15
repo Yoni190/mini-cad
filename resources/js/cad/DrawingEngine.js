@@ -16,7 +16,7 @@ export default class DrawingEngine {
 
     replaceElements(elements) {
         this.elements = elements;
-        this.invalidateWallGeometry();
+        this.handleModelChange({ wallsChanged: true });
         this.render();
     }
 
@@ -44,7 +44,7 @@ export default class DrawingEngine {
 
         //Add the wall to this.elements
         this.elements = nextElements;
-        this.invalidateWallGeometry();
+        this.handleModelChange({ wallsChanged: true });
 
         //Render all elements
         this.render();
@@ -56,7 +56,7 @@ export default class DrawingEngine {
 
         //Add the column to this.elements
         this.elements.push(column);
-        this.notifyModelChange();
+        this.handleModelChange();
 
         //Render all elements
         this.render();
@@ -73,7 +73,7 @@ export default class DrawingEngine {
         }
 
         column.position = candidate.position;
-        this.notifyModelChange();
+        this.handleModelChange();
         return true;
     }
 
@@ -116,7 +116,7 @@ export default class DrawingEngine {
             wall.end = end;
         }
 
-        this.invalidateWallGeometry();
+        this.handleModelChange({ wallsChanged: true });
         return true;
     }
 
@@ -193,7 +193,7 @@ export default class DrawingEngine {
         column.width = width;
         column.depth = depth;
 
-        this.notifyModelChange();
+        this.handleModelChange();
 
         this.render(column.id);
     }
@@ -219,16 +219,25 @@ export default class DrawingEngine {
         }
 
         wall.thickness = thickness;
-        this.invalidateWallGeometry();
+        this.handleModelChange({ wallsChanged: true });
 
         // Recalculate footprints and joins, preserving the selection.
         this.render(wall.id);
     }
 
+    /** Clears derived wall geometry without notifying listeners or redrawing. */
     invalidateWallGeometry() {
         this.wallGeometryCache = null;
         this.wallGeometryElements = null;
+    }
 
+    /**
+     * Runs after a model change has been committed. Invalidate before notifying:
+     * listeners such as the 3D view may request geometry immediately.
+     * Redrawing remains with the caller so drag updates can be scheduled.
+     */
+    handleModelChange({ wallsChanged = false } = {}) {
+        if (wallsChanged) this.invalidateWallGeometry();
         this.notifyModelChange();
     }
 
@@ -259,11 +268,7 @@ export default class DrawingEngine {
 
         const [removed] = this.elements.splice(index, 1);
 
-        if (removed.type === 'wall') {
-            this.invalidateWallGeometry();
-        } else {
-            this.notifyModelChange();
-        }
+        this.handleModelChange({ wallsChanged: removed.type === 'wall' });
 
         this.render();
     }
