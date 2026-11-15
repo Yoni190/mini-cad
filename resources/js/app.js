@@ -29,6 +29,26 @@ if (canvas && twoContainer && threeContainer) {
     const status = document.getElementById('saveStatus');
     let currentProjectId = null;
 
+    const changesStatus = document.getElementById('changesStatus');
+    const projectNameInput = document.getElementById('projectName');
+
+    let hasUnsavedChanges = false;
+
+    function setUnsavedChanges(value) {
+        if (hasUnsavedChanges === value) return;
+
+        hasUnsavedChanges = value;
+        changesStatus.dataset.unsaved = String(value);
+
+        changesStatus.textContent = value
+            ? 'Unsaved changes'
+            : 'Saved.';
+    }
+
+    projectNameInput.addEventListener('input', () => {
+        setUnsavedChanges(true);
+    });
+
     let projectOperationInProgress = false;
 
     /**
@@ -149,6 +169,8 @@ if (canvas && twoContainer && threeContainer) {
 
     // The app connects model changes to the 2D and 3D views.
     engine.onModelChange = () => {
+        setUnsavedChanges(true);
+        
         editor.scheduleCanvasRender();
         threeNeedsSync = true;
         syncThreeIfVisible();
@@ -214,6 +236,7 @@ if (canvas && twoContainer && threeContainer) {
                     );
 
                 currentProjectId = project.id;
+                setUnsavedChanges(false);
 
                 status.textContent =
                     `Project "${project.name}" saved successfully!`;
@@ -294,6 +317,7 @@ if (canvas && twoContainer && threeContainer) {
 
                 // Display the loaded project name
                 document.getElementById('projectName').value = project.name;
+                setUnsavedChanges(false);
 
                 status.textContent =
                     `Project "${project.name}" loaded successfully!`;
@@ -334,6 +358,7 @@ if (canvas && twoContainer && threeContainer) {
             // Clear project name and selection
             document.getElementById('projectName').value = '';
             projectList.value = '';
+            setUnsavedChanges(false);
 
             status.textContent = 'New project created.';
         });

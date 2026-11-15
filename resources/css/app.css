@@ -90,6 +90,16 @@
 .user-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cad-editor .button-quiet { border-color: transparent; color: var(--cad-muted); }
 .project-status { padding: 9px 20px; border-bottom: 1px solid var(--cad-border); background: #f4f7fc; color: #355276; overflow-wrap: anywhere; min-height: 39px; }
+#changesStatus { display: flex; align-items: center; gap: 8px; }
+#changesStatus::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #15803d;
+}
+#changesStatus[data-unsaved="true"]::before { background: #e3a008; }
 .editor-layout { display: grid; grid-template-columns: 116px minmax(0, 1fr) 232px; min-height: calc(100dvh - 130px); }
 .tool-panel, .properties-panel { background: #fff; padding: 20px 12px; }
 .tool-panel { border-right: 1px solid var(--cad-border); }

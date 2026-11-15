@@ -39,7 +39,16 @@
         </div>
     </header>
 
-    <div class="project-status"><p id="saveStatus" role="status" aria-live="polite" aria-atomic="true">Ready. Open a project or start drawing.</p></div>
+    <div class="project-status">
+        <p id="saveStatus" role="status"
+        aria-live="polite" aria-atomic="true">
+            Ready. Open a project or start drawing.
+        </p>
+
+        <p id="changesStatus" data-unsaved="false" role="status" aria-live="polite">
+            Saved.
+        </p>
+    </div>
 
     <div class="editor-layout">
         <aside class="tool-panel" aria-label="Drawing tools">
