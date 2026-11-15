@@ -343,6 +343,29 @@ export default class GeometryService {
         return Number.isFinite(twiceArea) && twiceArea !== 0;
     }
 
+    /**
+     * Chooses the thickness side (1 or -1) for a new wall so its thickness
+     * continues on the same physical side as the walls it connects to.
+     *
+     * Only walls sharing an endpoint with the new wall are considered.
+     * Priority:
+     *  1. Collinear neighbors (parallel, sharing an endpoint): if they all
+     *     agree on one physical side, use it. The side is flipped when the
+     *     neighbor is drawn in the opposite direction.
+     *  2. If collinear neighbors disagree, return `fallback`.
+     *  3. With no collinear neighbors, a single corner neighbor decides:
+     *     keep its side if the boundary continues (end→start), flip it if
+     *     two starts or two ends meet.
+     *  4. Otherwise (no neighbors, or several corner neighbors) return `fallback`.
+     *
+     * This does not detect which side is inside a room.
+     *
+     * @param {Point} start Start of the new wall
+     * @param {Point} end End of the new wall
+     * @param {Wall[]} walls Existing elements (non-walls are ignored)
+     * @param {1|-1} [fallback=1] Value returned when no side can be inferred
+     * @returns {1|-1}
+     */
     static resolveWallThicknessSide(start, end, walls, fallback = 1) {
         const dx = end.x - start.x;
         const dy = end.y - start.y;
@@ -405,7 +428,6 @@ export default class GeometryService {
             return [...alignedSides][0];
         }
 
-        // Conflicting aligned walls need an explicit user choice.
         if (alignedSides.size > 1) return fallback;
 
         // A single neighbor provides an unambiguous continuation.
