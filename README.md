@@ -128,7 +128,8 @@ The editor maintains one collection of `Wall` and `Column` model instances in `D
 | `WallTopology.js` | Splits walls at connections and discovers closed rooms |
 | `WallGeometry.js` | Resolves wall footprints and supported junctions for display |
 | `CanvasRenderer.js` | 2D polygons, measurements, grid, and world/screen transforms |
-| `EditorController.js` | Mouse/keyboard drawing, selection, zoom, pan, and edit interactions |
+| `EditorController.js` | Input routing, editing locks, selection/dragging, and preview rendering |
+| `WallDrawingTool.js` | Pending wall drafting, chains, alignment, Ortho, numeric lengths, and preview geometry |
 | `SelectionManager.js` | Element hit testing and selection state |
 | `SnapManager.js` | Nearby wall-endpoint snapping |
 | `ThreeViewer.js` | Three.js scene, camera, controls, and 3D meshes |
@@ -139,7 +140,7 @@ The editor maintains one collection of `Wall` and `Column` model instances in `D
 
 ### How editor data flows
 
-`resources/js/app.js` constructs the editor and wires model changes to project state and rendering. `ProjectController` owns project lifecycle and operation locks; `ViewportController` coordinates resizing and the 2D/3D views; `ui/project-controls.js` connects project buttons and Ctrl/Cmd+S to shared actions. `EditorController` converts input events into changes to `DrawingEngine`, which owns the current element collection. Adding a wall uses `WallTopology.split()` to split connected reference edges; `WallTopology.rooms()` finds closed paths. The engine caches display footprints from `WallGeometry`: it starts with each wall's reference-edge footprint, resolves supported junctions, and rejects changes that produce invalid polygons. The original reference edges remain the source for dimensions and saved data. `GeometryService` provides the underlying calculations and tolerances. The 2D renderer and 3D viewer consume the same resolved footprints.
+`resources/js/app.js` constructs the editor and wires model changes to project state and rendering. `ProjectController` owns project lifecycle and operation locks; `ViewportController` coordinates resizing and the 2D/3D views; `ui/project-controls.js` connects project buttons and Ctrl/Cmd+S to shared actions. `EditorController` routes input events to wall drafting and navigation components. `WallDrawingTool` owns pending wall state and commits through `DrawingEngine`, which owns the current element collection. Adding a wall uses `WallTopology.split()` to split connected reference edges; `WallTopology.rooms()` finds closed paths. The engine caches display footprints from `WallGeometry`: it starts with each wall's reference-edge footprint, resolves supported junctions, and rejects changes that produce invalid polygons. The original reference edges remain the source for dimensions and saved data. `GeometryService` provides the underlying calculations and tolerances. The 2D renderer and 3D viewer consume the same resolved footprints.
 
 Model changes must invalidate cached wall geometry and notify the 3D view. Use engine mutation methods rather than modifying its element array directly. In particular, `replaceElements()` clears the pending start point, invalidates the cache, notifies listeners, and redraws. The project load handler reconstructs model instances before calling it; saving serializes the current models as JSON. The Laravel request validates that JSON, and the project policy protects individual records. When changing the saved element shape, update both model reconstruction and server validation, and consider compatibility with existing projects.
 
