@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import SnapManager from '../SnapManager';
+import SnapManager from '../interaction/SnapManager';
 import Wall from '../models/Wall';
 
 describe('SnapManager', () => {

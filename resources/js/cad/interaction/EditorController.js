@@ -1,6 +1,6 @@
-import GeometryService from "./GeometryService";
-import Wall from "./models/Wall";
-import WallTopology from './WallTopology';
+import GeometryService from "../geometry/GeometryService";
+import Wall from "../models/Wall";
+import WallTopology from '../geometry/WallTopology';
 
 export default class EditorController {
     constructor(canvas, engine, renderer, snapManager, selectionManager) {

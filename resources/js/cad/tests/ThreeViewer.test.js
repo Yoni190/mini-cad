@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import ThreeViewer from '../ThreeViewer';
+import ThreeViewer from '../rendering/ThreeViewer';
 
 afterEach(() => vi.unstubAllGlobals());
 

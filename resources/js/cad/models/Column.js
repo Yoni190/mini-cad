@@ -1,4 +1,4 @@
-import GeometryService from "../GeometryService";
+import GeometryService from "../geometry/GeometryService";
 import DrawingElement from "./DrawingElement";
 
 export default class Column extends DrawingElement {

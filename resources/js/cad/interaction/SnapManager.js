@@ -1,4 +1,4 @@
-import WallTopology from './WallTopology';
+import WallTopology from '../geometry/WallTopology';
 
 export default class SnapManager {
     constructor(tolerance = 150) {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import EditorController from '../EditorController';
+import EditorController from '../interaction/EditorController';
 
 afterEach(() => vi.unstubAllGlobals());
 

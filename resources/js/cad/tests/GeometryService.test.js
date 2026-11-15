@@ -1,7 +1,7 @@
 
 import { describe, it, expect } from 'vitest';
 import Wall from '../models/Wall';
-import GeometryService from '../GeometryService';
+import GeometryService from '../geometry/GeometryService';
 
 describe('Wall Geometry', () => {
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import GeometryService from '../GeometryService';
+import GeometryService from '../geometry/GeometryService';
 import Wall from '../models/Wall';
 import Column from '../models/Column';
 

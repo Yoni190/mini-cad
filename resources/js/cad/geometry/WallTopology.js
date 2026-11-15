@@ -1,5 +1,5 @@
 import GeometryService from './GeometryService';
-import Wall from './models/Wall';
+import Wall from '../models/Wall';
 
 const EPS = 1e-6;
 

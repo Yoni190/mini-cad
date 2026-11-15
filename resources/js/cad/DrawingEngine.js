@@ -1,8 +1,8 @@
 import Wall from "./models/Wall";
 import Column from "./models/Column";
-import GeometryService from "./GeometryService";
-import WallTopology from './WallTopology';
-import WallGeometry from './WallGeometry';
+import GeometryService from "./geometry/GeometryService";
+import WallTopology from './geometry/WallTopology';
+import WallGeometry from './geometry/WallGeometry';
 
 export default class DrawingEngine {
     constructor(renderer) {

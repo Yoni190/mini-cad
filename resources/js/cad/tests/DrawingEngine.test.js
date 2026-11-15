@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import DrawingEngine from '../DrawingEngine';
 import Wall from '../models/Wall';
-import GeometryService from '../GeometryService';
-import SelectionManager from '../SelectionManager';
+import GeometryService from '../geometry/GeometryService';
+import SelectionManager from '../interaction/SelectionManager';
 
 describe('DrawingEngine wall creation', () => {
     it('uses the requested thickness and retains the default when omitted', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import DrawingEngine from '../DrawingEngine';
-import EditorController from '../EditorController';
+import EditorController from '../interaction/EditorController';
 import Wall from '../models/Wall';
 import Column from '../models/Column';
 

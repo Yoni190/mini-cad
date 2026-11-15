@@ -1,13 +1,13 @@
 
 import './bootstrap';
-import initEditorUI from './cad/editor-ui';
-import CanvasRenderer from './cad/CanvasRenderer';
+import initEditorUI from './cad/ui/editor-ui';
+import CanvasRenderer from './cad/rendering/CanvasRenderer';
 import DrawingEngine from './cad/DrawingEngine';
-import EditorController from './cad/EditorController';
-import ProjectService from './cad/ProjectService';
-import SelectionManager from './cad/SelectionManager';
-import SnapManager from './cad/SnapManager';
-import ThreeViewer from './cad/ThreeViewer';
+import EditorController from './cad/interaction/EditorController';
+import ProjectService from './cad/persistence/ProjectService';
+import SelectionManager from './cad/interaction/SelectionManager';
+import SnapManager from './cad/interaction/SnapManager';
+import ThreeViewer from './cad/rendering/ThreeViewer';
 import Wall from './cad/models/Wall';
 import Column from './cad/models/Column';
 
