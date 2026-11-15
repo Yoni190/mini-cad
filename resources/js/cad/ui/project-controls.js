@@ -1,5 +1,10 @@
 /** Buttons and shortcuts share the same project actions. */
 export default function initProjectControls(projects, controls) {
+    window.addEventListener('beforeunload', event => {
+        if (!projects.hasUnsavedChanges) return;
+        event.preventDefault();
+        event.returnValue = true;
+    });
     controls.name.addEventListener('input', () => projects.setUnsavedChanges(true));
     controls.name.addEventListener('keydown', event => {
         if (event.key === 'Enter') {

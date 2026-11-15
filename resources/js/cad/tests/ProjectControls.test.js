@@ -6,6 +6,7 @@ afterEach(() => vi.unstubAllGlobals());
 it('routes the button and Ctrl/Cmd+S to save, suppressing browser save and repeated keys', () => {
     const document = new EventTarget();
     vi.stubGlobal('document', document);
+    vi.stubGlobal('window', new EventTarget());
     const controls = { name: new EventTarget(), save: new EventTarget(), newProject: new EventTarget() };
     const projects = { save: vi.fn() };
     initProjectControls(projects, controls);
@@ -23,4 +24,22 @@ it('routes the button and Ctrl/Cmd+S to save, suppressing browser save and repea
         document.dispatchEvent(event);
     }
     expect(projects.save).toHaveBeenCalledTimes(3);
+});
+
+it('warns before leaving only while there are unsaved changes', () => {
+    vi.stubGlobal('document', new EventTarget());
+    const window = new EventTarget();
+    vi.stubGlobal('window', window);
+    const controls = { name: new EventTarget(), save: new EventTarget(), newProject: new EventTarget() };
+    const projects = { hasUnsavedChanges: false };
+    initProjectControls(projects, controls);
+
+    for (const unsaved of [false, true, false]) {
+        projects.hasUnsavedChanges = unsaved;
+        const event = new Event('beforeunload', { cancelable: true });
+        Object.defineProperty(event, 'returnValue', { value: '', writable: true });
+        window.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(unsaved);
+        expect(event.returnValue).toBe(unsaved ? true : '');
+    }
 });
