@@ -17,7 +17,10 @@
                 <label for="projectName" class="visually-hidden">Project name</label>
                 <input type="text" id="projectName" value="{{ isset($project) ? $project->name : 'Untitled Project' }}" placeholder="Untitled Project" maxlength="255" title="Click to rename project">
             </div>
-            <button type="button" id="saveProject" class="button-primary" title="Save project">Save</button>
+            <div class="save-controls">
+                <p id="changesStatus" data-unsaved="false" role="status" aria-live="polite">Saved.</p>
+                <button type="button" id="saveProject" class="button-primary" title="Save project">Save</button>
+            </div>
             <button type="button" id="newProject" title="Create a new project">New Project</button>
         </div>
         <div class="view-toggle" role="group" aria-label="Drawing view">
@@ -39,9 +42,6 @@
             Ready. Open a project or start drawing.
         </p>
 
-        <p id="changesStatus" data-unsaved="false" role="status" aria-live="polite">
-            Saved.
-        </p>
     </div>
 
     <div class="editor-layout">

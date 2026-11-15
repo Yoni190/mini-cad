@@ -97,7 +97,8 @@
 .user-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cad-editor .button-quiet { border-color: transparent; color: var(--cad-muted); }
 .project-status { padding: 9px 20px; border-bottom: 1px solid var(--cad-border); background: #f4f7fc; color: #355276; overflow-wrap: anywhere; min-height: 39px; }
-#changesStatus { display: flex; align-items: center; gap: 8px; }
+.save-controls { display: flex; align-items: center; gap: 12px; }
+#changesStatus { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 #changesStatus::before {
     content: '';
     width: 9px;
