@@ -5,6 +5,7 @@ export default class ProjectController {
     constructor({ engine, editor, projectService, controls, canvas }) {
         Object.assign(this, { engine, editor, projectService, controls, canvas });
         this.currentProjectId = null;
+        this.currentProjectVersion = null;
         this.hasUnsavedChanges = false;
         this.isBusy = false;
     }
@@ -29,6 +30,7 @@ export default class ProjectController {
             const elements = restoreElements(project.elements);
             this.engine.replaceElements(elements);
             this.currentProjectId = project.id;
+            this.currentProjectVersion = project.version;
             this.controls.name.value = project.name;
             this.setUnsavedChanges(false);
             this.controls.status.textContent = `Project "${project.name}" loaded.`;
@@ -62,10 +64,11 @@ export default class ProjectController {
         try {
             this.controls.status.textContent = 'Saving...';
             const project = this.currentProjectId
-                ? await this.projectService.updateProject(this.currentProjectId, name, this.engine.elements)
+                ? await this.projectService.updateProject(this.currentProjectId, name, this.engine.elements, this.currentProjectVersion)
                 : await this.projectService.saveProject(name, this.engine.elements);
 
             this.currentProjectId = project.id;
+            this.currentProjectVersion = project.version;
             window.history.replaceState(null, '', `/editor/${project.id}`);
             this.setUnsavedChanges(false);
             this.controls.status.textContent = `Project "${project.name}" saved successfully!`;
@@ -82,6 +85,7 @@ export default class ProjectController {
 
         this.engine.replaceElements([]);
         this.currentProjectId = null;
+        this.currentProjectVersion = null;
         window.history.replaceState(null, '', '/editor');
         this.editor.cancelInteraction({ clearSelection: true });
         this.controls.name.value = 'Untitled Project';

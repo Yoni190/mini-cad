@@ -73,7 +73,7 @@ export default class ProjectService {
         return data;
     }
 
-    async updateProject(id, name, elements) {
+    async updateProject(id, name, elements, version) {
         const response = await fetch(`/projects/${id}`, {
             method: 'PUT',
 
@@ -83,7 +83,7 @@ export default class ProjectService {
                 'X-CSRF-TOKEN': this.csrfToken
             },
 
-            body: JSON.stringify({ name, elements })
+            body: JSON.stringify({ name, elements, version })
         });
 
         const data = await response.json();

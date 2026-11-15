@@ -145,7 +145,8 @@
         </aside>
     </div>
     @isset($project)
-        <script id="initialProject" type="application/json">@json($project->only(['id', 'name', 'elements']))</script>
+        @php($initialProject = $project->only(['id', 'name', 'elements', 'version']))
+        <script id="initialProject" type="application/json">@json($initialProject)</script>
     @endisset
 </body>
 </html>
