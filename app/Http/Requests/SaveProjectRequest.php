@@ -23,6 +23,7 @@ class SaveProjectRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'version' => [$this->isMethod('put') ? 'required' : 'prohibited', 'integer', 'min:1'],
 
             // A project may contain no elements.
             'elements' => ['present', 'array', 'list', 'max:1000'],

@@ -19,7 +19,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'message' => 'Project created',
-            'project' => $project
+            'project' => $project->refresh()
         ], 201);
     }
 
@@ -57,7 +57,19 @@ class ProjectController extends Controller
     {
         Gate::authorize('update', $project);
 
-        $project->update($request->validated());
+        $data = $request->validated();
+        $updated = Project::whereKey($project->id)->where('version', $data['version'])->update([
+            'name' => $data['name'],
+            'elements' => json_encode($data['elements'], JSON_THROW_ON_ERROR),
+            'version' => $data['version'] + 1,
+        ]);
+
+        if (!$updated) {
+            return response()->json(['message' => 'This project was changed in another tab. Your changes remain here but were not saved. Open the latest project in another tab to reconcile them.'], 409);
+        }
+
+        $project->fill($data);
+        $project->version = $data['version'] + 1;
 
         return response()->json($project);
     }
