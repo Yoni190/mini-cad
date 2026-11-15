@@ -41,14 +41,14 @@ export default class Wall extends DrawingElement {
      * Measures the stored start-to-end reference edge in millimeters.
      * Display joins and camera changes do not affect this distance.
      */
+
+    //TODO: Put in GeometryService?
     getLength() {
         //Euclidean distance
         const dx = this.end.x - this.start.x;
         const dy = this.end.y - this.start.y;
 
-        const length = Math.hypot(dx, dy);
-
-        return length;
+        return Math.hypot(dx, dy);
     }
 
     getGeometry() {
