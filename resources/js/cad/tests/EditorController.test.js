@@ -292,3 +292,100 @@ describe('navigation routing', () => {
         expect(controller.scheduleCanvasRender).toHaveBeenCalledOnce();
     });
 });
+
+describe('selection routing and cancellation', () => {
+    function setup() {
+        const canvas = new EventTarget();
+        const selectInput = Object.assign(new EventTarget(), { value: 'wall' });
+        vi.stubGlobal('window', new EventTarget());
+        vi.stubGlobal('document', Object.assign(new EventTarget(), {
+            getElementById: id => id === 'drawingTool' ? selectInput : new EventTarget(),
+        }));
+        vi.stubGlobal('HTMLElement', class {});
+        const selected = { id: 'column', type: 'column', position: { x: 100, y: 100 } };
+        const selectionManager = {
+            selectedElement: selected,
+            select: vi.fn(() => selected),
+            clear: vi.fn(() => { selectionManager.selectedElement = null; }),
+            isPointInsideColumn: () => true,
+        };
+        const engine = { elements: [selected], getWallDisplayGeometry: () => new Map(), moveColumn: vi.fn(), removeElement: vi.fn() };
+        const controller = new EditorController(canvas, engine, { scale: 1 }, null, selectionManager, { render: vi.fn() });
+        controller.activeTool = 'select';
+        controller.getMousePoint = vi.fn(event => event.point);
+        controller.scheduleCanvasRender = vi.fn();
+        controller.init();
+        return { controller, engine, selectionManager, selectInput };
+    }
+
+    it('uses unsnapped selection coordinates and consumes a post-drag click only once', () => {
+        const { controller, selectionManager } = setup();
+        controller.selectionTool.suppressNextClick = true;
+        controller.handleClick({ button: 0, point: { x: 120, y: 120 } });
+        expect(selectionManager.select).not.toHaveBeenCalled();
+        controller.handleClick({ button: 0, point: { x: 120, y: 120 } });
+        expect(selectionManager.select).toHaveBeenCalledOnce();
+        expect(controller.getMousePoint).toHaveBeenLastCalledWith(expect.anything(), false);
+    });
+
+    it.each(['Escape', 'tool change', 'lock', 'new project action'])('cancels active dragging on %s', action => {
+        const { controller, engine, selectionManager, selectInput } = setup();
+        controller.handleMouseDown({ button: 0, point: { x: 120, y: 120 } });
+        expect(controller.selectionTool.isDragging).toBe(true);
+        if (action === 'Escape') controller.handleKeyDown({ key: 'Escape' });
+        if (action === 'tool change') selectInput.dispatchEvent(new Event('change'));
+        if (action === 'lock') {
+            controller.setEditingLocked(true);
+            controller.setEditingLocked(false);
+        }
+        if (action === 'new project action') controller.cancelInteraction({ clearSelection: true });
+        expect(controller.selectionTool.isDragging).toBe(false);
+        controller.activeTool = 'select';
+        controller.handleMouseMove({ point: { x: 500, y: 500 } });
+        expect(engine.moveColumn).not.toHaveBeenCalled();
+        if (action === 'lock') expect(selectionManager.clear).not.toHaveBeenCalled();
+        else expect(selectionManager.clear).toHaveBeenCalledOnce();
+    });
+
+    it('stops dragging on the window mouseup listener', () => {
+        const { controller } = setup();
+        controller.handleMouseDown({ button: 0, point: { x: 120, y: 120 } });
+        window.dispatchEvent(new Event('mouseup'));
+        expect(controller.selectionTool.isDragging).toBe(false);
+    });
+
+    it('gives panning priority over an active selection drag', () => {
+        const { controller, engine } = setup();
+        controller.handleMouseDown({ button: 0, point: { x: 120, y: 120 } });
+        controller.navigation.isPanning = true;
+        controller.navigation.updatePan = vi.fn();
+        controller.handleMouseMove({ point: { x: 500, y: 500 } });
+        expect(controller.navigation.updatePan).toHaveBeenCalledOnce();
+        expect(engine.moveColumn).not.toHaveBeenCalled();
+    });
+
+    it('blocks selection, dragging, and deletion while locked', () => {
+        const { controller, engine, selectionManager } = setup();
+        controller.setEditingLocked(true);
+        controller.handleClick({ button: 0, point: { x: 120, y: 120 } });
+        controller.handleMouseDown({ button: 0, point: { x: 120, y: 120 } });
+        controller.handleMouseMove({ point: { x: 500, y: 500 } });
+        controller.handleKeyDown({ key: 'Delete' });
+        expect(controller.selectionTool.isDragging).toBe(false);
+        expect(selectionManager.select).not.toHaveBeenCalled();
+        expect(engine.moveColumn).not.toHaveBeenCalled();
+        expect(engine.removeElement).not.toHaveBeenCalled();
+    });
+
+    it.each(['Delete', 'Backspace'])('routes %s to deletion while preserving typing in form fields', key => {
+        const { controller, engine } = setup();
+        for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT']) {
+            controller.handleKeyDown({ key, target: { tagName } });
+        }
+        expect(engine.removeElement).not.toHaveBeenCalled();
+        const event = { key, preventDefault: vi.fn() };
+        controller.handleKeyDown(event);
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(engine.removeElement).toHaveBeenCalledWith('column');
+    });
+});

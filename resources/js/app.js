@@ -56,7 +56,7 @@ if (canvas && twoContainer && threeContainer) {
         ].map(id => document.getElementById(id)),
     };
     const projects = new ProjectController({
-        engine, editor, selectionManager, controls, canvas,
+        engine, editor, controls, canvas,
         projectService: new ProjectService(),
     });
     const viewport = new ViewportController({

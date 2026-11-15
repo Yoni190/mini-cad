@@ -2,8 +2,8 @@ import restoreElements from './restoreElements';
 
 /** Owns the active project's identity, dirty state, and save/load lifecycle. */
 export default class ProjectController {
-    constructor({ engine, editor, selectionManager, projectService, controls, canvas }) {
-        Object.assign(this, { engine, editor, selectionManager, projectService, controls, canvas });
+    constructor({ engine, editor, projectService, controls, canvas }) {
+        Object.assign(this, { engine, editor, projectService, controls, canvas });
         this.currentProjectId = null;
         this.hasUnsavedChanges = false;
         this.isBusy = false;
@@ -83,9 +83,7 @@ export default class ProjectController {
         this.engine.replaceElements([]);
         this.currentProjectId = null;
         window.history.replaceState(null, '', '/editor');
-        this.editor.cancelWallDrawing();
-        this.editor.isDragging = false;
-        this.selectionManager.clear();
+        this.editor.cancelInteraction({ clearSelection: true });
         this.controls.name.value = 'Untitled Project';
         this.setUnsavedChanges(false);
         this.controls.status.textContent = 'New project created.';

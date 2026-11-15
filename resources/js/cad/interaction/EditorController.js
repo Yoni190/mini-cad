@@ -1,4 +1,5 @@
 import WallDrawingTool from './tools/WallDrawingTool';
+import SelectionTool from './tools/SelectionTool';
 import CanvasNavigation from './CanvasNavigation';
 
 export default class EditorController {
@@ -10,16 +11,18 @@ export default class EditorController {
         this.snapManager = snapManager;
         this.activeTool = 'wall';
         this.selectionManager = selectionManager;
-        this.isDragging = false;
-        this.dragOffset = { x: 0, y: 0 };
         this.navigation = new CanvasNavigation({
             canvas,
             renderer,
             requestRender: () => this.scheduleCanvasRender(),
         });
+        this.selectionTool = new SelectionTool({
+            engine, selectionManager,
+            getScale: () => this.renderer.scale,
+            requestRender: () => this.scheduleCanvasRender(),
+            renderSelection: selectedId => this.view.render(selectedId),
+        });
         this.isEditingLocked = false;
-        this.wallDrag = null;
-        this.suppressNextClick = false;
         this.pendingRenderFrame = null;
         this.pendingPreviewFrame = null;
         this.wallTool = new WallDrawingTool({
@@ -78,9 +81,7 @@ export default class EditorController {
             .addEventListener('change', (event) => {
                 this.activeTool = event.target.value;
 
-                this.cancelWallDrawing();
-                this.isDragging = false;
-                this.selectionManager.clear();
+                this.cancelInteraction({ clearSelection: true });
 
                 this.view.render();
             });
@@ -97,10 +98,7 @@ export default class EditorController {
      */
     handleClick(event) {
         if (this.isEditingLocked) return;
-        if (this.suppressNextClick) {
-            this.suppressNextClick = false;
-            return;
-        }
+        if (this.selectionTool.consumeNextClick()) return;
 
         if (event.button !== 0) {
             return;
@@ -111,14 +109,8 @@ export default class EditorController {
             this.activeTool !== 'select'
         );
 
-        if(this.activeTool === 'select') {
-            const selected = this.selectionManager.select(
-                point,
-                this.engine.elements,
-                this.engine.getWallDisplayGeometry()
-            );
-
-            this.view.render(selected?.id ?? null);
+        if (this.activeTool === 'select') {
+            this.selectionTool.handleClick(point);
             return;
         }
 
@@ -144,72 +136,8 @@ export default class EditorController {
             return;
         }
 
-        if (this.wallDrag) {
-            const drag = this.wallDrag;
-            const point = this.getMousePoint(event, false);
-
-            const mouseDx = point.x - drag.mouseStart.x;
-            const mouseDy = point.y - drag.mouseStart.y;
-
-            // Project the mouse movement onto the wall's perpendicular direction.
-            const distance =
-                mouseDx * drag.normal.x +
-                mouseDy * drag.normal.y;
-
-            const offset = {
-                x: drag.normal.x * distance,
-                y: drag.normal.y * distance,
-            };
-
-            const newStart = {
-                x: drag.start.x + offset.x,
-                y: drag.start.y + offset.y,
-            };
-
-            const newEnd = {
-                x: drag.end.x + offset.x,
-                y: drag.end.y + offset.y,
-            };
-
-            const changes = new Map([
-                [drag.wall.id, { id: drag.wall.id, start: newStart, end: newEnd }],
-            ]);
-
-            for (const connection of drag.connections) {
-                const wall = connection.wall;
-                if (!changes.has(wall.id)) {
-                    changes.set(wall.id, { id: wall.id, start: wall.start, end: wall.end });
-                }
-                changes.get(wall.id)[connection.key] =
-                    connection.junction === 'start' ? newStart : newEnd;
-            }
-
-            if (!this.engine.updateWallEndpoints([...changes.values()])) return;
-
-            if (Math.hypot(mouseDx, mouseDy) * this.renderer.scale > 2) {
-                drag.moved = true;
-            }
-
-            this.scheduleCanvasRender();
-            return;
-        }
-
-        // Handle column dragging
-        if (this.isDragging) {
-            const point = this.getMousePoint(event, false);
-            const column = this.selectionManager.selectedElement;
-
-            if (!column) {
-                this.isDragging = false;
-                return;
-            }
-
-            const moved = this.engine.moveColumn(column.id, {
-                x: point.x - this.dragOffset.x,
-                y: point.y - this.dragOffset.y
-            });
-
-            if (moved) this.scheduleCanvasRender();
+        if (this.selectionTool.isDragging) {
+            this.selectionTool.updateDrag(this.getMousePoint(event, false));
             return;
         }
 
@@ -229,81 +157,12 @@ export default class EditorController {
             return;
         }
 
-        const selected = this.selectionManager.selectedElement;
-
-        if (selected?.type === 'wall') {
-            const point = this.getMousePoint(event, false);
-            const corners = this.engine.getWallDisplayGeometry().get(selected.id)
-                ?? selected.getGeometry();
-
-            if (!this.selectionManager.isPointInsidePolygon(point, corners)) {
-                return;
-            }
-
-            const start = { ...selected.start };
-            const end = { ...selected.end };
-            const dx = end.x - start.x;
-            const dy = end.y - start.y;
-            const length = Math.hypot(dx, dy);
-
-            if (length === 0) return;
-
-            // Record endpoints that exactly share a junction with this wall.
-            const connections = [];
-
-            for (const wall of this.engine.elements) {
-                if (wall.type !== 'wall' || wall.id === selected.id) continue;
-
-                for (const key of ['start', 'end']) {
-                    const endpoint = wall[key];
-
-                    if (endpoint.x === start.x && endpoint.y === start.y) {
-                        connections.push({ wall, key, junction: 'start' });
-                    } else if (endpoint.x === end.x && endpoint.y === end.y) {
-                        connections.push({ wall, key, junction: 'end' });
-                    }
-                }
-            }
-
-            this.wallDrag = {
-                wall: selected,
-                mouseStart: point,
-                start,
-                end,
-                normal: { x: -dy / length, y: dx / length },
-                connections,
-                moved: false,
-            };
-
-            return;
-        }
-        const column = this.selectionManager.selectedElement;
-
-        if (!column || column.type !== 'column') {
-            return;
-        }
-
-        const point = this.getMousePoint(event, false);
-
-        if (!this.selectionManager.isPointInsideColumn(point, column)) {
-            return;
-        }
-
-        this.dragOffset = {
-            x: point.x - column.position.x,
-            y: point.y - column.position.y
-        };
-
-        this.isDragging = true;
+        this.selectionTool.startDrag(this.getMousePoint(event, false));
     }
 
     handleMouseUp() {
         if (this.isEditingLocked) return;
-        if (this.wallDrag) {
-            this.suppressNextClick = this.wallDrag.moved;
-            this.wallDrag = null;
-        }
-        this.isDragging = false;
+        this.selectionTool.endDrag();
         this.navigation.stopPan();
     }
 
@@ -347,9 +206,7 @@ export default class EditorController {
         }
         
         if (event.key === 'Escape') {
-            this.cancelWallDrawing();
-            this.isDragging = false;
-            this.selectionManager.clear();
+            this.cancelInteraction({ clearSelection: true });
 
             this.view.render();
         }
@@ -364,16 +221,9 @@ export default class EditorController {
                 return;
             }
 
-            const selected = this.selectionManager.selectedElement;
-
-            if (!selected) {
-                return;
-            }
-
+            if (!this.selectionTool.hasSelection) return;
             event.preventDefault();
-
-            this.engine.removeElement(selected.id);
-            this.selectionManager.clear();
+            this.selectionTool.deleteSelected();
         }
     }
 
@@ -404,6 +254,13 @@ export default class EditorController {
         this.wallTool.cancel();
     }
 
+    /** Cancel transient gestures without rolling back committed model changes. */
+    cancelInteraction({ clearSelection = false } = {}) {
+        this.cancelWallDrawing();
+        this.selectionTool.cancel({ clearSelection });
+        this.navigation.stopPan();
+    }
+
     /**
      * Locks editor interactions during project save or load operations.
      *
@@ -414,13 +271,7 @@ export default class EditorController {
         this.isEditingLocked = locked;
 
         if (locked) {
-            // Cancel unfinished wall drawing
-            this.cancelWallDrawing();
-
-            // Stop any active dragging or panning
-            this.isDragging = false;
-            this.navigation.stopPan();
-            this.wallDrag = null;
+            this.cancelInteraction();
 
             // Clear any drawing preview
             this.view.render();

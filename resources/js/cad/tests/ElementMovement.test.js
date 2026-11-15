@@ -123,6 +123,7 @@ describe('dragging through the engine', () => {
         const controller = new EditorController(null, engine, { scale: 0.1 }, null, {
             selectedElement: selected,
             isPointInsidePolygon: () => true,
+            isPointInsideColumn: () => true,
         });
         controller.activeTool = 'select';
         controller.getMousePoint = event => event.point;
@@ -133,8 +134,7 @@ describe('dragging through the engine', () => {
     it('applies the column drag offset and schedules a redraw only after movement', () => {
         const { engine, column } = setup();
         const controller = controllerFor(engine, column);
-        controller.isDragging = true;
-        controller.dragOffset = { x: 100, y: 200 };
+        controller.handleMouseDown({ button: 0, point: { x: 2100, y: 2200 } });
 
         controller.handleMouseMove({ point: { x: 3100, y: 4200 } });
         controller.handleMouseMove({ point: { x: 3100, y: 4200 } });
@@ -154,7 +154,7 @@ describe('dragging through the engine', () => {
         expect(wall.end).toEqual({ x: 1000, y: 200 });
         expect(neighbor.start).toEqual(wall.end);
         expect(neighbor.end).toEqual({ x: 1000, y: 1000 });
-        expect(controller.wallDrag.moved).toBe(true);
+        expect(controller.selectionTool.drag.moved).toBe(true);
         expect(controller.scheduleCanvasRender).toHaveBeenCalledTimes(1);
         expect(engine.onModelChange).toHaveBeenCalledTimes(1);
     });

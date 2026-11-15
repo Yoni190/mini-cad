@@ -16,8 +16,7 @@ describe('project lifecycle', () => {
         service = { saveProject: vi.fn(), updateProject: vi.fn() };
         projects = new ProjectController({
             engine, controls, projectService: service, canvas: { style: {} },
-            editor: { setEditingLocked: vi.fn(), cancelWallDrawing: vi.fn() },
-            selectionManager: { clear: vi.fn() },
+            editor: { setEditingLocked: vi.fn(), cancelInteraction: vi.fn() },
         });
         engine.replaceElements.mockImplementation(elements => {
             engine.elements = elements;
@@ -61,6 +60,7 @@ describe('project lifecycle', () => {
         expect(projects.hasUnsavedChanges).toBe(false);
         projects.createNew();
         expect(projects.currentProjectId).toBeNull();
+        expect(projects.editor.cancelInteraction).toHaveBeenCalledWith({ clearSelection: true });
         expect(projects.hasUnsavedChanges).toBe(false);
         expect(controls.name.value).toBe('Untitled Project');
         expect(window.history.replaceState).toHaveBeenLastCalledWith(null, '', '/editor');
