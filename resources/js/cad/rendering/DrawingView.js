@@ -9,7 +9,7 @@ export default class DrawingView {
     /**
      * Redraws stored elements using their resolved display geometry.
      *
-     * Temporary previews are drawn separately by EditorController.
+     * Temporary previews are drawn by WallPreviewRenderer when the editor requests it.
      */
     render(selectedId = null) {
         const wallGeometry = this.engine.getWallDisplayGeometry();

@@ -5,6 +5,7 @@ import initEditorControls from './cad/ui/editor-controls';
 import createWallInputs from './cad/ui/wall-inputs';
 import CanvasRenderer from './cad/rendering/CanvasRenderer';
 import DrawingView from './cad/rendering/DrawingView';
+import WallPreviewRenderer from './cad/rendering/WallPreviewRenderer';
 import DrawingEngine from './cad/DrawingEngine';
 import EditorController from './cad/interaction/EditorController';
 import ProjectService from './cad/persistence/ProjectService';
@@ -23,8 +24,9 @@ if (canvas && twoContainer && threeContainer) {
     const previewCanvas = document.getElementById('previewCanvas');
     const previewRenderer = new CanvasRenderer(previewCanvas);
     const engine = new DrawingEngine();
-    const view = new DrawingView(engine, renderer, previewRenderer);
     const snapManager = new SnapManager();
+    const wallPreviewRenderer = new WallPreviewRenderer({ renderer, previewRenderer, snapManager });
+    const view = new DrawingView(engine, renderer, wallPreviewRenderer);
     const selectionManager = new SelectionManager();
     const editor = new EditorController(
         canvas,
@@ -33,10 +35,9 @@ if (canvas && twoContainer && threeContainer) {
         snapManager,
         selectionManager,
         view,
-        createWallInputs()
+        createWallInputs(),
+        wallPreviewRenderer
     );
-
-    editor.previewRenderer = previewRenderer;
 
     editor.init();
     initEditorUI();

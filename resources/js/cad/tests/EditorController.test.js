@@ -12,7 +12,7 @@ describe('pending wall input', () => {
             addWall: vi.fn((start, end) => elements.push({ type: 'wall', start, end })),
         };
         const controller = new EditorController(null, engine, null, null, { clear: vi.fn() }, { render: vi.fn() });
-        controller.previewRenderer = { clear: vi.fn() };
+        controller.wallPreviewRenderer = { clear: vi.fn() };
         controller.getMousePoint = event => event.point;
         const inputs = {
             wallLength: { value: '' },
@@ -146,6 +146,24 @@ describe('pending wall input', () => {
         expect(controller.pendingRenderFrame).toBeNull();
     });
 
+    it('delegates preview geometry, initial hints, and clearing to the preview renderer', () => {
+        const { controller, engine } = setup();
+        const preview = { clear: vi.fn(), render: vi.fn(), renderStartHints: vi.fn() };
+        controller.wallPreviewRenderer = preview;
+        controller.handleMouseMove({ point: { x: 1000, y: 0 } });
+        expect(preview.renderStartHints).toHaveBeenCalledWith({ x: 1000, y: 0 }, engine.elements);
+        controller.handleClick({ button: 0, point: { x: 0, y: 0 } });
+        expect(preview.clear).toHaveBeenCalledOnce();
+        controller.wallTool.directionPoint = { x: 1000, y: 0 };
+        controller.renderWallPreview();
+        expect(preview.render).toHaveBeenCalledWith(expect.objectContaining({
+            start: { x: 0, y: 0 }, end: { x: 1000, y: 0 }, thickness: 200,
+        }), engine.elements);
+        controller.cancelWallDrawing();
+        controller.renderWallPreview();
+        expect(preview.render).toHaveBeenLastCalledWith(null, engine.elements);
+    });
+
     it('does not draw a queued preview after the pending wall is cancelled', () => {
         const { controller } = setup();
         controller.wallTool.startPoint = { x: 0, y: 0 };
@@ -249,7 +267,7 @@ describe('navigation routing', () => {
         const renderer = { scale: 1, offsetX: 0, offsetY: 0, screenToWorld: (x, y) => ({ x, y }) };
         const controller = new EditorController(canvas, {}, renderer, null, {}, { render: vi.fn() });
         controller.scheduleCanvasRender = vi.fn();
-        controller.renderWallStartHints = vi.fn();
+        controller.wallPreviewRenderer = { renderStartHints: vi.fn() };
         vi.stubGlobal('window', new EventTarget());
         vi.stubGlobal('document', Object.assign(new EventTarget(), {
             getElementById: () => new EventTarget(),
@@ -264,7 +282,7 @@ describe('navigation routing', () => {
         controller.handleMouseMove({ clientX: 30, clientY: 40 });
         expect(renderer.offsetX).toBe(20);
         expect(renderer.offsetY).toBe(20);
-        expect(controller.renderWallStartHints).not.toHaveBeenCalled();
+        expect(controller.wallPreviewRenderer.renderStartHints).not.toHaveBeenCalled();
         expect(controller.scheduleCanvasRender).toHaveBeenCalledOnce();
         window.dispatchEvent(new Event('mouseup'));
         expect(controller.navigation.isPanning).toBe(false);
