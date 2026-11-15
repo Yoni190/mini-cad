@@ -210,3 +210,55 @@ describe('property actions', () => {
         expect(controller.renderWallPreview).toHaveBeenCalledOnce();
     });
 });
+
+describe('navigation routing', () => {
+    function setup() {
+        const canvas = Object.assign(new EventTarget(), {
+            getBoundingClientRect: () => ({ left: 0, top: 0 }),
+        });
+        const renderer = { scale: 1, offsetX: 0, offsetY: 0, screenToWorld: (x, y) => ({ x, y }) };
+        const controller = new EditorController(canvas, {}, renderer, null, {}, { render: vi.fn() });
+        controller.scheduleCanvasRender = vi.fn();
+        controller.renderWallStartHints = vi.fn();
+        vi.stubGlobal('window', new EventTarget());
+        vi.stubGlobal('document', Object.assign(new EventTarget(), {
+            getElementById: () => new EventTarget(),
+        }));
+        controller.init();
+        return { controller, renderer };
+    }
+
+    it('prioritizes panning over wall previews and stops on a mouseup outside the canvas', () => {
+        const { controller, renderer } = setup();
+        controller.handleMouseDown({ button: 1, clientX: 10, clientY: 20, preventDefault() {} });
+        controller.handleMouseMove({ clientX: 30, clientY: 40 });
+        expect(renderer.offsetX).toBe(20);
+        expect(renderer.offsetY).toBe(20);
+        expect(controller.renderWallStartHints).not.toHaveBeenCalled();
+        expect(controller.scheduleCanvasRender).toHaveBeenCalledOnce();
+        window.dispatchEvent(new Event('mouseup'));
+        expect(controller.navigation.isPanning).toBe(false);
+        expect(controller.navigation.lastPanPoint).toBeNull();
+    });
+
+    it('cancels panning on lock and blocks navigation until unlocked', () => {
+        const { controller, renderer } = setup();
+        const down = { button: 1, clientX: 10, clientY: 20, preventDefault: vi.fn() };
+        controller.handleMouseDown(down);
+        controller.setEditingLocked(true);
+        expect(controller.navigation.isPanning).toBe(false);
+        controller.handleMouseDown(down);
+        controller.handleMouseMove({ clientX: 30, clientY: 40 });
+        const wheel = { clientX: 30, clientY: 40, deltaY: -1, preventDefault: vi.fn() };
+        controller.handleWheel(wheel);
+        expect(controller.navigation.isPanning).toBe(false);
+        expect(renderer.scale).toBe(1);
+        expect(renderer.offsetX).toBe(0);
+        expect(controller.scheduleCanvasRender).not.toHaveBeenCalled();
+        expect(wheel.preventDefault).not.toHaveBeenCalled();
+        controller.setEditingLocked(false);
+        controller.handleWheel(wheel);
+        expect(renderer.scale).toBe(1.1);
+        expect(controller.scheduleCanvasRender).toHaveBeenCalledOnce();
+    });
+});

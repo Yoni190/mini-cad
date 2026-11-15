@@ -1,6 +1,7 @@
 import GeometryService from "../geometry/GeometryService";
 import Wall from "../models/Wall";
 import WallTopology from '../geometry/WallTopology';
+import CanvasNavigation from './CanvasNavigation';
 
 export default class EditorController {
     constructor(canvas, engine, renderer, snapManager, selectionManager, view) {
@@ -16,8 +17,11 @@ export default class EditorController {
         this.selectionManager = selectionManager;
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
-        this.isPanning = false;
-        this.lastPanPoint = null;
+        this.navigation = new CanvasNavigation({
+            canvas,
+            renderer,
+            requestRender: () => this.scheduleCanvasRender(),
+        });
         this.isEditingLocked = false;
         this.orthoEnabled = false;
         this.wallChainStart = null;
@@ -152,21 +156,9 @@ export default class EditorController {
      */
     handleMouseMove(event) {
         if (this.isEditingLocked) return;
-        // Handle panning
-        if (this.isPanning) {
-            const dx = event.clientX - this.lastPanPoint.x;
-            const dy = event.clientY - this.lastPanPoint.y;
-
-            this.renderer.offsetX += dx;
-            this.renderer.offsetY += dy;
-
-            this.lastPanPoint = {
-                x: event.clientX,
-                y: event.clientY
-            };
-
-            this.scheduleCanvasRender();
-
+        // Navigation takes priority over dragging and drafting previews.
+        if (this.navigation.isPanning) {
+            this.navigation.updatePan(event);
             return;
         }
 
@@ -256,15 +248,7 @@ export default class EditorController {
     handleMouseDown(event) {
         if (this.isEditingLocked) return;
         if (event.button === 1) {
-            event.preventDefault();
-
-            this.isPanning = true;
-
-            this.lastPanPoint = {
-                x: event.clientX,
-                y: event.clientY
-            };
-
+            this.navigation.startPan(event);
             return;
         }
 
@@ -347,8 +331,7 @@ export default class EditorController {
             this.wallDrag = null;
         }
         this.isDragging = false;
-        this.isPanning = false;
-        this.lastPanPoint = null;
+        this.navigation.stopPan();
     }
 
     handleKeyDown(event) {
@@ -453,57 +436,10 @@ export default class EditorController {
         }
     }
 
-    /**
-     * Zooms around the cursor while keeping its world point fixed.
-     *
-     * After changing scale, the pan offsets are recalculated so the
-     * same drawing point remains underneath the mouse.
-     */
     handleWheel(event) {
         if (this.isEditingLocked) return;
-        event.preventDefault();
-
-        // Get mouse position relative to the Canvas
-        const rect = this.canvas.getBoundingClientRect();
-
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
-
-        // Find which world coordinate is under the cursor
-        const worldPoint = this.renderer.screenToWorld(
-            mouseX,
-            mouseY
-        );
-
-        // Zoom in or out
-        const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
-
-        // Limit zoom so the drawing can't become
-        // infinitely small or large
-        const newScale = Math.min(
-            2,
-            Math.max(0.01, this.renderer.scale * zoomFactor)
-        );
-
-        // Skip redraws when zoom is at limit
-        if (newScale === this.renderer.scale) {
-            return;
-        }
-
-        this.renderer.scale = newScale;
-
-        // Recalculate offsets so the world point
-        // remains underneath the cursor
-        this.renderer.offsetX =
-            mouseX - worldPoint.x * newScale;
-
-        this.renderer.offsetY =
-            mouseY - worldPoint.y * newScale;
-
-        // Redraw with the new scale and offsets
-        this.scheduleCanvasRender();
+        this.navigation.zoom(event);
     }
-
 
     /**
      * Converts browser mouse coordinates to canvas-local pixels,
@@ -601,7 +537,7 @@ export default class EditorController {
 
             // Stop any active dragging or panning
             this.isDragging = false;
-            this.isPanning = false;
+            this.navigation.stopPan();
             this.wallDrag = null;
 
             // Clear any drawing preview
