@@ -197,6 +197,23 @@ export default class EditorController {
             );
 
         if (
+            !isTypingInField && (event.ctrlKey || event.metaKey) &&
+            !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'a' &&
+            document.getElementById('threeContainer').style.display === 'none'
+        ) {
+            event.preventDefault();
+            if (this.activeTool !== 'select') {
+                const tool = document.getElementById('drawingTool');
+                tool.value = 'select';
+                tool.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            this.cancelInteraction();
+            this.selectionManager.setSelection([...this.engine.elements]);
+            this.view.render(this.selectionManager.selectedIds);
+            return;
+        }
+
+        if (
             !isTypingInField &&
             !event.ctrlKey &&
             !event.metaKey &&

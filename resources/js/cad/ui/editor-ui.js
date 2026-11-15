@@ -9,7 +9,7 @@ export default function initEditorUI() {
     const instructions = {
         wall: 'Wall: Click a start point, then an end point. Use Properties for an exact length.',
         column: 'Column: Click to place a column. Choose Select to move or resize it.',
-        select: 'Select: Click an element, or double-click and hold to draw a selection box. Drag to move; Delete to remove.',
+        select: 'Select: Click an element, or double-click and hold to draw a selection box. Ctrl+A selects all; drag to move; Delete to remove.',
     };
 
     document.addEventListener('cad-selection-change', (event) => {

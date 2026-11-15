@@ -33,6 +33,39 @@ function setup() {
     return { engine, wall, column, outside, selection, preview, view, editor, canvasEvents, windowEvents, canvas, event };
 }
 
+describe('select all shortcut', () => {
+    it.each(['ctrlKey', 'metaKey'])('selects all elements and switches to Select with %s', modifier => {
+        const { engine, selection, editor, view } = setup();
+        vi.stubGlobal('HTMLElement', class {});
+        const tool = { value: 'wall', dispatchEvent: vi.fn(() => { editor.activeTool = 'select'; }) };
+        document.getElementById = id => id === 'threeContainer' ? { style: { display: 'none' } } : tool;
+        editor.activeTool = 'wall';
+        const event = { key: 'a', [modifier]: true, preventDefault: vi.fn() };
+        editor.handleKeyDown(event);
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(tool.value).toBe('select');
+        expect(tool.dispatchEvent).toHaveBeenCalledOnce();
+        expect(selection.selectedElements).toEqual(engine.elements);
+        expect(view.render).toHaveBeenLastCalledWith(selection.selectedIds);
+        engine.elements.push(new Column({ position: { x: 8000, y: 8000 } }));
+        expect(selection.selectedElements).toHaveLength(3);
+    });
+
+    it('leaves text fields and the 3D view to the browser', () => {
+        const { selection, editor } = setup();
+        class Field { matches() { return true; } }
+        vi.stubGlobal('HTMLElement', Field);
+        const event = { key: 'a', ctrlKey: true, target: new Field(), preventDefault: vi.fn() };
+        editor.handleKeyDown(event);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(selection.selectedElements).toEqual([]);
+        document.getElementById = () => ({ style: { display: 'block' } });
+        editor.handleKeyDown({ ...event, target: null });
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(selection.selectedElements).toEqual([]);
+    });
+});
+
 describe('box selection', () => {
     it.each([false, true])('starts on the second press and finishes on release (reverse=%s)', reversed => {
         const { canvasEvents, windowEvents, event, selection, wall, column, preview, view } = setup();
