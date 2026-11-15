@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
+import SelectionManager from '../interaction/SelectionManager';
 import ViewportController from '../rendering/ViewportController';
 import ThreeViewer from '../rendering/ThreeViewer';
 
@@ -17,17 +18,19 @@ it('defers 3D creation and synchronization until visible, then refreshes only ch
     const canvas = {}, previewCanvas = {};
     const engine = { elements: [], getWallDisplayGeometry: vi.fn(() => []) };
     const view = { render: vi.fn() };
+    const selection = new SelectionManager();
+    selection.selectedElements = [{ id: 'selected' }];
     const viewport = new ViewportController({
         canvas, previewCanvas, engine, view,
         viewport: { clientWidth: 800 },
         twoContainer: { style: { display: 'block' } },
         threeContainer: { style: { display: 'none' } },
-        selectionManager: { selectedElement: { id: 'selected' } },
+        selectionManager: selection,
     });
     viewport.init();
     expect(canvas).toEqual({ width: 800, height: 600 });
     expect(previewCanvas).toEqual(canvas);
-    expect(view.render).toHaveBeenCalledWith('selected');
+    expect(view.render).toHaveBeenCalledWith(new Set(['selected']));
     viewport.modelChanged();
     expect(ThreeViewer).not.toHaveBeenCalled();
     viewport.show3D();

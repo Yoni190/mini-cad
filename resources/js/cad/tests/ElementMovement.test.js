@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import SelectionManager from '../interaction/SelectionManager';
 import DrawingEngine from '../DrawingEngine';
 import EditorController from '../interaction/EditorController';
 import Wall from '../models/Wall';
@@ -120,11 +121,9 @@ describe('wall endpoint updates', () => {
 
 describe('dragging through the engine', () => {
     function controllerFor(engine, selected) {
-        const controller = new EditorController(null, engine, { scale: 0.1 }, null, {
-            selectedElement: selected,
-            isPointInsidePolygon: () => true,
-            isPointInsideColumn: () => true,
-        });
+        const selection = new SelectionManager();
+        selection.selectedElements = [selected];
+        const controller = new EditorController(null, engine, { scale: 0.1 }, null, selection);
         controller.activeTool = 'select';
         controller.getMousePoint = event => event.point;
         controller.scheduleCanvasRender = vi.fn();

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import SelectionManager from '../interaction/SelectionManager';
 import EditorController from '../interaction/EditorController';
 import createWallInputs from '../ui/wall-inputs';
 
@@ -195,7 +196,9 @@ describe('pending wall input', () => {
 describe('property actions', () => {
     function setup(selectedElement = null) {
         const engine = { updateColumnDimensions: vi.fn(), updateWallThickness: vi.fn() };
-        const controller = new EditorController(null, engine, null, null, { selectedElement });
+        const selection = new SelectionManager();
+        selection.selectedElements = selectedElement ? [selectedElement] : [];
+        const controller = new EditorController(null, engine, null, null, selection);
         controller.wallTool.createWallWithLength = vi.fn();
         controller.renderWallPreview = vi.fn();
         return { controller, engine };
@@ -214,7 +217,7 @@ describe('property actions', () => {
     it('requires column selection, Select mode, and positive finite dimensions', () => {
         const { controller, engine } = setup();
         expect(() => controller.updateSelectedColumnDimensions(300, 400)).toThrow('Please select a column first.');
-        controller.selectionManager.selectedElement = { id: 'column', type: 'column' };
+        controller.selectionManager.selectedElements = [{ id: 'column', type: 'column' }];
         controller.updateSelectedColumnDimensions(300, 400);
         expect(engine.updateColumnDimensions).not.toHaveBeenCalled();
         controller.activeTool = 'select';
@@ -231,7 +234,7 @@ describe('property actions', () => {
         expect(engine.updateWallThickness).not.toHaveBeenCalled();
         controller.activeTool = 'select';
         expect(() => controller.updateSelectedWallThickness('200')).toThrow('Please select a wall first.');
-        controller.selectionManager.selectedElement = { id: 'wall', type: 'wall' };
+        controller.selectionManager.selectedElements = [{ id: 'wall', type: 'wall' }];
         controller.updateSelectedWallThickness('200');
         expect(engine.updateWallThickness).toHaveBeenCalledWith('wall', '200');
         engine.updateWallThickness.mockImplementation(() => { throw new Error('Invalid thickness'); });
@@ -331,13 +334,12 @@ describe('selection routing and cancellation', () => {
         }));
         vi.stubGlobal('HTMLElement', class {});
         const selected = { id: 'column', type: 'column', position: { x: 100, y: 100 } };
-        const selectionManager = {
-            selectedElement: selected,
-            select: vi.fn(() => selected),
-            clear: vi.fn(() => { selectionManager.selectedElement = null; }),
-            isPointInsideColumn: () => true,
-        };
-        const engine = { elements: [selected], getWallDisplayGeometry: () => new Map(), moveColumn: vi.fn(), removeElement: vi.fn() };
+        const selectionManager = new SelectionManager();
+        selectionManager.selectedElements = [selected];
+        vi.spyOn(selectionManager, 'select').mockReturnValue(selected);
+        vi.spyOn(selectionManager, 'clear');
+        vi.spyOn(selectionManager, 'isPointInsideColumn').mockReturnValue(true);
+        const engine = { elements: [selected], getWallDisplayGeometry: () => new Map(), moveColumn: vi.fn(), removeElements: vi.fn() };
         const controller = new EditorController(canvas, engine, { scale: 1 }, null, selectionManager, { render: vi.fn() });
         controller.activeTool = 'select';
         controller.getMousePoint = vi.fn(event => event.point);
@@ -402,7 +404,7 @@ describe('selection routing and cancellation', () => {
         expect(controller.selectionTool.isDragging).toBe(false);
         expect(selectionManager.select).not.toHaveBeenCalled();
         expect(engine.moveColumn).not.toHaveBeenCalled();
-        expect(engine.removeElement).not.toHaveBeenCalled();
+        expect(engine.removeElements).not.toHaveBeenCalled();
     });
 
     it.each(['Delete', 'Backspace'])('does not delete the hidden selection in 3D with %s', key => {
@@ -411,13 +413,13 @@ describe('selection routing and cancellation', () => {
         const event = { key, preventDefault: vi.fn() };
         controller.handleKeyDown(event);
         expect(event.preventDefault).not.toHaveBeenCalled();
-        expect(engine.removeElement).not.toHaveBeenCalled();
+        expect(engine.removeElements).not.toHaveBeenCalled();
         expect(selectionManager.selectedElement).not.toBeNull();
 
         threeContainer.style.display = 'none';
         controller.handleKeyDown(event);
         expect(event.preventDefault).toHaveBeenCalledOnce();
-        expect(engine.removeElement).toHaveBeenCalledWith('column');
+        expect(engine.removeElements).toHaveBeenCalledWith(new Set(['column']));
     });
 
     it.each(['Delete', 'Backspace'])('routes %s to deletion while preserving typing in form fields', key => {
@@ -425,10 +427,10 @@ describe('selection routing and cancellation', () => {
         for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT']) {
             controller.handleKeyDown({ key, target: { tagName } });
         }
-        expect(engine.removeElement).not.toHaveBeenCalled();
+        expect(engine.removeElements).not.toHaveBeenCalled();
         const event = { key, preventDefault: vi.fn() };
         controller.handleKeyDown(event);
         expect(event.preventDefault).toHaveBeenCalledOnce();
-        expect(engine.removeElement).toHaveBeenCalledWith('column');
+        expect(engine.removeElements).toHaveBeenCalledWith(new Set(['column']));
     });
 });

@@ -12,14 +12,14 @@ export default class SelectionTool {
     }
 
     get hasSelection() {
-        return Boolean(this.selectionManager.selectedElements?.length || this.selectionManager.selectedElement);
+        return this.selectionManager.selectedElements.length > 0;
     }
 
     handleClick(point) {
-        const selected = this.selectionManager.select(
+        this.selectionManager.select(
             point, this.engine.elements, this.engine.getWallDisplayGeometry()
         );
-        this.renderSelection(selected?.id ?? null);
+        this.renderSelection(this.selectionManager.selectedIds);
     }
 
     startBox(point) {
@@ -51,7 +51,7 @@ export default class SelectionTool {
 
     startDrag(point) {
         const group = this.selectionManager.selectedElements;
-        if (group?.length > 1) {
+        if (group.length > 1) {
             const geometry = this.engine.getWallDisplayGeometry();
             const inside = group.some(element => this.selectionManager.isPointInsidePolygon(
                 point, geometry.get(element.id) ?? element.getGeometry()
@@ -221,10 +221,8 @@ export default class SelectionTool {
     }
 
     deleteSelected() {
-        const selected = this.selectionManager.selectedElements;
-        if (selected?.length > 1) this.engine.removeElements(selected.map(element => element.id));
-        else if (this.selectionManager.selectedElement) this.engine.removeElement(this.selectionManager.selectedElement.id);
-        else return;
+        if (!this.hasSelection) return;
+        this.engine.removeElements(this.selectionManager.selectedIds);
         this.cancel({ clearSelection: true });
     }
 }

@@ -1,22 +1,25 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import SelectionManager from '../interaction/SelectionManager';
 import SelectionTool from '../interaction/tools/SelectionTool';
 import DrawingEngine from '../DrawingEngine';
 import Wall from '../models/Wall';
 import Column from '../models/Column';
 
+afterEach(() => vi.unstubAllGlobals());
+
 function setup(type = 'wall') {
+    vi.stubGlobal('document', { dispatchEvent: vi.fn() });
     const wall = new Wall({ start: { x: 0, y: 0 }, end: { x: 1000, y: 0 } });
     const column = new Column({ position: { x: 2000, y: 2000 } });
     const engine = new DrawingEngine();
     engine.elements = [wall, column];
     engine.onModelChange = vi.fn();
-    const selectionManager = {
-        selectedElement: type === 'wall' ? wall : type === 'column' ? column : null,
-        select: vi.fn(),
-        clear: vi.fn(() => { selectionManager.selectedElement = null; }),
-        isPointInsidePolygon: vi.fn(() => true),
-        isPointInsideColumn: vi.fn(() => true),
-    };
+    const selectionManager = new SelectionManager();
+    selectionManager.selectedElements = type === 'wall' ? [wall] : type === 'column' ? [column] : [];
+    vi.spyOn(selectionManager, 'select');
+    vi.spyOn(selectionManager, 'clear');
+    vi.spyOn(selectionManager, 'isPointInsidePolygon');
+    vi.spyOn(selectionManager, 'isPointInsideColumn');
     const requestRender = vi.fn(), renderSelection = vi.fn();
     const tool = new SelectionTool({ engine, selectionManager, getScale: () => 0.1, requestRender, renderSelection });
     return { tool, engine, wall, column, selectionManager, requestRender, renderSelection };
@@ -27,12 +30,11 @@ const wallPoint = { x: 500, y: 0 };
 describe('selection gestures', () => {
     it('selects using resolved wall footprints and renders the selected identity', () => {
         const { tool, engine, wall, selectionManager, renderSelection } = setup();
-        selectionManager.select.mockReturnValueOnce(wall).mockReturnValueOnce(null);
         tool.handleClick(wallPoint);
         expect(selectionManager.select).toHaveBeenCalledWith(wallPoint, engine.elements, engine.getWallDisplayGeometry());
-        expect(renderSelection).toHaveBeenLastCalledWith(wall.id);
+        expect(renderSelection).toHaveBeenLastCalledWith(new Set([wall.id]));
         tool.handleClick({ x: 9000, y: 9000 });
-        expect(renderSelection).toHaveBeenLastCalledWith(null);
+        expect(renderSelection).toHaveBeenLastCalledWith(new Set());
     });
 
     it('starts wall dragging only inside its resolved footprint', () => {
@@ -47,7 +49,7 @@ describe('selection gestures', () => {
         const { tool, column, selectionManager, engine } = setup(null);
         tool.startDrag({ x: 2100, y: 2200 });
         expect(tool.isDragging).toBe(false);
-        selectionManager.selectedElement = column;
+        selectionManager.setSelection([column]);
         selectionManager.isPointInsideColumn.mockReturnValue(false);
         tool.startDrag({ x: 2100, y: 2200 });
         expect(tool.isDragging).toBe(false);
@@ -97,7 +99,7 @@ describe('selection gestures', () => {
     it('ends a column gesture if selection is cleared externally', () => {
         const { tool, selectionManager, requestRender } = setup('column');
         tool.startDrag({ x: 2100, y: 2200 });
-        selectionManager.selectedElement = null;
+        selectionManager.clear();
         tool.updateDrag({ x: 3100, y: 4200 });
         expect(tool.isDragging).toBe(false);
         expect(requestRender).not.toHaveBeenCalled();

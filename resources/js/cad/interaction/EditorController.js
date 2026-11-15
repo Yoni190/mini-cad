@@ -21,7 +21,7 @@ export default class EditorController {
             engine, selectionManager,
             getScale: () => this.renderer.scale,
             requestRender: () => this.scheduleCanvasRender(),
-            renderSelection: selectedId => this.view.render(selectedId),
+            renderSelection: selectedIds => this.view.render(selectedIds),
             renderBox: (start, end) => this.wallPreviewRenderer.renderSelectionBox(start, end),
             clearBox: () => this.wallPreviewRenderer.clear(),
         });
@@ -313,7 +313,7 @@ export default class EditorController {
             this.cancelInteraction();
 
             // Clear any drawing preview
-            this.view.render(this.selectionManager.selectedIds ?? this.selectionManager.selectedElement?.id ?? null);
+            this.view.render(this.selectionManager.selectedIds);
         }
     }
 
@@ -366,7 +366,7 @@ export default class EditorController {
 
             // Use the current selection and current element positions.
             this.view.render(
-                this.selectionManager.selectedIds ?? this.selectionManager.selectedElement?.id ?? null
+                this.selectionManager.selectedIds
             );
 
             // A full redraw clears the preview overlay. Restore an active

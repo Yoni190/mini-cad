@@ -259,21 +259,9 @@ export default class DrawingEngine {
         const selected = new Set(ids);
         const removed = this.elements.filter(element => selected.has(element.id));
         if (!removed.length) return;
-        this.elements = this.elements.filter(element => !selected.has(element.id));
+        const remaining = this.elements.filter(element => !selected.has(element.id));
+        this.elements.splice(0, this.elements.length, ...remaining);
         this.handleModelChange({ wallsChanged: removed.some(element => element.type === 'wall') });
     }
 
-    removeElement(id) {
-        const index = this.elements.findIndex(
-            element => element.id === id
-        );
-
-        if (index === -1) {
-            return;
-        }
-
-        const [removed] = this.elements.splice(index, 1);
-
-        this.handleModelChange({ wallsChanged: removed.type === 'wall' });
-    }
 }

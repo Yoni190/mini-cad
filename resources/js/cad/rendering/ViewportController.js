@@ -22,7 +22,7 @@ export default class ViewportController {
         if (this.canvas.width !== width || this.canvas.height !== height) {
             this.canvas.width = this.previewCanvas.width = width;
             this.canvas.height = this.previewCanvas.height = height;
-            this.view.render(this.selectionManager.selectedIds ?? this.selectionManager.selectedElement?.id ?? null);
+            this.view.render(this.selectionManager.selectedIds);
         }
         this.threeViewer?.resize();
     }
@@ -51,6 +51,6 @@ export default class ViewportController {
         this.threeViewer?.setVisible(false);
         this.threeContainer.style.display = 'none';
         this.twoContainer.style.display = 'block';
-        this.view.render(this.selectionManager.selectedIds ?? this.selectionManager.selectedElement?.id ?? null);
+        this.view.render(this.selectionManager.selectedIds);
     }
 }

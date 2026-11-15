@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import SelectionManager from '../interaction/SelectionManager';
 import DrawingEngine from '../DrawingEngine';
 import DrawingView from '../rendering/DrawingView';
 import EditorController from '../interaction/EditorController';
@@ -43,7 +44,7 @@ describe('DrawingView', () => {
         const selected = selectedType === 'wall' ? first : selectedType === 'column' ? column : null;
         const before = JSON.stringify(engine.elements);
 
-        view.render(selected?.id ?? null);
+        view.render(new Set(selected ? [selected.id] : []));
 
         expect(renderer.clear).toHaveBeenCalledTimes(1);
         expect(renderer.drawGrid).toHaveBeenCalledTimes(1);
@@ -83,7 +84,7 @@ describe('DrawingView', () => {
 describe('scheduled redraws after model changes', () => {
     it('combines model changes into one frame and uses the current selection', () => {
         const { engine, renderer, view } = setup();
-        const selection = { selectedElement: null };
+        const selection = new SelectionManager();
         const controller = new EditorController(null, engine, renderer, null, selection, view);
         let drawFrame;
         const requestFrame = vi.fn(callback => {
@@ -96,7 +97,7 @@ describe('scheduled redraws after model changes', () => {
         engine.addColumn({ x: 1000, y: 1000 });
         const column = engine.elements[0];
         engine.updateColumnDimensions(column.id, 600, 800);
-        selection.selectedElement = column;
+        selection.selectedElements = [column];
 
         expect(requestFrame).toHaveBeenCalledTimes(1);
         expect(renderer.drawElement).not.toHaveBeenCalled();
@@ -110,7 +111,7 @@ describe('scheduled redraws after model changes', () => {
 
     it('clears the previous picture when a project is replaced', () => {
         const { engine, renderer, previewRenderer, view } = setup();
-        const controller = new EditorController(null, engine, renderer, null, { selectedElement: null }, view);
+        const controller = new EditorController(null, engine, renderer, null, new SelectionManager(), view);
         let drawFrame;
         vi.stubGlobal('requestAnimationFrame', callback => {
             drawFrame = callback;

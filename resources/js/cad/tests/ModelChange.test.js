@@ -44,7 +44,7 @@ describe('model change lifecycle', () => {
         },
         {
             name: 'removing a wall',
-            change: ({ engine, wall }) => engine.removeElement(wall.id),
+            change: ({ engine, wall }) => engine.removeElements([wall.id]),
             verify: (geometry, { wall }) => expect(geometry.has(wall.id)).toBe(false),
         },
         {
@@ -87,7 +87,7 @@ describe('model change lifecycle', () => {
         },
         {
             name: 'removing a column',
-            change: ({ engine, column }) => engine.removeElement(column.id),
+            change: ({ engine, column }) => engine.removeElements([column.id]),
             verify: ({ engine, column }) => expect(engine.elements).not.toContain(column),
         },
     ];
@@ -105,12 +105,27 @@ describe('model change lifecycle', () => {
         expect(engine.onModelChange).toHaveBeenCalledTimes(1);
     });
 
+    it('removes a column group without recalculating wall footprints', () => {
+        const { engine, wall, column, cached } = setup();
+        engine.addColumn({ x: 4000, y: 4000 });
+        const added = engine.elements.at(-1);
+        engine.onModelChange.mockClear();
+        engine.onModelChange.mockImplementation(() => {
+            expect(engine.elements).toEqual([wall]);
+            expect(engine.getWallDisplayGeometry()).toBe(cached);
+        });
+
+        engine.removeElements([column.id, added.id]);
+
+        expect(engine.onModelChange).toHaveBeenCalledOnce();
+    });
+
     it('does not notify or redraw for unchanged dimensions, unchanged thickness or a missing deletion', () => {
         const { engine, wall, column, cached } = setup();
 
         engine.updateWallThickness(wall.id, wall.thickness);
         engine.updateColumnDimensions(column.id, column.width, column.depth);
-        engine.removeElement('missing');
+        engine.removeElements(['missing']);
 
         expect(engine.onModelChange).not.toHaveBeenCalled();
         expect(engine.getWallDisplayGeometry()).toBe(cached);

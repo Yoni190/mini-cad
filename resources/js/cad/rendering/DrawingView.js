@@ -11,7 +11,7 @@ export default class DrawingView {
      *
      * Temporary previews are drawn by WallPreviewRenderer when the editor requests it.
      */
-    render(selectedId = null) {
+    render(selectedIds = new Set()) {
         const wallGeometry = this.engine.getWallDisplayGeometry();
 
         //Clear canvas
@@ -22,7 +22,7 @@ export default class DrawingView {
 
         //Draw walls and columns
         for (const element of this.engine.elements) {
-            const isSelected = selectedId instanceof Set ? selectedId.has(element.id) : element.id === selectedId;
+            const isSelected = selectedIds.has(element.id);
 
             const corners = element.type === 'wall'
                 ? wallGeometry.get(element.id) ?? element.getGeometry()
