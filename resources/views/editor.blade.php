@@ -9,22 +9,16 @@
 </head>
 <body class="cad-editor">
     <header class="editor-header">
-        <div class="editor-brand">
+        <div class="editor-brand" role="img" aria-label="Mini CAD">
             <span class="brand-mark" aria-hidden="true">⌑</span>
-            <div><h1>Mini CAD Editor</h1><p>Engineering workspace</p></div>
         </div>
         <div class="project-controls" role="group" aria-label="Project controls">
             <div class="field project-name">
-                <label for="projectName">Project name</label>
-                <input type="text" id="projectName" placeholder="e.g. Ground Floor" maxlength="255">
+                <label for="projectName" class="visually-hidden">Project name</label>
+                <input type="text" id="projectName" value="Untitled Project" placeholder="Untitled Project" maxlength="255" title="Click to rename project">
             </div>
             <button type="button" id="saveProject" class="button-primary" title="Save project">Save</button>
             <button type="button" id="newProject" title="Create a new project">New Project</button>
-            <div class="field project-list">
-                <label for="projectList">Saved projects</label>
-                <select id="projectList"><option value="">Select a project</option></select>
-            </div>
-            <button type="button" id="loadProject" title="Load selected project">Load</button>
         </div>
         <div class="view-toggle" role="group" aria-label="Drawing view">
             <button type="button" id="show2D" aria-pressed="true" title="Switch to 2D">2D</button>
