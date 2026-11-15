@@ -199,6 +199,23 @@ if (canvas && twoContainer && threeContainer) {
         view.render();
     });
 
+    // Save project keyboard shortcut
+    document.addEventListener('keydown', (event) => {
+        const isSaveShortcut =
+            (event.ctrlKey || event.metaKey) &&
+            !event.altKey &&
+            !event.shiftKey &&
+            event.key.toLowerCase() === 's';
+
+        if (!isSaveShortcut) return;
+
+        event.preventDefault(); // Stop the browser's Save Page dialog.
+
+        if (!event.repeat) {
+            document.getElementById('saveProject').click();
+        }
+    });
+
     //Save a project
     document.getElementById('saveProject')
         .addEventListener('click', async () => {
