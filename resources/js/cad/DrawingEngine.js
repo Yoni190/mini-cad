@@ -127,10 +127,9 @@ export default class DrawingEngine {
     /**
      * Redraws stored elements using their resolved display geometry.
      *
-     * The preview is drawn separately without entering the element
-     * collection, so mouse movement never commits temporary walls.
+     * Temporary previews are drawn separately by EditorController.
      */
-    render(previewWall = null, selectedId = null) {
+    render(selectedId = null) {
         const wallGeometry = this.getWallDisplayGeometry();
 
         //Clear canvas
@@ -157,14 +156,6 @@ export default class DrawingEngine {
                 isSelected,
                 corners
             );
-        }
-
-        if (previewWall) {
-            this.renderer.drawElement(previewWall, true);
-
-            if(previewWall.type === 'wall'){
-                this.renderer.drawWallLength(previewWall);
-            }
         }
 
         // Notify components after rendering
@@ -204,7 +195,7 @@ export default class DrawingEngine {
 
         this.notifyModelChange();
 
-        this.render(null, column.id);
+        this.render(column.id);
     }
 
     updateWallThickness(id, thickness) {
@@ -231,7 +222,7 @@ export default class DrawingEngine {
         this.invalidateWallGeometry();
 
         // Recalculate footprints and joins, preserving the selection.
-        this.render(null, wall.id);
+        this.render(wall.id);
     }
 
     invalidateWallGeometry() {

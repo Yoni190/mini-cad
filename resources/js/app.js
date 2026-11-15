@@ -141,7 +141,7 @@ if (canvas && twoContainer && threeContainer) {
         if (canvas.width !== width || canvas.height !== height) {
             canvas.width = previewCanvas.width = width;
             canvas.height = previewCanvas.height = height;
-            engine.render(null, selectionManager.selectedElement?.id ?? null);
+            engine.render(selectionManager.selectedElement?.id ?? null);
         }
         threeViewer?.resize();
     }

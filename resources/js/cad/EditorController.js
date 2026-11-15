@@ -182,7 +182,7 @@ export default class EditorController {
                 this.engine.getWallDisplayGeometry()
             );
 
-            this.engine.render(null, selected?.id ?? null);
+            this.engine.render(selected?.id ?? null);
             if(selected?.type === 'column') {
                 document.getElementById('columnWidth').value = selected.width;
                 document.getElementById('columnDepth').value = selected.depth;
@@ -1009,7 +1009,6 @@ export default class EditorController {
 
             // Use the current selection and current element positions.
             this.engine.render(
-                null,
                 this.selectionManager.selectedElement?.id ?? null
             );
 
