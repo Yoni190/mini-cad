@@ -1,6 +1,19 @@
 export default class SelectionManager {
     constructor() {
-        this.selectedElement = null;
+        this.selectedElements = [];
+    }
+
+    get selectedElement() {
+        return this.selectedElements.length === 1 ? this.selectedElements[0] : null;
+    }
+
+    get selectedIds() {
+        return new Set(this.selectedElements.map(element => element.id));
+    }
+
+    setSelection(elements) {
+        this.selectedElements = elements;
+        document.dispatchEvent(new CustomEvent('cad-selection-change', { detail: this.selectedElement }));
     }
 
     /**
@@ -11,14 +24,14 @@ export default class SelectionManager {
      * are used when supplied so selection follows the visible shape.
      */
     select(point, elements, wallGeometry = null) {
-        this.selectedElement = null;
+        let selected = null;
 
         for (let i = elements.length - 1; i >= 0; i--) {
             const element = elements[i];
             
             if (element.type === 'column') {
                 if (this.isPointInsideColumn(point, element)) {
-                    this.selectedElement = element;
+                    selected = element;
                     break;
                 }
             }
@@ -28,25 +41,18 @@ export default class SelectionManager {
                     ?? element.getGeometry();
 
                 if (this.isPointInsidePolygon(point, corners)) {
-                    this.selectedElement = element;
+                    selected = element;
                     break;
                 }
             }
         }
 
-        document.dispatchEvent(new CustomEvent('cad-selection-change', {
-            detail: this.selectedElement
-        }));
-        
-        return this.selectedElement;
+        this.setSelection(selected ? [selected] : []);
+        return selected;
     }
 
     clear() {
-        this.selectedElement = null;
-
-        document.dispatchEvent(new CustomEvent('cad-selection-change', {
-            detail: null
-        }));
+        this.setSelection([]);
     }
 
     isPointInsideColumn(point, column) {

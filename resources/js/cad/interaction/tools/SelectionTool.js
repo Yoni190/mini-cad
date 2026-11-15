@@ -2,8 +2,8 @@
  * Coordinates arrive unsnapped. Model mutations stay in DrawingEngine.
  */
 export default class SelectionTool {
-    constructor({ engine, selectionManager, getScale, requestRender, renderSelection }) {
-        Object.assign(this, { engine, selectionManager, getScale, requestRender, renderSelection });
+    constructor({ engine, selectionManager, getScale, requestRender, renderSelection, renderBox, clearBox }) {
+        Object.assign(this, { engine, selectionManager, getScale, requestRender, renderSelection, renderBox, clearBox });
         this.cancel();
     }
 
@@ -12,7 +12,7 @@ export default class SelectionTool {
     }
 
     get hasSelection() {
-        return Boolean(this.selectionManager.selectedElement);
+        return Boolean(this.selectionManager.selectedElements?.length || this.selectionManager.selectedElement);
     }
 
     handleClick(point) {
@@ -22,7 +22,43 @@ export default class SelectionTool {
         this.renderSelection(selected?.id ?? null);
     }
 
+    startBox(point) {
+        this.drag = null;
+        this.box = { start: point, end: point };
+        this.renderBox(point, point);
+    }
+
+    updateBox(point) {
+        this.box.end = point;
+        this.renderBox(this.box.start, point);
+    }
+
+    finishBox(point, suppressClick) {
+        const { start } = this.box;
+        const minX = Math.min(start.x, point.x), maxX = Math.max(start.x, point.x);
+        const minY = Math.min(start.y, point.y), maxY = Math.max(start.y, point.y);
+        const geometry = this.engine.getWallDisplayGeometry();
+        const selected = this.engine.elements.filter(element => {
+            const corners = geometry.get(element.id) ?? element.getGeometry();
+            return corners.every(corner => corner.x >= minX && corner.x <= maxX && corner.y >= minY && corner.y <= maxY);
+        });
+        this.box = null;
+        this.clearBox();
+        this.selectionManager.setSelection(selected);
+        this.renderSelection(this.selectionManager.selectedIds);
+        this.suppressNextClick = suppressClick;
+    }
+
     startDrag(point) {
+        const group = this.selectionManager.selectedElements;
+        if (group?.length > 1) {
+            const geometry = this.engine.getWallDisplayGeometry();
+            const inside = group.some(element => this.selectionManager.isPointInsidePolygon(
+                point, geometry.get(element.id) ?? element.getGeometry()
+            ));
+            if (inside) this.drag = { type: 'group', start: point, last: point, moved: false };
+            return;
+        }
         const selected = this.selectionManager.selectedElement;
 
         if (selected?.type === 'wall') {
@@ -88,6 +124,15 @@ export default class SelectionTool {
     }
 
     updateDrag(point) {
+        if (this.drag?.type === 'group') {
+            const drag = this.drag;
+            if (!drag.moved && Math.hypot(point.x - drag.start.x, point.y - drag.start.y) * this.getScale() <= 2) return;
+            this.engine.moveElements(this.selectionManager.selectedElements, point.x - drag.last.x, point.y - drag.last.y);
+            drag.last = point;
+            drag.moved = true;
+            this.requestRender();
+            return;
+        }
         if (this.drag?.type === 'wall') {
             const drag = this.drag;
 
@@ -156,7 +201,7 @@ export default class SelectionTool {
     }
 
     endDrag() {
-        if (this.drag?.type === 'wall') this.suppressNextClick = this.drag.moved;
+        if (this.drag?.type === 'wall' || this.drag?.type === 'group') this.suppressNextClick = this.drag.moved;
         this.drag = null;
     }
 
@@ -169,14 +214,17 @@ export default class SelectionTool {
 
     cancel({ clearSelection = false } = {}) {
         this.drag = null;
+        if (this.box) this.clearBox();
+        this.box = null;
         this.suppressNextClick = false;
         if (clearSelection) this.selectionManager.clear();
     }
 
     deleteSelected() {
-        const selected = this.selectionManager.selectedElement;
-        if (!selected) return;
-        this.engine.removeElement(selected.id);
+        const selected = this.selectionManager.selectedElements;
+        if (selected?.length > 1) this.engine.removeElements(selected.map(element => element.id));
+        else if (this.selectionManager.selectedElement) this.engine.removeElement(this.selectionManager.selectedElement.id);
+        else return;
         this.cancel({ clearSelection: true });
     }
 }

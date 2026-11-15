@@ -22,7 +22,7 @@ export default class DrawingView {
 
         //Draw walls and columns
         for (const element of this.engine.elements) {
-            const isSelected = element.id === selectedId;
+            const isSelected = selectedId instanceof Set ? selectedId.has(element.id) : element.id === selectedId;
 
             const corners = element.type === 'wall'
                 ? wallGeometry.get(element.id) ?? element.getGeometry()

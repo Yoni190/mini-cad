@@ -25,6 +25,11 @@ export default class WallPreviewRenderer {
         this.drawSnapMarker(preview.end, elements);
     }
 
+    renderSelectionBox(start, end) {
+        this.prepareFrame();
+        this.previewRenderer.drawSelectionBox(start, end);
+    }
+
     renderStartHints(point, elements) {
         this.prepareFrame();
         this.previewRenderer.drawWallGuides({ start: null, end: point }, elements);

@@ -246,6 +246,27 @@ export default class DrawingEngine {
         this.onModelChange?.();
     }
 
+    moveElements(elements, dx, dy) {
+        if (!Number.isFinite(dx) || !Number.isFinite(dy) || (!dx && !dy)) return;
+        for (const element of elements) {
+            if (element.type === 'wall') {
+                element.start = { x: element.start.x + dx, y: element.start.y + dy };
+                element.end = { x: element.end.x + dx, y: element.end.y + dy };
+            } else {
+                element.position = { x: element.position.x + dx, y: element.position.y + dy };
+            }
+        }
+        this.handleModelChange({ wallsChanged: elements.some(element => element.type === 'wall') });
+    }
+
+    removeElements(ids) {
+        const selected = new Set(ids);
+        const removed = this.elements.filter(element => selected.has(element.id));
+        if (!removed.length) return;
+        this.elements = this.elements.filter(element => !selected.has(element.id));
+        this.handleModelChange({ wallsChanged: removed.some(element => element.type === 'wall') });
+    }
+
     removeElement(id) {
         const index = this.elements.findIndex(
             element => element.id === id

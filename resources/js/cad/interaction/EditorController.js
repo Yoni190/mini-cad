@@ -22,6 +22,8 @@ export default class EditorController {
             getScale: () => this.renderer.scale,
             requestRender: () => this.scheduleCanvasRender(),
             renderSelection: selectedId => this.view.render(selectedId),
+            renderBox: (start, end) => this.wallPreviewRenderer.renderSelectionBox(start, end),
+            clearBox: () => this.wallPreviewRenderer.clear(),
         });
         this.isEditingLocked = false;
         this.pendingRenderFrame = null;
@@ -70,8 +72,11 @@ export default class EditorController {
             }
         });
 
-        window.addEventListener('mouseup', () => {
-            this.handleMouseUp();
+        window.addEventListener('mousemove', event => {
+            if (event.target !== this.canvas && this.selectionTool.box) this.handleMouseMove(event);
+        });
+        window.addEventListener('mouseup', event => {
+            this.handleMouseUp(event);
         });
 
         document.addEventListener('keydown', (event) => {
@@ -141,6 +146,11 @@ export default class EditorController {
             return;
         }
 
+        if (this.activeTool === 'select' && this.selectionTool.box) {
+            this.selectionTool.updateBox(this.getMousePoint(event, false));
+            return;
+        }
+
         if (this.selectionTool.isDragging) {
             this.selectionTool.updateDrag(this.getMousePoint(event, false));
             return;
@@ -162,12 +172,18 @@ export default class EditorController {
             return;
         }
 
-        this.selectionTool.startDrag(this.getMousePoint(event, false));
+        const point = this.getMousePoint(event, false);
+        if (event.detail === 2) this.selectionTool.startBox(point);
+        else this.selectionTool.startDrag(point);
     }
 
-    handleMouseUp() {
+    handleMouseUp(event) {
         if (this.isEditingLocked) return;
-        this.selectionTool.endDrag();
+        if (this.selectionTool.box && event?.button === 0) {
+            this.selectionTool.finishBox(this.getMousePoint(event, false), event.target === this.canvas);
+        } else if (!this.selectionTool.box) {
+            this.selectionTool.endDrag();
+        }
         this.navigation.stopPan();
     }
 
@@ -279,7 +295,7 @@ export default class EditorController {
             this.cancelInteraction();
 
             // Clear any drawing preview
-            this.view.render();
+            this.view.render(this.selectionManager.selectedIds ?? this.selectionManager.selectedElement?.id ?? null);
         }
     }
 
@@ -332,7 +348,7 @@ export default class EditorController {
 
             // Use the current selection and current element positions.
             this.view.render(
-                this.selectionManager.selectedElement?.id ?? null
+                this.selectionManager.selectedIds ?? this.selectionManager.selectedElement?.id ?? null
             );
 
             // A full redraw clears the preview overlay. Restore an active

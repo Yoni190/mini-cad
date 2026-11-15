@@ -284,6 +284,19 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
+    drawSelectionBox(start, end) {
+        const a = this.worldToScreen(start.x, start.y);
+        const b = this.worldToScreen(end.x, end.y);
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.fillStyle = 'rgba(36, 94, 199, 0.12)';
+        ctx.strokeStyle = '#245ec7';
+        ctx.setLineDash([5, 3]);
+        ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
+        ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
+        ctx.restore();
+    }
+
     drawSnapMarker(point) {
         const screen = this.worldToScreen(point.x, point.y);
         const ctx = this.ctx;
