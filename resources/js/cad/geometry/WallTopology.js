@@ -144,6 +144,40 @@ export default class WallTopology {
         return result;
     }
 
+    /**
+     * Tests whether an existing route connects the proposed wall endpoints.
+     * Requires at least two segments after temporary splitting. The query
+     * preserves source elements and uses the drafting tolerance of < 1e-6 mm.
+     * Splitting errors propagate to the caller before a new wall is committed.
+     */
+    static hasPath(elements, start, end) {
+        const samePoint = (a, b) => distance(a, b) < EPS;
+        // Temporarily split at the proposed connection points so the
+        // path search recognizes points inside existing walls.
+        const walls = this.split(
+            elements,
+            [start, end]
+        ).filter(element => element.type === 'wall');
+
+        const queue = [{ point: start, depth: 0 }];
+        const visited = [start];
+
+        for (let i = 0; i < queue.length; i++) {
+            const { point, depth } = queue[i];
+            for (const wall of walls) {
+                const next = samePoint(point, wall.start) ? wall.end
+                    : samePoint(point, wall.end) ? wall.start : null;
+                if (!next) continue;
+                if (samePoint(next, end) && depth + 1 >= 2) return true;
+                if (!visited.some(visitedPoint => samePoint(visitedPoint, next))) {
+                    visited.push(next);
+                    queue.push({ point: next, depth: depth + 1 });
+                }
+            }
+        }
+        return false;
+    }
+
     static rooms(elements) {
         const nodes = new Map();
         const edges = [];

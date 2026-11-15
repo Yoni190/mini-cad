@@ -772,10 +772,10 @@ export default class EditorController {
         let closesExistingPath;
 
         try {
-            closesExistingPath = this.hasWallPath(
+            closesExistingPath = WallTopology.hasPath(
+                this.engine.elements,
                 start,
-                finalEnd,
-                samePoint
+                finalEnd
             );
 
             this.engine.addWall(start, finalEnd, thickness);
@@ -798,33 +798,6 @@ export default class EditorController {
             // Start the next wall at the endpoint just created.
             this.startPoint = finalEnd;
         }
-    }
-
-    hasWallPath(start, end, samePoint) {
-        // Temporarily split at the proposed connection points so the
-        // path search recognizes points inside existing walls.
-        const walls = WallTopology.split(
-            this.engine.elements,
-            [start, end]
-        ).filter(element => element.type === 'wall');
-
-        const queue = [{ point: start, depth: 0 }];
-        const visited = [start];
-
-        for (let i = 0; i < queue.length; i++) {
-            const { point, depth } = queue[i];
-            for (const wall of walls) {
-                const next = samePoint(point, wall.start) ? wall.end
-                    : samePoint(point, wall.end) ? wall.start : null;
-                if (!next) continue;
-                if (samePoint(next, end) && depth + 1 >= 2) return true;
-                if (!visited.some(visitedPoint => samePoint(visitedPoint, next))) {
-                    visited.push(next);
-                    queue.push({ point: next, depth: depth + 1 });
-                }
-            }
-        }
-        return false;
     }
 
     scheduleWallPreview() {
