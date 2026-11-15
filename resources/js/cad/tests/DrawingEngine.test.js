@@ -15,6 +15,31 @@ describe('DrawingEngine wall creation', () => {
     });
 });
 
+describe('room wall thickness', () => {
+    it.each([false, true])('places thickness outside a closed room (reversed=%s)', reversed => {
+        const engine = new DrawingEngine();
+        const points = [{ x: 0, y: 0 }, { x: 1000, y: 0 }, { x: 1000, y: 1000 }, { x: 0, y: 1000 }];
+        if (reversed) points.reverse();
+        points.forEach((point, i) => engine.addWall(point, points[(i + 1) % points.length]));
+        for (const wall of engine.elements) {
+            const corners = wall.getGeometry();
+            const midpoint = { x: (corners[2].x + corners[3].x) / 2, y: (corners[2].y + corners[3].y) / 2 };
+            expect(midpoint.x < 0 || midpoint.x > 1000 || midpoint.y < 0 || midpoint.y > 1000).toBe(true);
+        }
+    });
+
+    it('keeps a shared wall unchanged when an adjacent room closes', () => {
+        const engine = new DrawingEngine();
+        const add = (a, b) => engine.addWall({ x: a[0], y: a[1] }, { x: b[0], y: b[1] });
+        add([0, 0], [1000, 0]); add([1000, 0], [1000, 1000]);
+        add([1000, 1000], [0, 1000]); add([0, 1000], [0, 0]);
+        const shared = engine.elements.find(wall => wall.start.x === 1000 && wall.end.x === 1000);
+        const side = shared.thicknessSide;
+        add([1000, 0], [2000, 0]); add([2000, 0], [2000, 1000]); add([2000, 1000], [1000, 1000]);
+        expect(engine.elements.find(wall => wall.id === shared.id).thicknessSide).toBe(side);
+    });
+});
+
 describe('project element limit', () => {
     it('allows the thousandth column and rejects another without changing the drawing', () => {
         const engine = new DrawingEngine();

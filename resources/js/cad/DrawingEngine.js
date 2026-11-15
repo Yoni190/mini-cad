@@ -45,6 +45,37 @@ export default class DrawingEngine {
             throw new Error('A project can contain at most 1,000 elements. Remove elements before adding this wall.');
         }
 
+        const rooms = WallTopology.rooms(nextElements);
+        const walls = nextElements.filter(element => element.type === 'wall');
+        const edgeKey = (a, b) => `${a.x},${a.y}|${b.x},${b.y}`;
+        const edges = new Map(walls.map(element => [edgeKey(element.start, element.end), element]));
+        const sides = new Map();
+        const affected = new Set();
+
+        for (const room of rooms) {
+            const boundary = room.polygon.map((point, i) => {
+                const next = room.polygon[(i + 1) % room.polygon.length];
+                const forward = edges.get(edgeKey(point, next));
+                return { wall: forward ?? edges.get(edgeKey(next, point)), side: forward ? -1 : 1 };
+            });
+            const touchesNewWall = boundary.some(({ wall: part }) =>
+                WallTopology.project(part.start, wall).distance < 1e-6 &&
+                WallTopology.project(part.end, wall).distance < 1e-6
+            );
+            for (const { wall: part, side } of boundary) {
+                if (!sides.has(part.id)) sides.set(part.id, new Set());
+                sides.get(part.id).add(side);
+                if (touchesNewWall) affected.add(part.id);
+            }
+        }
+
+        for (const part of walls) {
+            const choices = sides.get(part.id);
+            if (affected.has(part.id) && choices?.size === 1) {
+                part.thicknessSide = [...choices][0];
+            }
+        }
+
         //Add the wall to this.elements
         this.elements = nextElements;
         this.handleModelChange({ wallsChanged: true });
