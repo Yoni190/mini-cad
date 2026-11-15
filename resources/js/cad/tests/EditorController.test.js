@@ -8,10 +8,9 @@ describe('pending wall input', () => {
         const elements = [];
         const engine = {
             elements,
-            render: vi.fn(),
             addWall: vi.fn((start, end) => elements.push({ type: 'wall', start, end })),
         };
-        const controller = new EditorController(null, engine, null, null, { clear: vi.fn() });
+        const controller = new EditorController(null, engine, null, null, { clear: vi.fn() }, { render: vi.fn() });
         controller.previewRenderer = { clear: vi.fn() };
         controller.getMousePoint = event => event.point;
         const inputs = {

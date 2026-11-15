@@ -4,11 +4,10 @@ import Wall from '../models/Wall';
 import Column from '../models/Column';
 
 function setup() {
-    const engine = new DrawingEngine(null);
+    const engine = new DrawingEngine();
     const wall = new Wall({ start: { x: 0, y: 0 }, end: { x: 1000, y: 0 } });
     const column = new Column({ position: { x: 2000, y: 2000 } });
     engine.elements = [wall, column];
-    engine.render = vi.fn();
     engine.onModelChange = vi.fn();
     const cached = engine.getWallDisplayGeometry();
     return { engine, wall, column, cached };
@@ -21,7 +20,6 @@ describe('model change lifecycle', () => {
         engine.invalidateWallGeometry();
 
         expect(engine.onModelChange).not.toHaveBeenCalled();
-        expect(engine.render).not.toHaveBeenCalled();
         expect(engine.getWallDisplayGeometry()).not.toBe(cached);
         expect(engine.getWallDisplayGeometry()).toEqual(cached);
     });
@@ -64,7 +62,6 @@ describe('model change lifecycle', () => {
             const geometry = engine.getWallDisplayGeometry();
             expect(geometry).not.toBe(cached);
             verify(geometry, state);
-            expect(engine.render).not.toHaveBeenCalled();
         });
 
         change(state);
@@ -101,7 +98,6 @@ describe('model change lifecycle', () => {
         engine.onModelChange.mockImplementation(() => {
             verify(state);
             expect(engine.getWallDisplayGeometry()).toBe(cached);
-            expect(engine.render).not.toHaveBeenCalled();
         });
 
         change(state);
@@ -117,7 +113,6 @@ describe('model change lifecycle', () => {
         engine.removeElement('missing');
 
         expect(engine.onModelChange).not.toHaveBeenCalled();
-        expect(engine.render).not.toHaveBeenCalled();
         expect(engine.getWallDisplayGeometry()).toBe(cached);
     });
 });

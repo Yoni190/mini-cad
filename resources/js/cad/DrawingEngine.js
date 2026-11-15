@@ -5,10 +5,8 @@ import WallTopology from './geometry/WallTopology';
 import WallGeometry from './geometry/WallGeometry';
 
 export default class DrawingEngine {
-    constructor(renderer) {
-        this.renderer = renderer;
+    constructor() {
         this.elements = [];
-        this.onRender = null;
         this.onModelChange = null;
         this.wallGeometryCache = null;
         this.wallGeometryElements = null;
@@ -17,7 +15,6 @@ export default class DrawingEngine {
     replaceElements(elements) {
         this.elements = elements;
         this.handleModelChange({ wallsChanged: true });
-        this.render();
     }
 
     addWall(start, end, thickness = 200, thicknessSide = null) {
@@ -45,9 +42,6 @@ export default class DrawingEngine {
         //Add the wall to this.elements
         this.elements = nextElements;
         this.handleModelChange({ wallsChanged: true });
-
-        //Render all elements
-        this.render();
     }
 
     addColumn(position) {
@@ -57,9 +51,6 @@ export default class DrawingEngine {
         //Add the column to this.elements
         this.elements.push(column);
         this.handleModelChange();
-
-        //Render all elements
-        this.render();
     }
 
     /** Moves a column; the caller schedules the redraw during dragging. */
@@ -124,44 +115,6 @@ export default class DrawingEngine {
         return WallTopology.rooms(this.elements);
     }
 
-    /**
-     * Redraws stored elements using their resolved display geometry.
-     *
-     * Temporary previews are drawn separately by EditorController.
-     */
-    render(selectedId = null) {
-        const wallGeometry = this.getWallDisplayGeometry();
-
-        //Clear canvas
-        this.renderer.clear();
-
-        // Draw the grid
-        this.renderer.drawGrid();
-
-        //Draw walls and columns
-        for (const element of this.elements) {
-            const isSelected = element.id === selectedId;
-
-            const corners = element.type === 'wall'
-                ? wallGeometry.get(element.id) ?? element.getGeometry()
-                : element.getGeometry();
-
-            if (!this.renderer.isGeometryVisible(corners)) {
-                continue;
-            }
-
-            this.renderer.drawElement(
-                element,
-                false,
-                isSelected,
-                corners
-            );
-        }
-
-        // Notify components after rendering
-        this.onRender?.();
-    }
-
     updateColumnDimensions(id, width, depth) {
         //Find element by id
         const column = this.elements.find(
@@ -184,7 +137,7 @@ export default class DrawingEngine {
             throw new Error('Column depth must be a positive number');
         }
 
-        // Skip redraws if dimensions didn't change
+        // Skip updates if dimensions didn't change
         if (column.width === width && column.depth === depth) {
             return;
         }
@@ -194,8 +147,6 @@ export default class DrawingEngine {
         column.depth = depth;
 
         this.handleModelChange();
-
-        this.render(column.id);
     }
 
     updateWallThickness(id, thickness) {
@@ -213,16 +164,13 @@ export default class DrawingEngine {
             throw new Error('Wall thickness must be a positive number.');
         }
 
-        // Skip redrawing if thickness didn't change
+        // Skip updates if thickness didn't change
         if (wall.thickness === thickness) {
             return;
         }
 
         wall.thickness = thickness;
         this.handleModelChange({ wallsChanged: true });
-
-        // Recalculate footprints and joins, preserving the selection.
-        this.render(wall.id);
     }
 
     /** Clears derived wall geometry without notifying listeners or redrawing. */
@@ -269,7 +217,5 @@ export default class DrawingEngine {
         const [removed] = this.elements.splice(index, 1);
 
         this.handleModelChange({ wallsChanged: removed.type === 'wall' });
-
-        this.render();
     }
 }

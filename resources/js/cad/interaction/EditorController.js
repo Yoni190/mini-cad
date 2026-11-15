@@ -3,9 +3,10 @@ import Wall from "../models/Wall";
 import WallTopology from '../geometry/WallTopology';
 
 export default class EditorController {
-    constructor(canvas, engine, renderer, snapManager, selectionManager) {
+    constructor(canvas, engine, renderer, snapManager, selectionManager, view) {
         this.canvas = canvas;
         this.engine = engine;
+        this.view = view;
         this.renderer = renderer;
         this.snapManager = snapManager;
         this.activeTool = 'wall';
@@ -88,7 +89,7 @@ export default class EditorController {
                 this.isDragging = false;
                 this.selectionManager.clear();
 
-                this.engine.render();
+                this.view.render();
             });
 
         document.getElementById('updateColumn')
@@ -182,7 +183,7 @@ export default class EditorController {
                 this.engine.getWallDisplayGeometry()
             );
 
-            this.engine.render(selected?.id ?? null);
+            this.view.render(selected?.id ?? null);
             if(selected?.type === 'column') {
                 document.getElementById('columnWidth').value = selected.width;
                 document.getElementById('columnDepth').value = selected.depth;
@@ -505,7 +506,7 @@ export default class EditorController {
             this.isDragging = false;
             this.selectionManager.clear();
 
-            this.engine.render();
+            this.view.render();
         }
 
         if(
@@ -683,7 +684,7 @@ export default class EditorController {
             this.wallDrag = null;
 
             // Clear any drawing preview
-            this.engine.render();
+            this.view.render();
         }
     }
 
@@ -1008,7 +1009,7 @@ export default class EditorController {
             this.pendingRenderFrame = null;
 
             // Use the current selection and current element positions.
-            this.engine.render(
+            this.view.render(
                 this.selectionManager.selectedElement?.id ?? null
             );
 

@@ -2,6 +2,7 @@
 import './bootstrap';
 import initEditorUI from './cad/ui/editor-ui';
 import CanvasRenderer from './cad/rendering/CanvasRenderer';
+import DrawingView from './cad/rendering/DrawingView';
 import DrawingEngine from './cad/DrawingEngine';
 import EditorController from './cad/interaction/EditorController';
 import ProjectService from './cad/persistence/ProjectService';
@@ -19,7 +20,8 @@ if (canvas && twoContainer && threeContainer) {
     const renderer = new CanvasRenderer(canvas);
     const previewCanvas = document.getElementById('previewCanvas');
     const previewRenderer = new CanvasRenderer(previewCanvas);
-    const engine = new DrawingEngine(renderer);
+    const engine = new DrawingEngine();
+    const view = new DrawingView(engine, renderer, previewRenderer);
     const snapManager = new SnapManager();
     const selectionManager = new SelectionManager();
     const projectService = new ProjectService();
@@ -93,14 +95,15 @@ if (canvas && twoContainer && threeContainer) {
         engine,
         renderer,
         snapManager,
-        selectionManager
+        selectionManager,
+        view
     );
 
     editor.previewRenderer = previewRenderer;
 
     editor.init();
     initEditorUI();
-    engine.render();
+    view.render();
 
     // Create the 3D viewer only when it is first opened.
     let threeViewer = null;
@@ -125,11 +128,6 @@ if (canvas && twoContainer && threeContainer) {
         threeNeedsSync = false;
     }
 
-    // A 2D redraw only needs to clear the temporary preview.
-    engine.onRender = () => {
-        previewRenderer.clear();
-    };
-
     // Keep the backing buffers in step with the displayed viewport so that
     // one canvas pixel continues to match one pointer coordinate.
     function resizeViews() {
@@ -141,7 +139,7 @@ if (canvas && twoContainer && threeContainer) {
         if (canvas.width !== width || canvas.height !== height) {
             canvas.width = previewCanvas.width = width;
             canvas.height = previewCanvas.height = height;
-            engine.render(selectionManager.selectedElement?.id ?? null);
+            view.render(selectionManager.selectedElement?.id ?? null);
         }
         threeViewer?.resize();
     }
@@ -149,8 +147,9 @@ if (canvas && twoContainer && threeContainer) {
     new ResizeObserver(resizeViews).observe(document.querySelector('.canvas-viewport'));
     resizeViews();
 
-    // Model changes can require new 3D geometry.
+    // The app connects model changes to the 2D and 3D views.
     engine.onModelChange = () => {
+        editor.scheduleCanvasRender();
         threeNeedsSync = true;
         syncThreeIfVisible();
     };
@@ -174,7 +173,7 @@ if (canvas && twoContainer && threeContainer) {
         threeContainer.style.display = 'none';
         twoContainer.style.display = 'block';
 
-        engine.render();
+        view.render();
     });
 
     //Save a project

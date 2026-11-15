@@ -8,9 +8,8 @@ function setup() {
     const wall = new Wall({ start: { x: 0, y: 0 }, end: { x: 1000, y: 0 } });
     const neighbor = new Wall({ start: wall.end, end: { x: 1000, y: 1000 } });
     const column = new Column({ position: { x: 2000, y: 2000 } });
-    const engine = new DrawingEngine(null);
+    const engine = new DrawingEngine();
     engine.elements = [wall, neighbor, column];
-    engine.render = vi.fn();
     engine.onModelChange = vi.fn();
     return { engine, wall, neighbor, column };
 }
@@ -28,7 +27,6 @@ describe('column movement', () => {
         expect(column.position.x).toBe(3000);
         expect(engine.getWallDisplayGeometry()).toBe(cached);
         expect(engine.onModelChange).toHaveBeenCalledTimes(1);
-        expect(engine.render).not.toHaveBeenCalled();
     });
 
     it('does not notify when the position is unchanged', () => {
@@ -73,7 +71,6 @@ describe('wall endpoint updates', () => {
         expect(neighbor.getLength()).toBe(800);
         expect(engine.getWallDisplayGeometry()).not.toBe(cached);
         expect(engine.onModelChange).toHaveBeenCalledTimes(1);
-        expect(engine.render).not.toHaveBeenCalled();
         junction.y = 9999;
         expect(wall.end.y).toBe(200);
         expect(neighbor.start.y).toBe(200);

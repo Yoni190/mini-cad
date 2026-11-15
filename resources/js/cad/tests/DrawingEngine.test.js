@@ -6,8 +6,7 @@ import SelectionManager from '../interaction/SelectionManager';
 
 describe('DrawingEngine wall creation', () => {
     it('uses the requested thickness and retains the default when omitted', () => {
-        const engine = new DrawingEngine(null);
-        engine.render = () => {};
+        const engine = new DrawingEngine();
         engine.addWall({ x: 0, y: 0 }, { x: 1000, y: 0 }, 350);
         engine.addWall({ x: 1000, y: 0 }, { x: 2000, y: 0 });
 
@@ -37,7 +36,7 @@ describe('DrawingEngine wall display geometry', () => {
         });
 
         // This test only calculates geometry; it doesn't render.
-        const engine = new DrawingEngine(null);
+        const engine = new DrawingEngine();
         engine.elements = [wallA, wallB, wallC];
 
         const geometry = engine.getWallDisplayGeometry();
@@ -74,7 +73,7 @@ describe('DrawingEngine wall display geometry', () => {
             thickness: 200
         });
 
-        const engine = new DrawingEngine(null);
+        const engine = new DrawingEngine();
 
         engine.elements = [wallA, wallB];
         const forward = engine.getWallDisplayGeometry();
@@ -109,7 +108,7 @@ describe('DrawingEngine wall junctions', () => {
         });
 
         // No Canvas renderer is needed for geometry resolution.
-        const engine = new DrawingEngine(null);
+        const engine = new DrawingEngine();
 
         engine.elements = [wallA, wallB, wallC];
         const geometry1 = engine.getWallDisplayGeometry();
@@ -173,7 +172,7 @@ describe('DrawingEngine wall junctions', () => {
             })
         ];
 
-        const engine = new DrawingEngine(null);
+        const engine = new DrawingEngine();
 
         engine.elements = walls;
         const geometry1 = engine.getWallDisplayGeometry();
@@ -221,7 +220,7 @@ describe('DrawingEngine wall junctions', () => {
             thickness: 200
         });
 
-        const engine = new DrawingEngine(null);
+        const engine = new DrawingEngine();
 
         engine.elements = [wallA, wallB];
 
@@ -258,7 +257,7 @@ describe('DrawingEngine wall junctions', () => {
             thickness: 200
         });
 
-        const engine = new DrawingEngine(null);
+        const engine = new DrawingEngine();
 
         engine.elements = [wallA, wallB, wallC];
 
@@ -300,10 +299,8 @@ describe('DrawingEngine wall junctions', () => {
 
 describe('replacing a drawing', () => {
     it('refreshes cached geometry and notifies the view', () => {
-        const engine = new DrawingEngine(null);
-        let redraws = 0;
+        const engine = new DrawingEngine();
         let notifications = 0;
-        engine.render = () => { redraws++; };
         engine.onModelChange = () => { notifications++; };
         const oldWall = new Wall({ start: { x: 0, y: 0 }, end: { x: 1000, y: 0 } });
         const loadedWall = new Wall({ start: { x: 0, y: 0 }, end: { x: 0, y: 2000 } });
@@ -317,11 +314,9 @@ describe('replacing a drawing', () => {
         expect(loadedGeometry.has(oldWall.id)).toBe(false);
         expect(loadedGeometry.has(loadedWall.id)).toBe(true);
         expect(notifications).toBe(2);
-        expect(redraws).toBe(2);
 
         engine.replaceElements([]);
         expect(engine.getWallDisplayGeometry().size).toBe(0);
         expect(notifications).toBe(3);
-        expect(redraws).toBe(3);
     });
 });
