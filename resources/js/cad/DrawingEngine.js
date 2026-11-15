@@ -8,7 +8,6 @@ export default class DrawingEngine {
     constructor(renderer) {
         this.renderer = renderer;
         this.elements = [];
-        this.startPoint = null;
         this.onRender = null;
         this.onModelChange = null;
         this.wallGeometryCache = null;
@@ -17,7 +16,6 @@ export default class DrawingEngine {
 
     replaceElements(elements) {
         this.elements = elements;
-        this.startPoint = null;
         this.invalidateWallGeometry();
         this.render();
     }

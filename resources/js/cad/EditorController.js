@@ -9,6 +9,7 @@ export default class EditorController {
         this.renderer = renderer;
         this.snapManager = snapManager;
         this.activeTool = 'wall';
+        this.startPoint = null;
         this.directionPoint = null;
         this.alignmentHold = { x: null, y: null };
         this.selectionManager = selectionManager;
@@ -40,7 +41,7 @@ export default class EditorController {
         });
 
         this.canvas.addEventListener('mouseleave', () => {
-            if (this.activeTool === 'wall' && !this.engine.startPoint) {
+            if (this.activeTool === 'wall' && !this.startPoint) {
                 this.previewRenderer.clear();
             }
         });
@@ -83,8 +84,7 @@ export default class EditorController {
             .addEventListener('change', (event) => {
                 this.activeTool = event.target.value;
 
-                this.engine.startPoint = null;
-                this.directionPoint = null;
+                this.cancelWallDrawing();
                 this.isDragging = false;
                 this.selectionManager.clear();
 
@@ -147,7 +147,7 @@ export default class EditorController {
 
         document.getElementById('newWallThickness')
             .addEventListener('input', () => {
-                if (this.activeTool === 'wall' && this.engine.startPoint && this.directionPoint) {
+                if (this.activeTool === 'wall' && this.startPoint && this.directionPoint) {
                     this.renderWallPreview();
                 }
             });
@@ -198,10 +198,10 @@ export default class EditorController {
             return;
         }
 
-        if (this.engine.startPoint === null) {
+        if (this.startPoint === null) {
             this.alignmentHold = { x: null, y: null };
             this.previewRenderer.clear();
-            this.engine.startPoint = point;
+            this.startPoint = point;
             this.wallChainStart = { ...point };
             this.wallChainCount = 0;
             this.directionPoint = null;
@@ -334,7 +334,7 @@ export default class EditorController {
 
         // Wall preview and hints before the first click.
         if (this.activeTool === 'wall') {
-            if (this.engine.startPoint) {
+            if (this.startPoint) {
                 this.directionPoint = this.getMousePoint(event);
 
                 // Mouse movement takes control of the wall length again.
@@ -470,7 +470,7 @@ export default class EditorController {
 
         const isDrawingWall =
             this.activeTool === 'wall' &&
-            this.engine.startPoint !== null &&
+            this.startPoint !== null &&
             document.getElementById('threeContainer').style.display === 'none';
 
         if (
@@ -516,8 +516,7 @@ export default class EditorController {
         }
         
         if (event.key === 'Escape') {
-            this.engine.startPoint = null;
-            this.directionPoint = null;
+            this.cancelWallDrawing();
             this.isDragging = false;
             this.selectionManager.clear();
 
@@ -613,7 +612,7 @@ export default class EditorController {
 
         if (!applySnap) return rawPoint;
 
-        const start = this.engine.startPoint;
+        const start = this.startPoint;
         const drawingWall = this.activeTool === 'wall' && start;
 
         // Apply guides and Ortho before choosing a wall connection.
@@ -651,24 +650,33 @@ export default class EditorController {
             ? this.constrainWallPoint(this.directionPoint)
             : null;
 
-        if(!this.engine.startPoint || !direction) {
+        if(!this.startPoint || !direction) {
             alert('Click a starting point and move the mouse to choose a direction.');
             return;
         }
-        if(this.engine.startPoint.x === direction.x &&
-            this.engine.startPoint.y === direction.y
+        if(this.startPoint.x === direction.x &&
+            this.startPoint.y === direction.y
         ) {
             alert('Move the mouse to choose a wall direction first.');
             return;
         }
 
         const newEndpoint = GeometryService.getEndPoint(
-            this.engine.startPoint,
+            this.startPoint,
             direction,
             length
         );
 
         this.commitWall(newEndpoint);
+    }
+
+    /** Clears the unfinished wall and its chain without changing saved elements. */
+    cancelWallDrawing() {
+        this.startPoint = null;
+        this.directionPoint = null;
+        this.wallChainStart = null;
+        this.wallChainCount = 0;
+        this.alignmentHold = { x: null, y: null };
     }
 
     /**
@@ -682,8 +690,7 @@ export default class EditorController {
 
         if (locked) {
             // Cancel unfinished wall drawing
-            this.engine.startPoint = null;
-            this.directionPoint = null;
+            this.cancelWallDrawing();
 
             // Stop any active dragging or panning
             this.isDragging = false;
@@ -732,7 +739,7 @@ export default class EditorController {
         // Erase the previous temporary wall and guides.
         previewRenderer.clear();
 
-        const start = this.engine.startPoint;
+        const start = this.startPoint;
         const direction = this.directionPoint
             ? this.constrainWallPoint(this.directionPoint)
             : null;
@@ -783,7 +790,7 @@ export default class EditorController {
     }
 
     alignWallPoint(point) {
-        const start = this.engine.startPoint;
+        const start = this.startPoint;
 
         if (!start) return point;
 
@@ -854,7 +861,7 @@ export default class EditorController {
     }
 
     constrainWallPoint(point) {
-        const start = this.engine.startPoint;
+        const start = this.startPoint;
 
         if (!this.orthoEnabled || !start) {
             return point;
@@ -879,13 +886,13 @@ export default class EditorController {
         button.setAttribute('aria-pressed', String(this.orthoEnabled));
         button.textContent = this.orthoEnabled ? 'Ortho: On' : 'Ortho: Off';
 
-        if (this.activeTool === 'wall' && this.engine.startPoint) {
+        if (this.activeTool === 'wall' && this.startPoint) {
             this.renderWallPreview();
         }
     }
 
     commitWall(end) {
-        const start = this.engine.startPoint;
+        const start = this.startPoint;
 
         if (!start || !end) return;
 
@@ -941,12 +948,12 @@ export default class EditorController {
 
         if (closesChain || closesExistingPath) {
             // The new wall completed a loop: finish the chain.
-            this.engine.startPoint = null;
+            this.startPoint = null;
             this.wallChainStart = null;
             this.wallChainCount = 0;
         } else {
             // Start the next wall at the endpoint just created.
-            this.engine.startPoint = finalEnd;
+            this.startPoint = finalEnd;
         }
     }
 
@@ -992,7 +999,7 @@ export default class EditorController {
             if (
                 this.isEditingLocked ||
                 this.activeTool !== 'wall' ||
-                !this.engine.startPoint ||
+                !this.startPoint ||
                 !this.directionPoint ||
                 document.getElementById('threeContainer').style.display !== 'none'
             ) {
@@ -1026,7 +1033,7 @@ export default class EditorController {
             if (
                 !this.isEditingLocked &&
                 this.activeTool === 'wall' &&
-                this.engine.startPoint &&
+                this.startPoint &&
                 this.directionPoint &&
                 document.getElementById('threeContainer').style.display === 'none'
             ) {

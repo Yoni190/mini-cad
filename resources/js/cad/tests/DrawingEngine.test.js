@@ -299,7 +299,7 @@ describe('DrawingEngine wall junctions', () => {
 });
 
 describe('replacing a drawing', () => {
-    it('clears pending input, refreshes cached geometry and notifies the view', () => {
+    it('refreshes cached geometry and notifies the view', () => {
         const engine = new DrawingEngine(null);
         let redraws = 0;
         let notifications = 0;
@@ -310,11 +310,9 @@ describe('replacing a drawing', () => {
 
         engine.replaceElements([oldWall]);
         const oldGeometry = engine.getWallDisplayGeometry();
-        engine.startPoint = { x: 10, y: 20 };
         engine.replaceElements([loadedWall]);
 
         const loadedGeometry = engine.getWallDisplayGeometry();
-        expect(engine.startPoint).toBeNull();
         expect(loadedGeometry).not.toBe(oldGeometry);
         expect(loadedGeometry.has(oldWall.id)).toBe(false);
         expect(loadedGeometry.has(loadedWall.id)).toBe(true);

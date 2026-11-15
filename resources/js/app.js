@@ -289,7 +289,7 @@ if (canvas && twoContainer && threeContainer) {
                 currentProjectId = project.id;
 
                 // 4. Clear temporary editor state
-                editor.directionPoint = null;
+                editor.cancelWallDrawing();
                 editor.isDragging = false;
                 selectionManager.clear();
 
@@ -328,7 +328,7 @@ if (canvas && twoContainer && threeContainer) {
             currentProjectId = null;
 
             // Reset editor state
-            editor.directionPoint = null;
+            editor.cancelWallDrawing();
             editor.isDragging = false;
             selectionManager.clear();
 
