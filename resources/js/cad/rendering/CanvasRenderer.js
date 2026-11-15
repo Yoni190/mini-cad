@@ -117,13 +117,11 @@ export default class CanvasRenderer {
         const ctx = this.ctx;
         const { start, end } = wall;
 
-        //Calculate wall midpoints (in pixels)
         const midpoint = this.worldToScreen(
             (start.x + end.x) / 2,
             (start.y + end.y) / 2
         );
 
-        //Get wall length
         const length = wall.getLength();
         const label = `${Math.round(length)} mm`
 
@@ -156,7 +154,6 @@ export default class CanvasRenderer {
 
         const ctx = this.ctx;
 
-        // Calculate where the grid begins on the screen
         const startX = ((this.offsetX % spacing) + spacing) % spacing;
         const startY = ((this.offsetY % spacing) + spacing) % spacing;
 
@@ -167,13 +164,11 @@ export default class CanvasRenderer {
 
         ctx.beginPath();
 
-        // Vertical lines
         for (let x = startX; x <= this.canvas.width; x += spacing) {
             ctx.moveTo(x, 0);
             ctx.lineTo(x, this.canvas.height);
         }
 
-        // Horizontal lines
         for (let y = startY; y <= this.canvas.height; y += spacing) {
             ctx.moveTo(0, y);
             ctx.lineTo(this.canvas.width, y);

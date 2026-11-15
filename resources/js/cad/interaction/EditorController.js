@@ -312,7 +312,6 @@ export default class EditorController {
         if (locked) {
             this.cancelInteraction();
 
-            // Clear any drawing preview
             this.view.render(this.selectionManager.selectedIds);
         }
     }
@@ -358,13 +357,11 @@ export default class EditorController {
             this.pendingPreviewFrame = null;
         }
         
-        // A redraw is already scheduled for the next frame.
         if (this.pendingRenderFrame !== null) return;
 
         this.pendingRenderFrame = requestAnimationFrame(() => {
             this.pendingRenderFrame = null;
 
-            // Use the current selection and current element positions.
             this.view.render(
                 this.selectionManager.selectedIds
             );

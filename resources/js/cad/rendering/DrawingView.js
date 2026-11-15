@@ -14,13 +14,10 @@ export default class DrawingView {
     render(selectedIds = new Set()) {
         const wallGeometry = this.engine.getWallDisplayGeometry();
 
-        //Clear canvas
         this.renderer.clear();
 
-        // Draw the grid
         this.renderer.drawGrid();
 
-        //Draw walls and columns
         for (const element of this.engine.elements) {
             const isSelected = selectedIds.has(element.id);
 

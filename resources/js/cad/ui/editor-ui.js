@@ -1,4 +1,3 @@
-// Presentation only: retain the existing selector, events, and operation locks.
 export default function initEditorUI() {
     const toolSelect = document.getElementById('drawingTool');
     const toolButtons = document.querySelectorAll('[data-tool]');
@@ -17,7 +16,6 @@ export default function initEditorUI() {
         syncUI();
     });
 
-    // Shortcuts for selecting a tool
     document.addEventListener('keydown', (event) => {
         // Leave typing and browser shortcuts alone.
         if (
@@ -80,7 +78,6 @@ export default function initEditorUI() {
         });
     });
     toolSelect.addEventListener('change', syncUI);
-    // Follow existing busy/view state without changing the project or CAD handlers.
     const observer = new MutationObserver(syncUI);
     observer.observe(toolSelect, { attributes: true, attributeFilter: ['disabled'] });
     observer.observe(twoContainer, { attributes: true, attributeFilter: ['style'] });

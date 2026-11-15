@@ -6,7 +6,6 @@ export default class ProjectService {
     }
     
     async saveProject(name, elements) {
-        // 1. Send the current drawing to Laravel
         const response = await fetch('/projects', {
             method: 'POST',
 
@@ -16,17 +15,14 @@ export default class ProjectService {
                 'X-CSRF-TOKEN': this.csrfToken
             },
 
-            // Convert JavaScript data into a JSON string
             body: JSON.stringify({
                 name: name,
                 elements: elements
             })
         });
 
-        // 2. Read the server response
         const data = await response.json();
 
-        // 3. Check whether Laravel accepted the request
         if (!response.ok) {
             const validationErrors = data.errors
                 ? Object.values(data.errors).flat().join(' ')
@@ -37,7 +33,6 @@ export default class ProjectService {
             );
         }
 
-        // 4. Return the created project from the response
         return data.project;
     }
 

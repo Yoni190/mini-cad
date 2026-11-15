@@ -42,9 +42,7 @@ export default class Wall extends DrawingElement {
      * Display joins and camera changes do not affect this distance.
      */
 
-    //TODO: Put in GeometryService?
     getLength() {
-        //Euclidean distance
         const dx = this.end.x - this.start.x;
         const dy = this.end.y - this.start.y;
 

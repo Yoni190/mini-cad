@@ -27,7 +27,6 @@ export default class DrawingEngine {
             this.elements
         );
 
-        //Create a wall instance
         const wall = new Wall({
             start,
             end,
@@ -76,7 +75,6 @@ export default class DrawingEngine {
             }
         }
 
-        //Add the wall to this.elements
         this.elements = nextElements;
         this.handleModelChange({ wallsChanged: true });
     }
@@ -86,10 +84,8 @@ export default class DrawingEngine {
             throw new Error('A project can contain at most 1,000 elements. Remove elements before adding a column.');
         }
 
-        //Create a column instance
         const column = new Column({ position });
 
-        //Add the column to this.elements
         this.elements.push(column);
         this.handleModelChange();
     }
@@ -153,12 +149,10 @@ export default class DrawingEngine {
     }
 
     updateColumnDimensions(id, width, depth) {
-        //Find element by id
         const column = this.elements.find(
             element => element.id === id
         );
 
-        //Confirm that the element is a column
         if (!column || column.type !== 'column') {
             throw new Error('Column not found');
         }
@@ -166,7 +160,6 @@ export default class DrawingEngine {
         width = Number(width);
         depth = Number(depth);
 
-        //Validate width and depth
         if(!Number.isFinite(width) || width <= 0) {
             throw new Error('Column width must be a positive number');
         }
@@ -174,12 +167,10 @@ export default class DrawingEngine {
             throw new Error('Column depth must be a positive number');
         }
 
-        // Skip updates if dimensions didn't change
         if (column.width === width && column.depth === depth) {
             return;
         }
 
-        //Update dimensions
         column.width = width;
         column.depth = depth;
 
@@ -201,7 +192,6 @@ export default class DrawingEngine {
             throw new Error('Wall thickness must be a positive number.');
         }
 
-        // Skip updates if thickness didn't change
         if (wall.thickness === thickness) {
             return;
         }

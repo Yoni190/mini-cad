@@ -24,17 +24,14 @@ export default class GeometryService {
         const dx = end.x - start.x;
         const dy = end.y - start.y;
 
-        // Normalize the perpendicular vector to the wall's direction
         const normalX = -dy / length;
         const normalY = dx / length;
 
         const side = wall.thicknessSide ?? 1;
 
-        // Scale the perpendicular vector by the wall thickness
         const offsetX = normalX * thickness * side;
         const offsetY = normalY * thickness * side;
 
-        // Return the four corners of the wall polygon
         return [
             { x: start.x, y: start.y },
             { x: end.x, y: end.y },
@@ -71,7 +68,6 @@ export default class GeometryService {
      * its vector allows the requested length to control the distance.
      */
     static getEndPoint(start, directionPoint, length) {
-        //Calculate the direction vector
         const dx = directionPoint.x - start.x;
         const dy = directionPoint.y - start.y;
 
@@ -85,11 +81,9 @@ export default class GeometryService {
             throw new Error('Length must be a positive number');
         }
 
-        //Calculate unit vector
         const ux = dx / distance;
         const uy = dy / distance;
 
-        //Return new endpoint
         return {
             x: start.x + (ux * length),
             y: start.y + (uy * length)
@@ -110,15 +104,12 @@ export default class GeometryService {
      * @returns {{x: number, y: number} | null} The intersection point, or null
      */
     static lineIntersection(p1, p2, p3, p4) {
-        // Direction vector of the first line
         const dx1 = p2.x - p1.x;
         const dy1 = p2.y - p1.y;
 
-        // Direction vector of the second line
         const dx2 = p4.x - p3.x;
         const dy2 = p4.y - p3.y;
 
-        // Cross product of both direction vectors
         const denominator = dx1 * dy2 - dy1 * dx2;
 
         // Parallel or nearly parallel lines have no
@@ -134,11 +125,9 @@ export default class GeometryService {
             return null;
         }
 
-        // Vector from the start of line 1 to line 2
         const dx3 = p3.x - p1.x;
         const dy3 = p3.y - p1.y;
 
-        // How far to travel along the first line
         const t = (dx3 * dy2 - dy3 * dx2) / denominator;
 
         return {
@@ -194,7 +183,6 @@ export default class GeometryService {
 
         const n = corners.length;
 
-        // Check for zero-length edges.
         for (let i = 0; i < n; i++) {
             const a = corners[i];
             const b = corners[(i + 1) % n];
@@ -204,7 +192,6 @@ export default class GeometryService {
             }
         }
 
-        // Check non-adjacent edges for intersections.
         for (let i = 0; i < n; i++) {
             const a = corners[i];
             const b = corners[(i + 1) % n];
@@ -224,7 +211,6 @@ export default class GeometryService {
             }
         }
 
-        // Reject zero-area polygons.
         let twiceArea = 0;
 
         for (let i = 0; i < n; i++) {

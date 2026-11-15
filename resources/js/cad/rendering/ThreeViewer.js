@@ -110,12 +110,10 @@ export default class ThreeViewer {
 
         const mesh = new THREE.Mesh(geometry, material);
 
-        //Calculate the center X, Y, Z
         const x = (position.x + (width / 2)) / 1000;
         const y = (height / 2) / 1000;
         const z = (position.y + (depth / 2)) / 1000;
 
-        //Set the mesh position
         mesh.position.set(x, y, z);
 
         return mesh;
@@ -128,8 +126,6 @@ export default class ThreeViewer {
      * The mesh is derived from drawing data and does not replace it.
      */
     createWallMesh(wall, corners = wall.getGeometry()) {
-        // 1. Create a 2D shape representing the wall footprint.
-        // The corners are already calculated by our CAD geometry system.
         const shape = new THREE.Shape();
 
         // Convert CAD millimeters to Three.js meters.
@@ -139,7 +135,6 @@ export default class ThreeViewer {
             -corners[0].y / 1000
         );
 
-        // Add the remaining corners to the shape.
         for (let i = 1; i < corners.length; i++) {
             shape.lineTo(
                 corners[i].x / 1000,
@@ -149,14 +144,11 @@ export default class ThreeViewer {
 
         shape.closePath();
 
-        // 2. Extrude the footprint by the wall's height.
-        // This creates a solid 3D wall.
         const geometry = new THREE.ExtrudeGeometry(shape, {
             depth: wall.height / 1000,
             bevelEnabled: false
         });
 
-        // 3. Material for visualization.
         const material = new THREE.MeshStandardMaterial({
             color: 0xc3ced8,
             roughness: 0.9
@@ -164,12 +156,6 @@ export default class ThreeViewer {
 
         const mesh = new THREE.Mesh(geometry, material);
 
-        // 4. Rotate the extrusion into the architectural coordinate system.
-        //
-        // After rotation:
-        // CAD X becomes Three.js X.
-        // CAD Y becomes Three.js Z.
-        // Extrusion depth becomes Three.js Y (vertical).
         mesh.rotation.x = -Math.PI / 2;
 
         // No separate wall position or direction rotation is needed.
@@ -181,7 +167,6 @@ export default class ThreeViewer {
      * Rebuilds the 3D representation from the shared CAD elements.
      *
      * Resolved wall corners keep supported joins consistent with 2D.
-     * This implementation recreates all meshes on each update.
      */
     updateElements(elements, wallGeometry = new Map()) {
         const currentIds = new Set();
@@ -218,7 +203,6 @@ export default class ThreeViewer {
 
             const existing = this.elementMeshes.get(element.id);
 
-            // The existing mesh already represents this element.
             if (existing?.signature === signature) {
                 continue;
             }
@@ -239,7 +223,6 @@ export default class ThreeViewer {
             sceneChanged = true;
         }
 
-        // Remove meshes for elements that no longer exist.
         for (const [id, existing] of this.elementMeshes) {
             if (currentIds.has(id)) {
                 continue;

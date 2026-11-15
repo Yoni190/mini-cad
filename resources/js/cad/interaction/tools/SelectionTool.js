@@ -182,7 +182,6 @@ export default class SelectionTool {
             return;
         }
 
-        // Handle column dragging
         if (this.drag?.type === 'column') {
             const column = this.selectionManager.selectedElement;
 
