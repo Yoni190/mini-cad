@@ -152,10 +152,6 @@ export default class DrawingEngine {
         return true;
     }
 
-    getRooms() {
-        return WallTopology.rooms(this.elements);
-    }
-
     updateColumnDimensions(id, width, depth) {
         //Find element by id
         const column = this.elements.find(

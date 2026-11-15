@@ -1,5 +1,4 @@
 
-import './bootstrap';
 import initEditorUI from './cad/ui/editor-ui';
 import initEditorControls from './cad/ui/editor-controls';
 import createWallInputs from './cad/ui/wall-inputs';

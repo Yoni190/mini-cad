@@ -41,38 +41,6 @@ export default class ProjectService {
         return data.project;
     }
 
-    async loadProject(id) {
-        const response = await fetch(`/projects/${id}`, {
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Failed to load project.');
-        }
-
-        return data;
-    }
-
-    async getProjects() {
-        const response = await fetch('/projects', {
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Failed to fetch projects.');
-        }
-
-        return data;
-    }
-
     async updateProject(id, name, elements, version) {
         const response = await fetch(`/projects/${id}`, {
             method: 'PUT',

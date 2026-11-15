@@ -203,14 +203,12 @@ export default class WallTopology {
 
             const forward = {
                 from: a,
-                to: b,
-                wallId: wall.id
+                to: b
             };
 
             const reverse = {
                 from: b,
-                to: a,
-                wallId: wall.id
+                to: a
             };
 
             forward.twin = reverse;
@@ -269,11 +267,7 @@ export default class WallTopology {
             // This traversal gives bounded faces positive area.
             if (twiceArea > EPS) {
                 rooms.push({
-                    polygon,
-                    wallIds: [
-                        ...new Set(boundary.map(e => e.wallId))
-                    ],
-                    referenceAreaM2: twiceArea / 2 / 1e6
+                    polygon
                 });
             }
         }

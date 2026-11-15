@@ -178,22 +178,6 @@ export default class ThreeViewer {
     }
 
     /**
-     * Removes derived meshes and releases their GPU resources.
-     *
-     * Removing a mesh from the scene alone does not dispose of its
-     * geometry or material. The source CAD elements remain untouched.
-     */
-    clearElements() {
-        for (const { mesh } of this.elementMeshes.values()) {
-            this.elementsGroup.remove(mesh);
-            mesh.geometry.dispose();
-            mesh.material.dispose();
-        }
-
-        this.elementMeshes.clear();
-    }
-
-    /**
      * Rebuilds the 3D representation from the shared CAD elements.
      *
      * Resolved wall corners keep supported joins consistent with 2D.
