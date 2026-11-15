@@ -134,3 +134,79 @@ describe('wall chain completion', () => {
         expect(controller.wallChainStart).toBeNull();
     });
 });
+
+describe('property actions', () => {
+    function setup(selectedElement = null) {
+        const engine = { updateColumnDimensions: vi.fn(), updateWallThickness: vi.fn() };
+        const controller = new EditorController(null, engine, null, null, { selectedElement });
+        controller.createWallWithLength = vi.fn();
+        controller.renderWallPreview = vi.fn();
+        return { controller, engine };
+    }
+
+    it('validates numeric length before delegating to drafting', () => {
+        const { controller } = setup();
+        for (const length of [0, -1, NaN, Infinity]) {
+            expect(() => controller.applyWallLength(length)).toThrow('Please enter a positive wall length.');
+        }
+        expect(controller.createWallWithLength).not.toHaveBeenCalled();
+        controller.applyWallLength(1000);
+        expect(controller.createWallWithLength).toHaveBeenCalledWith(1000);
+    });
+
+    it('requires column selection, Select mode, and positive finite dimensions', () => {
+        const { controller, engine } = setup();
+        expect(() => controller.updateSelectedColumnDimensions(300, 400)).toThrow('Please select a column first.');
+        controller.selectionManager.selectedElement = { id: 'column', type: 'column' };
+        controller.updateSelectedColumnDimensions(300, 400);
+        expect(engine.updateColumnDimensions).not.toHaveBeenCalled();
+        controller.activeTool = 'select';
+        for (const [width, depth] of [[0, 400], [300, -1], [NaN, 400], [300, Infinity]]) {
+            expect(() => controller.updateSelectedColumnDimensions(width, depth)).toThrow('Width and depth must be positive numbers.');
+        }
+        controller.updateSelectedColumnDimensions(300, 400);
+        expect(engine.updateColumnDimensions).toHaveBeenCalledExactlyOnceWith('column', 300, 400);
+    });
+
+    it('requires Select mode and a wall, and passes engine validation failures to the UI', () => {
+        const { controller, engine } = setup();
+        controller.updateSelectedWallThickness('200');
+        expect(engine.updateWallThickness).not.toHaveBeenCalled();
+        controller.activeTool = 'select';
+        expect(() => controller.updateSelectedWallThickness('200')).toThrow('Please select a wall first.');
+        controller.selectionManager.selectedElement = { id: 'wall', type: 'wall' };
+        controller.updateSelectedWallThickness('200');
+        expect(engine.updateWallThickness).toHaveBeenCalledWith('wall', '200');
+        engine.updateWallThickness.mockImplementation(() => { throw new Error('Invalid thickness'); });
+        expect(() => controller.updateSelectedWallThickness('bad')).toThrow('Invalid thickness');
+    });
+
+    it('blocks all property actions when editing is locked', () => {
+        const { controller, engine } = setup();
+        controller.isEditingLocked = true;
+        controller.applyWallLength(1000);
+        controller.updateSelectedColumnDimensions(300, 400);
+        controller.updateSelectedWallThickness('200');
+        controller.startPoint = { x: 0, y: 0 };
+        controller.directionPoint = { x: 100, y: 0 };
+        controller.refreshWallPreview();
+        expect(controller.createWallWithLength).not.toHaveBeenCalled();
+        expect(engine.updateColumnDimensions).not.toHaveBeenCalled();
+        expect(engine.updateWallThickness).not.toHaveBeenCalled();
+        expect(controller.renderWallPreview).not.toHaveBeenCalled();
+    });
+
+    it('refreshes a preview only for an active wall with a start and direction', () => {
+        const { controller } = setup();
+        controller.refreshWallPreview();
+        controller.startPoint = { x: 0, y: 0 };
+        controller.refreshWallPreview();
+        expect(controller.renderWallPreview).not.toHaveBeenCalled();
+        controller.directionPoint = { x: 100, y: 0 };
+        controller.refreshWallPreview();
+        expect(controller.renderWallPreview).toHaveBeenCalledOnce();
+        controller.activeTool = 'select';
+        controller.refreshWallPreview();
+        expect(controller.renderWallPreview).toHaveBeenCalledOnce();
+    });
+});

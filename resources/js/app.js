@@ -1,6 +1,7 @@
 
 import './bootstrap';
 import initEditorUI from './cad/ui/editor-ui';
+import initEditorControls from './cad/ui/editor-controls';
 import CanvasRenderer from './cad/rendering/CanvasRenderer';
 import DrawingView from './cad/rendering/DrawingView';
 import DrawingEngine from './cad/DrawingEngine';
@@ -37,6 +38,7 @@ if (canvas && twoContainer && threeContainer) {
 
     editor.init();
     initEditorUI();
+    initEditorControls(editor);
     view.render();
 
     const controls = {

@@ -67,20 +67,6 @@ export default class EditorController {
             this.handleKeyDown(event);
         });
 
-        document.getElementById('applyWallLength')
-            .addEventListener('click', () => {
-                const input = document.getElementById('wallLength');
-
-                const length = Number(input.value);
-
-                if (!Number.isFinite(length) || length <= 0) {
-                    alert('Please enter a positive wall length.');
-                    return;
-                }
-
-                this.createWallWithLength(length);
-            })
-        
         document.getElementById('drawingTool')
             .addEventListener('change', (event) => {
                 this.activeTool = event.target.value;
@@ -92,66 +78,8 @@ export default class EditorController {
                 this.view.render();
             });
 
-        document.getElementById('updateColumn')
-            .addEventListener('click', () => {
-                if (this.isEditingLocked) return;
-                
-                const selected = this.selectionManager.selectedElement;
-
-                if (!selected || selected.type !== 'column') {
-                    alert('Please select a column first.');
-                    return;
-                }
-
-                //Check that a column is selected
-                if(this.activeTool === 'select') {
-                    //Convert column dimensions input values into numbers
-                    const width = Number(document.getElementById('columnWidth').value);
-                    const depth = Number(document.getElementById('columnDepth').value);
-
-                    if (
-                        !Number.isFinite(width) || width <= 0 ||
-                        !Number.isFinite(depth) || depth <= 0
-                    ) {
-                        alert('Width and depth must be positive numbers.');
-                        return;
-                    }
-
-                    this.engine.updateColumnDimensions(selected.id, width, depth);
-                }
-            });
-
-        document.getElementById('updateWallThickness')
-            .addEventListener('click', () => {
-                if (this.isEditingLocked || this.activeTool !== 'select') {
-                    return;
-                }
-
-                const selected = this.selectionManager.selectedElement;
-
-                if (selected?.type !== 'wall') {
-                    alert('Please select a wall first.');
-                    return;
-                }
-
-                const thickness = document.getElementById('wallThickness').value;
-
-                try {
-                    this.engine.updateWallThickness(selected.id, thickness);
-                } catch (error) {
-                    alert(error.message);
-                }
-            });
-
         document.getElementById('toggleOrtho')
             .addEventListener('click', () => this.toggleOrtho());
-
-        document.getElementById('newWallThickness')
-            .addEventListener('input', () => {
-                if (this.activeTool === 'wall' && this.startPoint && this.directionPoint) {
-                    this.renderWallPreview();
-                }
-            });
     }
 
     /**
@@ -184,13 +112,6 @@ export default class EditorController {
             );
 
             this.view.render(selected?.id ?? null);
-            if(selected?.type === 'column') {
-                document.getElementById('columnWidth').value = selected.width;
-                document.getElementById('columnDepth').value = selected.depth;
-            }
-
-            document.getElementById('wallThickness').value =
-                selected?.type === 'wall' ? selected.thickness : '';
             return;
         }
 
@@ -1025,5 +946,44 @@ export default class EditorController {
                 this.renderWallPreview();
             }
         });
+    }
+
+
+    /** Property actions accept values; UI bindings display any validation errors. */
+    applyWallLength(length) {
+        if (this.isEditingLocked) return;
+        if (!Number.isFinite(length) || length <= 0) {
+            throw new Error('Please enter a positive wall length.');
+        }
+        this.createWallWithLength(length);
+    }
+
+    updateSelectedColumnDimensions(width, depth) {
+        if (this.isEditingLocked) return;
+        const selected = this.selectionManager.selectedElement;
+        if (!selected || selected.type !== 'column') {
+            throw new Error('Please select a column first.');
+        }
+        if (this.activeTool !== 'select') return;
+        if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(depth) || depth <= 0) {
+            throw new Error('Width and depth must be positive numbers.');
+        }
+        this.engine.updateColumnDimensions(selected.id, width, depth);
+    }
+
+    updateSelectedWallThickness(thickness) {
+        if (this.isEditingLocked || this.activeTool !== 'select') return;
+        const selected = this.selectionManager.selectedElement;
+        if (selected?.type !== 'wall') {
+            throw new Error('Please select a wall first.');
+        }
+        this.engine.updateWallThickness(selected.id, thickness);
+    }
+
+    refreshWallPreview() {
+        if (this.isEditingLocked) return;
+        if (this.activeTool === 'wall' && this.startPoint && this.directionPoint) {
+            this.renderWallPreview();
+        }
     }
 }
