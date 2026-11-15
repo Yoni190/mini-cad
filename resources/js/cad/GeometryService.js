@@ -135,7 +135,14 @@ export default class GeometryService {
      * Finds the intersection of two infinite lines, not bounded segments.
      *
      * Outer wall edges may need extending to meet at a corner.
-     * Returns null when the lines have no stable unique intersection.
+     * Returns null when the lines have no stable unique intersection
+     * (parallel, nearly parallel, or either line has zero length).
+     *
+     * @param {{x: number, y: number}} p1 First point on line 1
+     * @param {{x: number, y: number}} p2 Second point on line 1
+     * @param {{x: number, y: number}} p3 First point on line 2
+     * @param {{x: number, y: number}} p4 Second point on line 2
+     * @returns {{x: number, y: number} | null} The intersection point, or null
      */
     static lineIntersection(p1, p2, p3, p4) {
         // Direction vector of the first line
