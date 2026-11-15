@@ -97,41 +97,6 @@ export default class GeometryService {
     }
 
     /**
-     * Checks whether any pair of wall endpoints is within the
-     * given tolerance in millimeters. This does not join their shapes.
-     */
-    static areWallsConnected(wallA, wallB, tolerance = 1) {
-        if (!Number.isFinite(tolerance) || tolerance < 0) {
-            throw new RangeError('tolerance must be a non-negative finite number');
-        }
-        // Collect both endpoints of each wall
-        const pointsA = [wallA.start, wallA.end];
-        const pointsB = [wallB.start, wallB.end];
-
-        // Compare every endpoint of A
-        // with every endpoint of B
-        for (const pointA of pointsA) {
-            for (const pointB of pointsB) {
-
-                // Calculate distance between the points in mm
-                const distance = Math.hypot(
-                    pointA.x - pointB.x,
-                    pointA.y - pointB.y
-                );
-
-                // If the endpoints are close enough,
-                // the walls are considered connected
-                if (distance <= tolerance) {
-                    return true;
-                }
-            }
-        }
-
-        // No endpoint pairs are close enough
-        return false;
-    }
-
-    /**
      * Finds the intersection of two infinite lines, not bounded segments.
      *
      * Outer wall edges may need extending to meet at a corner.
@@ -179,78 +144,6 @@ export default class GeometryService {
         return {
             x: p1.x + t * dx1,
             y: p1.y + t * dy1
-        };
-    }
-
-
-    /**
-     * Builds a corner join where wall A ends exactly where wall B starts.
-     *
-     * Only the outer footprint corners change. The stored reference
-     * endpoints and measured lengths remain unchanged.
-     * Returns null for unsupported or invalid joins.
-     */
-    static getJoinedWallCorners(wallA, wallB) {
-        if (
-            wallA.end.x !== wallB.start.x ||
-            wallA.end.y !== wallB.start.y
-        ) {
-            return null;
-        }
-
-        const a = wallA.getGeometry().map(p => ({ ...p }));
-        const b = wallB.getGeometry().map(p => ({ ...p }));
-
-        const sameSide =
-            (wallA.thicknessSide ?? 1) ===
-            (wallB.thicknessSide ?? 1);
-
-        // Match the physical faces, accounting for thickness direction.
-        const referenceJoin = this.lineIntersection(
-            a[0], a[1],
-            ...(sameSide ? [b[0], b[1]] : [b[3], b[2]])
-        );
-
-        const offsetJoin = this.lineIntersection(
-            a[3], a[2],
-            ...(sameSide ? [b[3], b[2]] : [b[0], b[1]])
-        );
-
-        if (!referenceJoin || !offsetJoin) {
-            return null;
-        }
-
-        const maxMiter =
-            Math.max(wallA.thickness, wallB.thickness) * 4;
-
-        if (
-            [referenceJoin, offsetJoin].some(point =>
-                Math.hypot(
-                    point.x - wallA.end.x,
-                    point.y - wallA.end.y
-                ) > maxMiter
-            )
-        ) {
-            return null;
-        }
-
-        // Adjust display corners only; stored endpoints stay unchanged.
-        a[1] = { ...referenceJoin };
-        a[2] = { ...offsetJoin };
-
-        b[0] = { ...(sameSide ? referenceJoin : offsetJoin) };
-        b[3] = { ...(sameSide ? offsetJoin : referenceJoin) };
-
-        if (
-            !this.isSimplePolygon(a) ||
-            !this.isSimplePolygon(b)
-        ) {
-            return null;
-        }
-
-        return {
-            wallACorners: a,
-            wallBCorners: b
         };
     }
 
