@@ -27,7 +27,7 @@ class AuthController extends Controller
         // Protect against session fixation
         $request->session()->regenerate();
 
-        return redirect()->route('editor');
+        return redirect()->route('projects.index');
     }
 
     // Authenticate an existing user
@@ -41,7 +41,8 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('editor'));
+            $request->session()->forget('url.intended');
+            return redirect()->route('projects.index');
         }
 
         return back()
