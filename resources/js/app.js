@@ -6,6 +6,7 @@ import DrawingView from './cad/rendering/DrawingView';
 import DrawingEngine from './cad/DrawingEngine';
 import EditorController from './cad/interaction/EditorController';
 import ProjectService from './cad/persistence/ProjectService';
+import restoreElements from './cad/persistence/restoreElements';
 import SelectionManager from './cad/interaction/SelectionManager';
 import SnapManager from './cad/interaction/SnapManager';
 import ThreeViewer from './cad/rendering/ThreeViewer';
@@ -159,6 +160,23 @@ if (canvas && twoContainer && threeContainer) {
         syncThreeIfVisible();
     };
 
+    const initialProject = document.getElementById('initialProject');
+    if (initialProject) {
+        try {
+            const project = JSON.parse(initialProject.textContent);
+            const elements = restoreElements(project.elements);
+            engine.replaceElements(elements);
+            currentProjectId = project.id;
+            projectNameInput.value = project.name;
+            setUnsavedChanges(false);
+            status.textContent = `Project "${project.name}" loaded.`;
+        } catch (error) {
+            setProjectBusy(true);
+            status.textContent = `Could not open project: ${error.message}. Return to Projects to try again.`;
+        }
+        initialProject.remove();
+    }
+
     document.getElementById('show3D').addEventListener('click', () => {
         twoContainer.style.display = 'none';
         threeContainer.style.display = 'block';
@@ -218,6 +236,7 @@ if (canvas && twoContainer && threeContainer) {
                     );
 
                 currentProjectId = project.id;
+                window.history.replaceState(null, '', `/editor/${project.id}`);
                 setUnsavedChanges(false);
 
                 status.textContent =
@@ -251,6 +270,7 @@ if (canvas && twoContainer && threeContainer) {
 
             // Reset current project
             currentProjectId = null;
+            window.history.replaceState(null, '', '/editor');
 
             // Reset editor state
             editor.cancelWallDrawing();
