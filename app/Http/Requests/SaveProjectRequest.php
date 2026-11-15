@@ -28,12 +28,10 @@ class SaveProjectRequest extends FormRequest
             // A project may contain no elements.
             'elements' => ['present', 'array', 'list', 'max:1000'],
 
-            // Common element properties.
             'elements.*' => ['required', 'array'],
             'elements.*.id' => ['required', 'uuid', 'distinct'],
             'elements.*.type' => ['required', 'in:wall,column'],
 
-            // Wall geometry.
             'elements.*.start' => ['sometimes', 'array'],
             'elements.*.start.x' => ['sometimes', 'numeric'],
             'elements.*.start.y' => ['sometimes', 'numeric'],
@@ -46,7 +44,6 @@ class SaveProjectRequest extends FormRequest
             'elements.*.thicknessSide' => ['sometimes', 'integer:strict', 'in:-1,1'],
             'elements.*.height' => ['sometimes', 'numeric'],
 
-            // Column geometry.
             'elements.*.position' => ['sometimes', 'array'],
             'elements.*.position.x' => ['sometimes', 'numeric'],
             'elements.*.position.y' => ['sometimes', 'numeric'],
@@ -65,7 +62,6 @@ class SaveProjectRequest extends FormRequest
             function (Validator $validator) {
                 $elements = $this->input('elements', []);
 
-                // Avoid iterating over invalid input.
                 if (!is_array($elements)) {
                     return;
                 }
@@ -111,7 +107,6 @@ class SaveProjectRequest extends FormRequest
             $validator
         );
 
-        // Validate both endpoints.
         $this->validatePoint(
             $wall['start'] ?? null,
             "$path.start",
@@ -124,7 +119,6 @@ class SaveProjectRequest extends FormRequest
             $validator
         );
 
-        // Dimensions must be positive.
         $this->validatePositiveNumber(
             $wall['thickness'] ?? null,
             "$path.thickness",
@@ -137,7 +131,6 @@ class SaveProjectRequest extends FormRequest
             $validator
         );
 
-        // Start and end must not be identical.
         $start = $wall['start'] ?? null;
         $end = $wall['end'] ?? null;
 

@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    // Register a new user
     public function register(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -21,7 +20,6 @@ class AuthController extends Controller
         // The User model's 'hashed' cast hashes the password
         $user = User::create($validated);
 
-        // Automatically log in the new user
         Auth::login($user);
 
         // Protect against session fixation
@@ -30,7 +28,6 @@ class AuthController extends Controller
         return redirect()->route('projects.index');
     }
 
-    // Authenticate an existing user
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
@@ -52,12 +49,10 @@ class AuthController extends Controller
             ->onlyInput('email');
     }
 
-    // Log out the current user
     public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
 
-        // Destroy the existing session and rotate the CSRF token
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

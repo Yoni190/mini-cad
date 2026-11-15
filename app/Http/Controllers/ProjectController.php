@@ -46,7 +46,7 @@ class ProjectController extends Controller
         return view('editor', ['project' => $project]);
     }
 
-    public function show(Request $request, Project $project)
+    public function show(Project $project)
     {
         Gate::authorize('view', $project);
 

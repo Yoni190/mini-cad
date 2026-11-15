@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AuthController;
 
-// Redirect homepage to projects or login
 Route::get('/', function () {
     return redirect()->route(
         auth()->check() ? 'projects.index' : 'login'
@@ -20,7 +19,6 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:5,1');
 });
 
-// Routes accessible only to authenticated users
 Route::middleware('auth')->group(function () {
     Route::view('/editor', 'editor')->name('editor');
     Route::get('/editor/{project}', [ProjectController::class, 'edit'])->name('editor.project');
@@ -28,7 +26,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])
         ->name('logout');
 
-    // CAD project routes
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
