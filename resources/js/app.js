@@ -78,4 +78,5 @@ if (canvas && twoContainer && threeContainer) {
     };
 
     projects.openInitialProject(document.getElementById('initialProject'));
+    projects.restoreGuestDraft();
 }
