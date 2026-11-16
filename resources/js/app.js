@@ -68,6 +68,10 @@ if (canvas && twoContainer && threeContainer) {
     viewport.init();
     initProjectControls(projects, controls);
     document.getElementById('show3D').addEventListener('click', () => viewport.show3D());
+    document.getElementById('showSplit').addEventListener('click', () => {
+        viewport.showSplit();
+        editor.scheduleCanvasRender();
+    });
     document.getElementById('show2D').addEventListener('click', () => {
         viewport.show2D();
         editor.scheduleCanvasRender();

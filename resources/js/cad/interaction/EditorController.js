@@ -224,7 +224,7 @@ export default class EditorController {
         if (
             !isTypingInField && (event.ctrlKey || event.metaKey) &&
             !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'a' &&
-            document.getElementById('threeContainer').style.display === 'none'
+            document.getElementById('twoContainer').style.display !== 'none'
         ) {
             event.preventDefault();
             if (this.activeTool !== 'select') {
@@ -246,7 +246,7 @@ export default class EditorController {
             !event.repeat &&
             event.key.toLowerCase() === 'o' &&
             this.activeTool === 'wall' &&
-            document.getElementById('threeContainer').style.display === 'none'
+            document.getElementById('twoContainer').style.display !== 'none'
         ) {
             event.preventDefault();
             this.toggleOrtho();
@@ -256,7 +256,7 @@ export default class EditorController {
         const isDrawingWall =
             this.activeTool === 'wall' &&
             this.wallTool.startPoint !== null &&
-            document.getElementById('threeContainer').style.display === 'none';
+            document.getElementById('twoContainer').style.display !== 'none';
 
         if (
             isDrawingWall &&
@@ -277,7 +277,7 @@ export default class EditorController {
         if(
             this.activeTool === 'select' &&
             (event.key === 'Delete' || event.key === 'Backspace') &&
-            document.getElementById('threeContainer').style.display === 'none'
+            document.getElementById('twoContainer').style.display !== 'none'
         ) {
             const tag = event.target?.tagName;
 
@@ -368,7 +368,7 @@ export default class EditorController {
 
             if (
                 this.isEditingLocked ||
-                document.getElementById('threeContainer').style.display !== 'none'
+                document.getElementById('twoContainer').style.display === 'none'
             ) return;
 
             if (this.activeTool === 'measure') {
@@ -403,7 +403,7 @@ export default class EditorController {
                 !this.isEditingLocked &&
                 this.activeTool === 'wall' &&
                 this.wallTool.hasPreview &&
-                document.getElementById('threeContainer').style.display === 'none'
+                document.getElementById('twoContainer').style.display !== 'none'
             ) {
                 this.renderWallPreview();
             }
@@ -411,7 +411,7 @@ export default class EditorController {
             if (
                 !this.isEditingLocked &&
                 this.activeTool === 'measure' &&
-                document.getElementById('threeContainer').style.display === 'none'
+                document.getElementById('twoContainer').style.display !== 'none'
             ) {
                 this.renderMeasurement();
             }

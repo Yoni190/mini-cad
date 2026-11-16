@@ -52,7 +52,9 @@ export default function initEditorUI() {
 
     function syncUI() {
         const tool = toolSelect.value;
-        const is3D = threeContainer.style.display !== 'none';
+        const has2D = twoContainer.style.display !== 'none';
+        const has3D = threeContainer.style.display !== 'none';
+        const is3D = has3D && !has2D;
         document.body.dataset.activeTool = tool;
         toolButtons.forEach(button => {
             button.setAttribute('aria-pressed', String(button.dataset.tool === tool));
@@ -65,11 +67,16 @@ export default function initEditorUI() {
         document.getElementById('wallThicknessProperties').hidden =
             tool !== 'select' || selectedElement?.type !== 'wall';
         document.getElementById('columnPlacementHelp').hidden = tool !== 'column';
-        document.getElementById('show2D').setAttribute('aria-pressed', String(!is3D));
+        document.getElementById('show2D').setAttribute('aria-pressed', String(has2D && !has3D));
         document.getElementById('show3D').setAttribute('aria-pressed', String(is3D));
-        document.getElementById('viewHeading').textContent = is3D ? '3D model' : '2D drawing';
+        document.getElementById('showSplit').setAttribute('aria-pressed', String(has2D && has3D));
+        document.getElementById('viewHeading').textContent = is3D ? '3D model' : has3D ? '2D drawing & 3D model' : '2D drawing';
         help.textContent = is3D ? '3D: Drag to orbit · Scroll to zoom · Right-drag to pan' : instructions[tool];
-        document.getElementById('navigationHelp').hidden = is3D;
+        const navigationHelp = document.getElementById('navigationHelp');
+        navigationHelp.hidden = is3D;
+        navigationHelp.textContent = has3D && has2D
+            ? '2D: Scroll to zoom · Middle-drag to pan · 3D: Drag to orbit · Scroll to zoom'
+            : 'Scroll to zoom · Middle-drag to pan · Esc to cancel';
     }
 
     toolButtons.forEach(button => {
