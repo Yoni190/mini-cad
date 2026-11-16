@@ -52,7 +52,7 @@ if (canvas && twoContainer && threeContainer) {
         busyControls: [
             'projectName', 'saveProject', 'newProject', 'drawingTool',
             'wallLength', 'applyWallLength', 'updateColumn',
-            'wallThickness', 'updateWallThickness',
+            'wallThickness', 'updateWallThickness', 'wallHeight', 'updateWallHeight',
         ].map(id => document.getElementById(id)),
     };
     const projects = new ProjectController({

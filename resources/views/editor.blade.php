@@ -165,7 +165,7 @@
                 <button id="applyWallLength" type="button">Create Wall</button>
             </section>
             <section class="property-section" id="wallThicknessProperties" hidden>
-                <h3>Wall thickness</h3>
+                <h3>Wall dimensions</h3>
                 <p class="field-help">Choose Select and click a wall to edit it.</p>
 
                 <label for="wallThickness">Thickness (mm)</label>
@@ -174,6 +174,9 @@
                 <button type="button" id="updateWallThickness">
                     Update Thickness
                 </button>
+                <label for="wallHeight">Height (mm)</label>
+                <input type="number" id="wallHeight" min="0.001" step="any">
+                <button type="button" id="updateWallHeight">Update Height</button>
             </section>
             <section class="property-section" id="columnProperties" hidden>
                 <h3>Column dimensions</h3>
