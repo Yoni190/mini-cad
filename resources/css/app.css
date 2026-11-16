@@ -170,6 +170,9 @@
 .workspace-heading h2 { font-size: 14px; font-weight: 600; }
 .workspace-heading span { font-size: 11px; color: var(--cad-muted); }
 .canvas-viewport { max-width: 100%; overflow: auto; border: 1px solid #cbd4df; border-radius: 4px; background: #e9edf2; }
+.canvas-viewport.split-view { display: flex; }
+.canvas-viewport.split-view > div { width: 50%; min-width: 0; }
+.canvas-viewport.split-view #threeContainer { border-left: 1px solid #cbd4df; }
 /* No CSS scaling or canvas borders: one displayed pixel stays one drawing pixel. */
 #twoContainer, #threeContainer { width: 100%; height: 600px; }
 #twoContainer {

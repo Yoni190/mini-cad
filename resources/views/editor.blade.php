@@ -25,6 +25,7 @@
         <div class="view-toggle" role="group" aria-label="Drawing view">
             <button type="button" id="show2D" aria-pressed="true" title="Switch to 2D">2D</button>
             <button type="button" id="show3D" aria-pressed="false" title="Switch to 3D">3D</button>
+            <button type="button" id="showSplit" aria-pressed="false" title="Show 2D and 3D side by side">Split</button>
         </div>
         <div class="account-controls">
             @auth
