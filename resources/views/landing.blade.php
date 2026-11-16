@@ -10,7 +10,7 @@
 @php
     $loginUrl = Route::has('login') ? route('login') : null;
     $registerUrl = Route::has('register') ? route('register') : $loginUrl;
-    $startUrl = auth()->check() ? route('editor') : ($registerUrl ?? route('editor'));
+    $startUrl = route('editor');
 @endphp
 <body class="cad-editor landing-page">
     <header class="editor-header landing-header">

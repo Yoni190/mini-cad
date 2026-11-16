@@ -28,11 +28,27 @@
             <button type="button" id="show3D" aria-pressed="false" title="Switch to 3D">3D</button>
         </div>
         <div class="account-controls">
-            <span class="user-name" title="{{ auth()->user()->name }}"><span class="visually-hidden">Logged in as </span>{{ auth()->user()->name }}</span>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="button-quiet">Logout</button>
-            </form>
+            @auth
+                <span class="user-name"
+                    title="{{ auth()->user()->name }}">
+                    {{ auth()->user()->name }}
+                </span>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="button-quiet">
+                        Logout
+                    </button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" class="button-quiet">
+                    Login
+                </a>
+
+                <a href="{{ route('register') }}" class="button-primary">
+                    Sign Up
+                </a>
+            @endauth
         </div>
     </header>
 

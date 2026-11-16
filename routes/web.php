@@ -5,12 +5,14 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AuthController;
 
 Route::get('/', function () {
-    return redirect()->route(
-        auth()->check() ? 'home' : 'login'
-    );
-});
+    if (auth()->check()) {
+        return redirect()->route('projects.index');
+    }
 
-Route::view('/', 'landing')->name('home');
+    return view('landing');
+})->name('home');
+
+Route::view('/editor', 'editor')->name('editor');
 
 Route::middleware('guest')->group(function () {
     Route::view('/register', 'auth.register')->name('register');
@@ -22,7 +24,6 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::view('/editor', 'editor')->name('editor');
     Route::get('/editor/{project}', [ProjectController::class, 'edit'])->name('editor.project');
 
     Route::post('/logout', [AuthController::class, 'logout'])
