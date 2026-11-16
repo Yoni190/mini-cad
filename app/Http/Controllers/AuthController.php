@@ -25,7 +25,7 @@ class AuthController extends Controller
         // Protect against session fixation
         $request->session()->regenerate();
 
-        return redirect()->route('projects.index');
+        return redirect()->route('editor');
     }
 
     public function login(Request $request): RedirectResponse
