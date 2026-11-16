@@ -21,7 +21,6 @@
                 <p id="changesStatus" data-unsaved="false" role="status" aria-live="polite">Saved.</p>
                 <button type="button" id="saveProject" class="button-primary" title="Save project">Save</button>
             </div>
-            <button type="button" id="newProject" title="Create a new project">New Project</button>
         </div>
         <div class="view-toggle" role="group" aria-label="Drawing view">
             <button type="button" id="show2D" aria-pressed="true" title="Switch to 2D">2D</button>
@@ -51,6 +50,21 @@
             @endauth
         </div>
     </header>
+
+    <nav class="editor-tabs" aria-label="Editor navigation">
+        <details class="file-menu">
+            <summary>
+                File 
+                <svg class="pi" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <path d="m6 9 6 6 6-6"></path>
+                </svg>
+            </summary>
+            <div class="file-menu-items">
+                <button type="button" id="newProject">New Project</button>
+            </div>
+        </details>
+        <a href="#drawing-workspace" aria-current="page">Home</a>
+    </nav>
 
     <div class="project-status">
         <p id="saveStatus" role="status"
@@ -111,7 +125,7 @@
             <p class="tool-note">Dimensions in mm</p>
         </aside>
 
-        <main class="drawing-workspace" aria-label="Drawing workspace">
+        <main id="drawing-workspace" class="drawing-workspace" aria-label="Drawing workspace">
             <div class="workspace-heading">
                 <h2 id="viewHeading">2D drawing</h2>
                 <span>Units: mm <span aria-hidden="true">·</span> Grid: 1000 mm</span>

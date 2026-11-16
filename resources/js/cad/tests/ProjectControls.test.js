@@ -43,3 +43,18 @@ it('warns before leaving only while there are unsaved changes', () => {
         expect(event.returnValue).toBe(unsaved ? true : '');
     }
 });
+
+it('closes the File menu when starting a new project', () => {
+    vi.stubGlobal('document', new EventTarget());
+    vi.stubGlobal('window', new EventTarget());
+    const menu = { open: true };
+    const newProject = Object.assign(new EventTarget(), { closest: () => menu });
+    const controls = { name: new EventTarget(), save: new EventTarget(), newProject };
+    const projects = { createNew: vi.fn() };
+    initProjectControls(projects, controls);
+
+    newProject.dispatchEvent(new Event('click'));
+
+    expect(menu.open).toBe(false);
+    expect(projects.createNew).toHaveBeenCalledOnce();
+});

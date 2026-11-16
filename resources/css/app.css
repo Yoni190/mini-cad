@@ -96,6 +96,16 @@
 .account-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .user-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cad-editor .button-quiet { border-color: transparent; color: var(--cad-muted); }
+.editor-tabs { display: flex; align-items: center; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--cad-border); background: #fff; }
+.editor-tabs > a, .file-menu summary { display: block; padding: 9px 12px; border-radius: 4px 4px 0 0; color: #334155; font-weight: 600; text-decoration: none; cursor: pointer; }
+.editor-tabs > a[aria-current="page"] { color: var(--cad-blue); box-shadow: inset 0 -2px var(--cad-blue); }
+.editor-tabs > a:hover, .file-menu summary:hover, .file-menu[open] summary { background: #f0f4fa; }
+.file-menu { position: relative; }
+.file-menu summary { display: flex; align-items: center; gap: 4px; list-style: none; }
+.file-menu summary::-webkit-details-marker { display: none; }
+.file-menu summary:focus-visible { outline: 2px solid var(--cad-blue); outline-offset: -2px; }
+.file-menu-items { position: absolute; z-index: 30; top: 100%; left: 0; min-width: 160px; padding: 4px; border: 1px solid var(--cad-border); border-radius: 0 0 5px 5px; background: #fff; box-shadow: 0 4px 12px rgba(15, 23, 42, .14); }
+.cad-editor .file-menu-items button { justify-content: flex-start; width: 100%; border-color: transparent; }
 .project-status { padding: 9px 20px; border-bottom: 1px solid var(--cad-border); background: #f4f7fc; color: #355276; overflow-wrap: anywhere; min-height: 39px; }
 .save-controls { display: flex; align-items: center; gap: 12px; }
 #changesStatus { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
@@ -204,7 +214,7 @@
     .cad-editor .tool-button { width: auto; margin: 0; }
     .properties-panel { border-left: 0; border-top: 1px solid var(--cad-border); }
     .property-section { max-width: 400px; }
-    .project-status { padding-inline: 12px; }
+    .editor-tabs, .project-status { padding-inline: 12px; }
 }
 
 /* Project library */

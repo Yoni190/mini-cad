@@ -21,7 +21,10 @@ export default function initProjectControls(projects, controls) {
         }
     });
     controls.save.addEventListener('click', () => projects.save());
-    controls.newProject.addEventListener('click', () => projects.createNew());
+    controls.newProject.addEventListener('click', () => {
+        controls.newProject.closest('details').open = false;
+        projects.createNew();
+    });
     document.addEventListener('keydown', event => {
         const isSaveShortcut = (event.ctrlKey || event.metaKey) &&
             !event.altKey && !event.shiftKey && event.key.toLowerCase() === 's';
