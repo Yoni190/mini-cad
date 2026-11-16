@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="cad-editor">
+<body class="cad-editor" data-authenticated="{{ auth()->check() ? 'true' : 'false' }}">
     <header class="editor-header">
         <a href="{{ route('projects.index') }}" class="editor-brand" aria-label="Back to projects" title="Back to projects">
             <span class="brand-mark" aria-hidden="true">⌑</span>
