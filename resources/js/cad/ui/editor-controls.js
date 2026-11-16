@@ -4,6 +4,7 @@ export default function initEditorControls(editor) {
     const columnWidth = document.getElementById('columnWidth');
     const columnDepth = document.getElementById('columnDepth');
     const wallThickness = document.getElementById('wallThickness');
+    const wallHeight = document.getElementById('wallHeight');
 
     // Validation belongs to the action; presentation of its error belongs here.
     function runAction(action) {
@@ -25,6 +26,9 @@ export default function initEditorControls(editor) {
     document.getElementById('updateWallThickness').addEventListener('click', () => {
         runAction(() => editor.updateSelectedWallThickness(wallThickness.value));
     });
+    document.getElementById('updateWallHeight').addEventListener('click', () => {
+        runAction(() => editor.updateSelectedWallHeight(wallHeight.value));
+    });
     document.getElementById('newWallThickness').addEventListener('input', () => {
         editor.refreshWallPreview();
     });
@@ -36,5 +40,6 @@ export default function initEditorControls(editor) {
             columnDepth.value = selected.depth;
         }
         wallThickness.value = selected?.type === 'wall' ? selected.thickness : '';
+        wallHeight.value = selected?.type === 'wall' ? selected.height : '';
     });
 }

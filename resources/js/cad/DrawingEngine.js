@@ -200,6 +200,18 @@ export default class DrawingEngine {
         this.handleModelChange({ wallsChanged: true });
     }
 
+    updateWallHeight(id, height) {
+        const wall = this.elements.find(element => element.id === id && element.type === 'wall');
+        if (!wall) throw new Error('Wall not found.');
+        height = Number(height);
+        if (!Number.isFinite(height) || height <= 0) {
+            throw new Error('Wall height must be a positive number.');
+        }
+        if (wall.height === height) return;
+        wall.height = height;
+        this.handleModelChange();
+    }
+
     /** Clears derived wall geometry without notifying listeners or redrawing. */
     invalidateWallGeometry() {
         this.wallGeometryCache = null;

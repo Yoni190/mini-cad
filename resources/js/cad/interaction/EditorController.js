@@ -441,6 +441,13 @@ export default class EditorController {
         this.engine.updateColumnDimensions(selected.id, width, depth);
     }
 
+    updateSelectedWallHeight(height) {
+        if (this.isEditingLocked || this.activeTool !== 'select') return;
+        const selected = this.selectionManager.selectedElement;
+        if (selected?.type !== 'wall') throw new Error('Please select a wall first.');
+        this.engine.updateWallHeight(selected.id, height);
+    }
+
     updateSelectedWallThickness(thickness) {
         if (this.isEditingLocked || this.activeTool !== 'select') return;
         const selected = this.selectionManager.selectedElement;
