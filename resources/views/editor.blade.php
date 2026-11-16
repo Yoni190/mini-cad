@@ -185,6 +185,8 @@
                 <input type="number" id="columnWidth" min="1" aria-describedby="columnDimensionsHelp">
                 <label for="columnDepth">Depth (mm)</label>
                 <input type="number" id="columnDepth" min="1" aria-describedby="columnDimensionsHelp">
+                <label for="columnHeight">Height (mm)</label>
+                <input type="number" id="columnHeight" min="0.001" step="any" aria-describedby="columnDimensionsHelp">
                 <button type="button" id="updateColumn">Update Dimensions</button>
             </section>
             <section class="property-section" id="columnPlacementHelp" hidden>
