@@ -41,4 +41,12 @@ export default class WallPreviewRenderer {
             this.previewRenderer.drawSnapMarker(point);
         }
     }
+
+    renderMeasurement(start, end) {
+        this.prepareFrame();
+
+        if (start && end) {
+            this.previewRenderer.drawMeasurement(start, end);
+        }
+    }
 }
