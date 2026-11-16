@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import WallTopology from '../geometry/WallTopology';
 
 export default class ThreeViewer {
     constructor(container) {
@@ -41,10 +42,9 @@ export default class ThreeViewer {
 
         this.controls.enableDamping = true;
 
-        const grid = new THREE.GridHelper(20, 20);
-        this.scene.add(grid);
-
         this.elementsGroup = new THREE.Group();
+        this.floorsGroup = new THREE.Group();
+        this.scene.add(this.floorsGroup);
         this.scene.add(this.elementsGroup);
         this.elementMeshes = new Map();
 
@@ -169,6 +169,16 @@ export default class ThreeViewer {
      * Resolved wall corners keep supported joins consistent with 2D.
      */
     updateElements(elements, wallGeometry = new Map()) {
+        for (const floor of [...this.floorsGroup.children]) {
+            this.floorsGroup.remove(floor);
+            floor.geometry.dispose();
+            floor.material.dispose();
+        }
+        for (const room of WallTopology.rooms(elements)) {
+            this.floorsGroup.add(this.createFloorMesh(room.polygon));
+        }
+        this.requestRender();
+
         const currentIds = new Set();
         let sceneChanged = false;
 
@@ -238,5 +248,27 @@ export default class ThreeViewer {
         if (sceneChanged) {
             this.requestRender();
         }
+    }
+
+    createFloorMesh(polygon) {
+        const shape = new THREE.Shape();
+
+        shape.moveTo(polygon[0].x / 1000, -polygon[0].y / 1000);
+        for (const point of polygon.slice(1)) {
+            shape.lineTo(point.x / 1000, -point.y / 1000);
+        }
+        shape.closePath();
+
+        const mesh = new THREE.Mesh(
+            new THREE.ShapeGeometry(shape),
+            new THREE.MeshStandardMaterial({
+                color: 0xc3ced8,
+                roughness: 0.9,
+                side: THREE.DoubleSide
+            })
+        );
+
+        mesh.rotation.x = -Math.PI / 2;
+        return mesh;
     }
 }
