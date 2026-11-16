@@ -69,6 +69,7 @@
                 <option value="wall">Wall</option>
                 <option value="column">Column</option>
                 <option value="select">Select</option>
+                <option value="measure">Measure</option>
             </select>
             <div class="tool-group" role="group" aria-label="Draw">
                 <p class="group-label">Draw</p>
@@ -91,6 +92,22 @@
                     <span class="tool-tooltip" aria-hidden="true">Select / move <kbd>S</kbd></span>
                 </button>
             </div>
+            <button type="button"
+                    class="tool-button"
+                    data-tool="measure"
+                    aria-pressed="false"
+                    aria-keyshortcuts="M">
+
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 17L17 3L21 7L7 21Z"/>
+                    <path d="M10 10L12 12M13 7L15 9M7 13L9 15"/>
+                </svg>
+
+                <span>Measure</span>
+                <span class="tool-tooltip" aria-hidden="true">
+                    Measure distance <kbd>M</kbd>
+                </span>
+            </button>
             <p class="tool-note">Dimensions in mm</p>
         </aside>
 
