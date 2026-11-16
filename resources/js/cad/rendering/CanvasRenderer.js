@@ -312,4 +312,54 @@ export default class CanvasRenderer {
         const ctx = this.ctx;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
+
+    drawMeasurement(start, end) {
+        const ctx = this.ctx;
+        const a = this.worldToScreen(start.x, start.y);
+        const b = this.worldToScreen(end.x, end.y);
+
+        const distance = Math.hypot(
+            end.x - start.x,
+            end.y - start.y
+        );
+
+        ctx.save();
+
+        // Measurement line
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+
+        // Endpoint markers
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#d97706';
+
+        for (const point of [a, b]) {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Measurement label
+        const midX = (a.x + b.x) / 2;
+        const midY = (a.y + b.y) / 2 - 12;
+        const label = `${Math.round(distance)} mm`;
+
+        ctx.font = '600 13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(label, midX, midY);
+        ctx.fillStyle = '#92400e';
+        ctx.fillText(label, midX, midY);
+
+        ctx.restore();
+    }
 }
