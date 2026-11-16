@@ -6,13 +6,13 @@ use App\Http\Controllers\AuthController;
 
 Route::get('/', function () {
     return redirect()->route(
-        auth()->check() ? 'projects.index' : 'login'
+        auth()->check() ? 'home' : 'login'
     );
 });
 
-Route::middleware('guest')->group(function () {
-    Route::view('/', 'landing')->name('home');
+Route::view('/', 'landing')->name('home');
 
+Route::middleware('guest')->group(function () {
     Route::view('/register', 'auth.register')->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 
