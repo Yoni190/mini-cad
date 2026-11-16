@@ -45,7 +45,7 @@ export default class WallDrawingTool {
         if (this.startPoint) {
             this.directionPoint = point;
             // Pointer movement takes control of length again.
-            this.inputs.setLength('');
+            // this.inputs.setLength('');
             this.preview.request();
         } else {
             this.preview.showStartHints(point);
@@ -84,6 +84,13 @@ export default class WallDrawingTool {
                 this.createWallWithLength(length);
             }
 
+            return true;
+        }
+
+        if (event.key === 'Escape' && value !== '') {
+            event.preventDefault();
+            this.inputs.setLength('');
+            this.preview.render();
             return true;
         }
         return false;
@@ -143,6 +150,7 @@ export default class WallDrawingTool {
         this.wallChainStart = null;
         this.wallChainCount = 0;
         this.alignmentHold = { x: null, y: null };
+        this.inputs.setLength('');
     }
 
     alignWallPoint(point) {
