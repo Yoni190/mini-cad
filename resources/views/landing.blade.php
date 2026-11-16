@@ -28,7 +28,7 @@
                 @if ($loginUrl)
                     <a href="{{ $loginUrl }}" class="landing-link">Log in</a>
                 @endif
-                <a href="{{ $startUrl }}" class="project-create">Sign up</a>
+                <a href="{{ $registerUrl }}" class="project-create">Sign up</a>
             @endauth
         </div>
     </header>
