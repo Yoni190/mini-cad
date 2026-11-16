@@ -1,7 +1,8 @@
 /** Buttons and shortcuts share the same project actions. */
 export default function initProjectControls(projects, controls) {
     window.addEventListener('beforeunload', event => {
-        if (!projects.hasUnsavedChanges) return;
+        if (!projects.hasUnsavedChanges || projects.allowNavigation) return;
+        
         event.preventDefault();
         event.returnValue = true;
     });

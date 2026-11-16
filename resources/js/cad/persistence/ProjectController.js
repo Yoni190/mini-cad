@@ -10,6 +10,7 @@ export default class ProjectController {
         this.isBusy = false;
         this.isGuest = document.body.dataset.authenticated !== 'true';
         this.guestDraftKey = 'miniCadGuestDraft';
+        this.allowNavigation = false;
     }
 
     setUnsavedChanges(value) {
@@ -69,6 +70,7 @@ export default class ProjectController {
                     elements: this.engine.elements
                 }));
 
+                this.allowNavigation = true;
                 window.location.assign('/register');
             } catch (error) {
                 this.controls.status.textContent =
