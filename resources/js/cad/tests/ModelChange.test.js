@@ -37,6 +37,18 @@ describe('model change lifecycle', () => {
         expect(engine.onModelChange).toHaveBeenCalledOnce();
     });
 
+    it('updates column height and rejects invalid dimensions without partial changes', () => {
+        const { engine, column } = setup();
+        engine.updateColumnDimensions(column.id, column.width, column.depth, 3500);
+        expect(column.height).toBe(3500);
+        expect(engine.onModelChange).toHaveBeenCalledOnce();
+        for (const height of [0, -1, Infinity, 'invalid']) {
+            expect(() => engine.updateColumnDimensions(column.id, 600, 800, height)).toThrow('Column height must be a positive number');
+        }
+        expect([column.width, column.depth, column.height]).toEqual([400, 400, 3500]);
+        expect(engine.onModelChange).toHaveBeenCalledOnce();
+    });
+
     const wallChanges = [
         {
             name: 'adding a wall',
@@ -95,7 +107,7 @@ describe('model change lifecycle', () => {
         },
         {
             name: 'resizing a column',
-            change: ({ engine, column }) => engine.updateColumnDimensions(column.id, 600, 800),
+            change: ({ engine, column }) => engine.updateColumnDimensions(column.id, 600, 800, 3500),
             verify: ({ column }) => expect([column.width, column.depth]).toEqual([600, 800]),
         },
         {
@@ -137,7 +149,7 @@ describe('model change lifecycle', () => {
         const { engine, wall, column, cached } = setup();
 
         engine.updateWallThickness(wall.id, wall.thickness);
-        engine.updateColumnDimensions(column.id, column.width, column.depth);
+        engine.updateColumnDimensions(column.id, column.width, column.depth, column.height);
         engine.removeElements(['missing']);
 
         expect(engine.onModelChange).not.toHaveBeenCalled();

@@ -7,7 +7,7 @@ describe('editor property controls', () => {
     let controls, editor, document;
     beforeEach(() => {
         controls = Object.fromEntries([
-            'wallLength', 'columnWidth', 'columnDepth', 'wallThickness', 'wallHeight',
+            'wallLength', 'columnWidth', 'columnDepth', 'columnHeight', 'wallThickness', 'wallHeight',
             'applyWallLength', 'updateColumn', 'updateWallThickness', 'updateWallHeight', 'newWallThickness',
         ].map(id => [id, Object.assign(new EventTarget(), { value: '' })]));
         document = Object.assign(new EventTarget(), { getElementById: id => controls[id] });
@@ -24,6 +24,7 @@ describe('editor property controls', () => {
         controls.wallLength.value = '1200';
         controls.columnWidth.value = '300';
         controls.columnDepth.value = '400';
+        controls.columnHeight.value = '3000';
         controls.wallThickness.value = '250';
         controls.wallHeight.value = '2800';
         for (const id of ['applyWallLength', 'updateColumn', 'updateWallThickness', 'updateWallHeight']) {
@@ -31,7 +32,7 @@ describe('editor property controls', () => {
         }
         controls.newWallThickness.dispatchEvent(new Event('input'));
         expect(editor.applyWallLength).toHaveBeenCalledExactlyOnceWith(1200);
-        expect(editor.updateSelectedColumnDimensions).toHaveBeenCalledExactlyOnceWith(300, 400);
+        expect(editor.updateSelectedColumnDimensions).toHaveBeenCalledExactlyOnceWith(300, 400, 3000);
         expect(editor.updateSelectedWallThickness).toHaveBeenCalledExactlyOnceWith('250');
         expect(editor.updateSelectedWallHeight).toHaveBeenCalledExactlyOnceWith('2800');
         expect(editor.refreshWallPreview).toHaveBeenCalledOnce();
@@ -49,9 +50,10 @@ describe('editor property controls', () => {
             const event = Object.assign(new Event('cad-selection-change'), { detail });
             document.dispatchEvent(event);
         };
-        select({ type: 'column', width: 300, depth: 400 });
+        select({ type: 'column', width: 300, depth: 400, height: 3000 });
         expect(controls.columnWidth.value).toBe(300);
         expect(controls.columnDepth.value).toBe(400);
+        expect(controls.columnHeight.value).toBe(3000);
         expect(controls.wallThickness.value).toBe('');
         select({ type: 'wall', thickness: 200, height: 3000 });
         expect(controls.wallThickness.value).toBe(200);

@@ -96,7 +96,7 @@ describe('scheduled redraws after model changes', () => {
 
         engine.addColumn({ x: 1000, y: 1000 });
         const column = engine.elements[0];
-        engine.updateColumnDimensions(column.id, 600, 800);
+        engine.updateColumnDimensions(column.id, 600, 800, column.height);
         selection.selectedElements = [column];
 
         expect(requestFrame).toHaveBeenCalledTimes(1);

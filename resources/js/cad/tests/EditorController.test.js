@@ -214,16 +214,17 @@ describe('property actions', () => {
 
     it('requires column selection, Select mode, and positive finite dimensions', () => {
         const { controller, engine } = setup();
-        expect(() => controller.updateSelectedColumnDimensions(300, 400)).toThrow('Please select a column first.');
+        expect(() => controller.updateSelectedColumnDimensions(300, 400, 3000)).toThrow('Please select a column first.');
         controller.selectionManager.selectedElements = [{ id: 'column', type: 'column' }];
-        controller.updateSelectedColumnDimensions(300, 400);
+        controller.updateSelectedColumnDimensions(300, 400, 3000);
         expect(engine.updateColumnDimensions).not.toHaveBeenCalled();
         controller.activeTool = 'select';
         for (const [width, depth] of [[0, 400], [300, -1], [NaN, 400], [300, Infinity]]) {
-            expect(() => controller.updateSelectedColumnDimensions(width, depth)).toThrow('Width and depth must be positive numbers.');
+            expect(() => controller.updateSelectedColumnDimensions(width, depth, 3000)).toThrow('Width, depth and height must be positive numbers.');
         }
-        controller.updateSelectedColumnDimensions(300, 400);
-        expect(engine.updateColumnDimensions).toHaveBeenCalledExactlyOnceWith('column', 300, 400);
+        expect(() => controller.updateSelectedColumnDimensions(300, 400, 0)).toThrow('Width, depth and height must be positive numbers.');
+        controller.updateSelectedColumnDimensions(300, 400, 3000);
+        expect(engine.updateColumnDimensions).toHaveBeenCalledExactlyOnceWith('column', 300, 400, 3000);
     });
 
     it('requires Select mode and a wall, and passes engine validation failures to the UI', () => {
@@ -254,7 +255,7 @@ describe('property actions', () => {
         const { controller, engine } = setup();
         controller.isEditingLocked = true;
         controller.applyWallLength(1000);
-        controller.updateSelectedColumnDimensions(300, 400);
+        controller.updateSelectedColumnDimensions(300, 400, 3000);
         controller.updateSelectedWallThickness('200');
         controller.wallTool.startPoint = { x: 0, y: 0 };
         controller.wallTool.directionPoint = { x: 100, y: 0 };
