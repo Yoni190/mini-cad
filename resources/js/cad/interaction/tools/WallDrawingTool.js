@@ -146,70 +146,36 @@ export default class WallDrawingTool {
     }
 
     alignWallPoint(point) {
-        const start = this.startPoint;
-
-        if (!start) return point;
+        if (!this.startPoint) return point;
 
         const threshold = 8 / this.getScale();
-        const holdDuration = 250; // milliseconds
-        const now = this.now();
+        const aligned = { ...point };
 
-        // The guides use wall endpoints and midpoints as references.
-        const references = [start];
+        const references = [this.startPoint];
 
-        for (const element of this.engine.elements) {
-            if (element.type !== 'wall') continue;
+        for (const wall of this.engine.elements) {
+            if (wall.type !== 'wall') continue;
 
             references.push(
-                element.start,
-                element.end,
+                wall.start,
+                wall.end,
                 {
-                    x: (element.start.x + element.end.x) / 2,
-                    y: (element.start.y + element.end.y) / 2,
+                    x: (wall.start.x + wall.end.x) / 2,
+                    y: (wall.start.y + wall.end.y) / 2,
                 }
             );
         }
 
-        const aligned = { ...point };
-
         for (const axis of ['x', 'y']) {
-            const hold = this.alignmentHold[axis];
-
-            if (hold && now < hold.until) {
-                aligned[axis] = hold.value;
-                continue;
-            }
-
-            // After the pause, release the coordinate once the pointer
-            // moves outside the guide's threshold.
-            if (hold) {
-                if (Math.abs(point[axis] - hold.value) <= threshold) {
-                    aligned[axis] = hold.value;
-                    continue;
-                }
-
-                this.alignmentHold[axis] = null;
-            }
-
-            let nearest = null;
+            let closestDistance = threshold;
 
             for (const reference of references) {
                 const distance = Math.abs(point[axis] - reference[axis]);
 
-                if (
-                    distance <= threshold &&
-                    (!nearest || distance < nearest.distance)
-                ) {
-                    nearest = { value: reference[axis], distance };
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    aligned[axis] = reference[axis];
                 }
-            }
-
-            if (nearest) {
-                aligned[axis] = nearest.value;
-                this.alignmentHold[axis] = {
-                    value: nearest.value,
-                    until: now + holdDuration,
-                };
             }
         }
 
