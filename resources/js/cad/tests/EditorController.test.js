@@ -193,7 +193,7 @@ describe('pending wall input', () => {
 
 describe('property actions', () => {
     function setup(selectedElement = null) {
-        const engine = { updateColumnDimensions: vi.fn(), updateWallThickness: vi.fn() };
+        const engine = { updateColumnDimensions: vi.fn(), updateWallThickness: vi.fn(), updateWallHeight: vi.fn() };
         const selection = new SelectionManager();
         selection.selectedElements = selectedElement ? [selectedElement] : [];
         const controller = new EditorController(null, engine, null, null, selection, null, { setLength: vi.fn() });
@@ -237,6 +237,17 @@ describe('property actions', () => {
         expect(engine.updateWallThickness).toHaveBeenCalledWith('wall', '200');
         engine.updateWallThickness.mockImplementation(() => { throw new Error('Invalid thickness'); });
         expect(() => controller.updateSelectedWallThickness('bad')).toThrow('Invalid thickness');
+    });
+
+    it('updates height only for a selected wall in Select mode', () => {
+        const { controller, engine } = setup();
+        controller.updateSelectedWallHeight('2800');
+        expect(engine.updateWallHeight).not.toHaveBeenCalled();
+        controller.activeTool = 'select';
+        expect(() => controller.updateSelectedWallHeight('2800')).toThrow('Please select a wall first.');
+        controller.selectionManager.selectedElements = [{ id: 'wall', type: 'wall' }];
+        controller.updateSelectedWallHeight('2800');
+        expect(engine.updateWallHeight).toHaveBeenCalledWith('wall', '2800');
     });
 
     it('blocks all property actions when editing is locked', () => {

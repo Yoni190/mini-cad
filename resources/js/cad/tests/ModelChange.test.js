@@ -24,6 +24,19 @@ describe('model change lifecycle', () => {
         expect(engine.getWallDisplayGeometry()).toEqual(cached);
     });
 
+    it('validates wall height and reports actual changes', () => {
+        const { engine, wall, cached } = setup();
+        for (const value of ['', 0, -1, Infinity, 'invalid']) {
+            expect(() => engine.updateWallHeight(wall.id, value)).toThrow('Wall height must be a positive number.');
+        }
+        engine.updateWallHeight(wall.id, '2800');
+        expect(wall.height).toBe(2800);
+        expect(engine.onModelChange).toHaveBeenCalledOnce();
+        expect(engine.getWallDisplayGeometry()).toBe(cached);
+        engine.updateWallHeight(wall.id, 2800);
+        expect(engine.onModelChange).toHaveBeenCalledOnce();
+    });
+
     const wallChanges = [
         {
             name: 'adding a wall',
