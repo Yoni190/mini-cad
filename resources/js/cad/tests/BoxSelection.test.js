@@ -38,7 +38,7 @@ describe('select all shortcut', () => {
         const { engine, selection, editor, view } = setup();
         vi.stubGlobal('HTMLElement', class {});
         const tool = { value: 'wall', dispatchEvent: vi.fn(() => { editor.activeTool = 'select'; }) };
-        document.getElementById = id => id === 'threeContainer' ? { style: { display: 'none' } } : tool;
+        document.getElementById = id => id === 'twoContainer' ? { style: { display: 'block' } } : tool;
         editor.activeTool = 'wall';
         const event = { key: 'a', [modifier]: true, preventDefault: vi.fn() };
         editor.handleKeyDown(event);
@@ -59,7 +59,7 @@ describe('select all shortcut', () => {
         editor.handleKeyDown(event);
         expect(event.preventDefault).not.toHaveBeenCalled();
         expect(selection.selectedElements).toEqual([]);
-        document.getElementById = () => ({ style: { display: 'block' } });
+        document.getElementById = () => ({ style: { display: 'none' } });
         editor.handleKeyDown({ ...event, target: null });
         expect(event.preventDefault).not.toHaveBeenCalled();
         expect(selection.selectedElements).toEqual([]);

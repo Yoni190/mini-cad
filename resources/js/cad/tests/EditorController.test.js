@@ -15,7 +15,7 @@ describe('pending wall input', () => {
         const inputs = {
             wallLength: { value: '' },
             newWallThickness: { value: '200', checkValidity: () => true },
-            threeContainer: { style: { display: 'none' } },
+            twoContainer: { style: { display: 'block' } },
         };
         vi.stubGlobal('document', { getElementById: id => inputs[id] });
         const controller = new EditorController(null, engine, null, null, { clear: vi.fn() }, { render: vi.fn() }, createWallInputs(), { clear: vi.fn() });
@@ -104,13 +104,23 @@ describe('pending wall input', () => {
         const key = properties => ({ key: '5', preventDefault: vi.fn(), ...properties });
         controller.handleKeyDown(key({ target: new Field() }));
         controller.handleKeyDown(key({ ctrlKey: true }));
-        inputs.threeContainer.style.display = 'block';
+        inputs.twoContainer.style.display = 'none';
         controller.handleKeyDown(key());
         expect(inputs.wallLength.value).toBe('');
-        inputs.threeContainer.style.display = 'none';
+        inputs.twoContainer.style.display = 'block';
         controller.handleKeyDown(key());
         expect(inputs.wallLength.value).toBe('5');
         expect(controller.renderWallPreview).toHaveBeenCalledOnce();
+    });
+
+    it('accepts numeric drafting while 2D is visible alongside 3D', () => {
+        const { controller, inputs } = setup();
+        vi.stubGlobal('HTMLElement', class {});
+        inputs.threeContainer = { style: { display: 'block' } };
+        controller.handleClick({ button: 0, point: { x: 0, y: 0 } });
+        controller.renderWallPreview = vi.fn();
+        controller.handleKeyDown({ key: '5', preventDefault: vi.fn() });
+        expect(inputs.wallLength.value).toBe('5');
     });
 
     it('clears pending drafting when switching tools through the UI', () => {
@@ -337,10 +347,10 @@ describe('selection routing and cancellation', () => {
     function setup() {
         const canvas = new EventTarget();
         const selectInput = Object.assign(new EventTarget(), { value: 'wall' });
-        const threeContainer = { style: { display: 'none' } };
+        const twoContainer = { style: { display: 'block' } };
         vi.stubGlobal('window', new EventTarget());
         vi.stubGlobal('document', Object.assign(new EventTarget(), {
-            getElementById: id => id === 'drawingTool' ? selectInput : id === 'threeContainer' ? threeContainer : new EventTarget(),
+            getElementById: id => id === 'drawingTool' ? selectInput : id === 'twoContainer' ? twoContainer : new EventTarget(),
         }));
         vi.stubGlobal('HTMLElement', class {});
         const selected = { id: 'column', type: 'column', position: { x: 100, y: 100 } };
@@ -355,7 +365,7 @@ describe('selection routing and cancellation', () => {
         controller.getMousePoint = vi.fn(event => event.point);
         controller.scheduleCanvasRender = vi.fn();
         controller.init();
-        return { controller, engine, selectionManager, selectInput, threeContainer };
+        return { controller, engine, selectionManager, selectInput, twoContainer };
     }
 
     it('uses unsnapped selection coordinates and consumes a post-drag click only once', () => {
@@ -418,15 +428,15 @@ describe('selection routing and cancellation', () => {
     });
 
     it.each(['Delete', 'Backspace'])('does not delete the hidden selection in 3D with %s', key => {
-        const { controller, engine, selectionManager, threeContainer } = setup();
-        threeContainer.style.display = 'block';
+        const { controller, engine, selectionManager, twoContainer } = setup();
+        twoContainer.style.display = 'none';
         const event = { key, preventDefault: vi.fn() };
         controller.handleKeyDown(event);
         expect(event.preventDefault).not.toHaveBeenCalled();
         expect(engine.removeElements).not.toHaveBeenCalled();
         expect(selectionManager.selectedElement).not.toBeNull();
 
-        threeContainer.style.display = 'none';
+        twoContainer.style.display = 'block';
         controller.handleKeyDown(event);
         expect(event.preventDefault).toHaveBeenCalledOnce();
         expect(engine.removeElements).toHaveBeenCalledWith(new Set(['column']));
