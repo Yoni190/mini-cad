@@ -8,6 +8,8 @@ export default class ProjectController {
         this.currentProjectVersion = null;
         this.hasUnsavedChanges = false;
         this.isBusy = false;
+        this.isGuest = document.body.dataset.authenticated !== 'true';
+        this.guestDraftKey = 'miniCadGuestDraft';
     }
 
     setUnsavedChanges(value) {
@@ -60,6 +62,21 @@ export default class ProjectController {
             return;
         }
 
+        if (this.isGuest) {
+            try {
+                localStorage.setItem(this.guestDraftKey, JSON.stringify({
+                    name,
+                    elements: this.engine.elements
+                }));
+
+                window.location.assign('/register');
+            } catch (error) {
+                this.controls.status.textContent =
+                    'Could not store your drawing locally. Check browser storage and try again.';
+            }
+
+            return;
+        }
         this.setBusy(true);
         try {
             this.controls.status.textContent = 'Saving...';
@@ -69,6 +86,7 @@ export default class ProjectController {
 
             this.currentProjectId = project.id;
             this.currentProjectVersion = project.version;
+            localStorage.removeItem(this.guestDraftKey);
             window.history.replaceState(null, '', `/editor/${project.id}`);
             this.setUnsavedChanges(false);
             this.controls.status.textContent = `Project "${project.name}" saved successfully!`;
@@ -91,5 +109,43 @@ export default class ProjectController {
         this.controls.name.value = 'Untitled Project';
         this.setUnsavedChanges(false);
         this.controls.status.textContent = 'New project created.';
+    }
+
+    async restoreGuestDraft() {
+        if (this.isGuest || this.currentProjectId !== null) return;
+
+        let draft;
+
+        try {
+            const stored = localStorage.getItem(this.guestDraftKey);
+            if (!stored) return;
+
+            draft = JSON.parse(stored);
+
+            if (
+                !draft ||
+                typeof draft.name !== 'string' ||
+                !draft.name.trim() ||
+                !Array.isArray(draft.elements)
+            ) {
+                throw new Error('Invalid guest draft.');
+            }
+
+            this.open({
+                id: null,
+                version: null,
+                name: draft.name,
+                elements: draft.elements
+            });
+
+            if (this.isBusy) return;
+
+            this.setUnsavedChanges(true);
+            await this.save();
+
+        } catch (error) {
+            this.controls.status.textContent =
+                `Could not restore guest drawing: ${error.message}`;
+        }
     }
 }
