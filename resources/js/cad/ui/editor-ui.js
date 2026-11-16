@@ -9,6 +9,7 @@ export default function initEditorUI() {
         wall: 'Wall: Click a start point, then an end point. Use Properties for an exact length.',
         column: 'Column: Click to place a column. Choose Select to move or resize it.',
         select: 'Select: Click an element, or double-click and hold to draw a selection box. Ctrl+A selects all; drag to move; Delete to remove.',
+        measure: 'Measure: Click two points to measure distance. Esc clears the ruler.',
     };
 
     document.addEventListener('cad-selection-change', (event) => {
@@ -36,6 +37,7 @@ export default function initEditorUI() {
             w: 'wall',
             c: 'column',
             s: 'select',
+            m: 'measure',
         };
 
         const tool = shortcuts[event.key.toLowerCase()];
