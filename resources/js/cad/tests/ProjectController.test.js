@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ProjectController from '../persistence/ProjectController';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('project lifecycle', () => {
     let projects, controls, engine, service;
     beforeEach(() => {
+        vi.useFakeTimers();
+        vi.stubGlobal('document', { body: { dataset: { authenticated: 'true' } } });
+        vi.stubGlobal('localStorage', { removeItem: vi.fn() });
         vi.stubGlobal('window', { history: { replaceState: vi.fn() }, confirm: vi.fn(() => true) });
         controls = {
             name: { value: 'Plan' }, status: { textContent: '' },
@@ -29,8 +32,8 @@ describe('project lifecycle', () => {
         service.saveProject.mockReturnValue(new Promise(resolve => { finish = resolve; }));
         projects.setUnsavedChanges(true);
         const pending = projects.save();
-        expect(projects.isBusy).toBe(true);
-        expect(controls.busyControls[0].disabled).toBe(true);
+        expect(projects.isSaving).toBe(true);
+        expect(controls.busyControls[0].disabled).toBe(false);
         await projects.save();
         projects.createNew();
         expect(service.saveProject).toHaveBeenCalledTimes(1);
@@ -44,6 +47,34 @@ describe('project lifecycle', () => {
         await projects.save();
         expect(service.updateProject).toHaveBeenCalledWith(7, 'Plan', engine.elements, 1);
         expect(projects.currentProjectVersion).toBe(2);
+    });
+
+    it('batches edits and saves changes made during an in-flight save', async () => {
+        let finish;
+        service.saveProject.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+        service.updateProject.mockResolvedValue({ id: 7, name: 'Plan', version: 2 });
+        projects.setUnsavedChanges(true);
+        await vi.advanceTimersByTimeAsync(4000);
+        projects.setUnsavedChanges(true);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(service.saveProject).toHaveBeenCalledTimes(1);
+        expect(projects.editor.setEditingLocked).not.toHaveBeenCalled();
+        projects.setUnsavedChanges(true);
+        finish({ id: 7, name: 'Plan', version: 1 });
+        await vi.advanceTimersByTimeAsync(0);
+        expect(projects.hasUnsavedChanges).toBe(true);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(service.updateProject).toHaveBeenCalledTimes(1);
+        expect(projects.hasUnsavedChanges).toBe(false);
+    });
+
+    it('saves periodically during continuous edits', async () => {
+        service.saveProject.mockResolvedValue({ id: 7, name: 'Plan', version: 1 });
+        for (let i = 0; i < 10; i++) {
+            projects.setUnsavedChanges(true);
+            await vi.advanceTimersByTimeAsync(3000);
+        }
+        expect(service.saveProject).toHaveBeenCalledTimes(1);
     });
 
     it('retains unsaved changes and unlocks after a failed save', async () => {

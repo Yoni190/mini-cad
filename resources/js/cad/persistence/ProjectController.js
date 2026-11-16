@@ -8,16 +8,34 @@ export default class ProjectController {
         this.currentProjectVersion = null;
         this.hasUnsavedChanges = false;
         this.isBusy = false;
+        this.isSaving = false;
+        this.changeVersion = 0;
+        this.autosaveTimer = null;
+        this.maxAutosaveTimer = null;
         this.isGuest = document.body.dataset.authenticated !== 'true';
         this.guestDraftKey = 'miniCadGuestDraft';
         this.allowNavigation = false;
     }
 
     setUnsavedChanges(value) {
+        if (value) {
+            this.changeVersion++;
+            if (!this.isGuest) this.scheduleAutosave();
+        } else {
+            clearTimeout(this.autosaveTimer);
+            clearTimeout(this.maxAutosaveTimer);
+            this.autosaveTimer = this.maxAutosaveTimer = null;
+        }
         if (this.hasUnsavedChanges === value) return;
         this.hasUnsavedChanges = value;
         this.controls.changesStatus.dataset.unsaved = String(value);
         this.controls.changesStatus.textContent = value ? 'Unsaved changes' : 'Saved.';
+    }
+
+    scheduleAutosave() {
+        clearTimeout(this.autosaveTimer);
+        this.autosaveTimer = setTimeout(() => this.save(), 5000);
+        this.maxAutosaveTimer ??= setTimeout(() => this.save(), 30000);
     }
 
     // Keep committed geometry stable and prevent overlapping project operations.
@@ -56,7 +74,10 @@ export default class ProjectController {
     }
 
     async save() {
-        if (this.isBusy) return;
+        if (this.isBusy || this.isSaving) return;
+        clearTimeout(this.autosaveTimer);
+        clearTimeout(this.maxAutosaveTimer);
+        this.autosaveTimer = this.maxAutosaveTimer = null;
         const name = this.controls.name.value.trim();
         if (!name) {
             this.controls.status.textContent = 'Please enter a project name.';
@@ -79,7 +100,8 @@ export default class ProjectController {
 
             return;
         }
-        this.setBusy(true);
+        this.isSaving = true;
+        const changeVersion = this.changeVersion;
         try {
             this.controls.status.textContent = 'Saving...';
             const project = this.currentProjectId
@@ -90,17 +112,22 @@ export default class ProjectController {
             this.currentProjectVersion = project.version;
             localStorage.removeItem(this.guestDraftKey);
             window.history.replaceState(null, '', `/editor/${project.id}`);
-            this.setUnsavedChanges(false);
+            if (this.changeVersion === changeVersion) this.setUnsavedChanges(false);
             this.controls.status.textContent = `Project "${project.name}" saved successfully!`;
         } catch (error) {
             this.controls.status.textContent = `Save failed: ${error.message}`;
         } finally {
-            this.setBusy(false);
+            this.isSaving = false;
+            if (this.changeVersion !== changeVersion) {
+                clearTimeout(this.maxAutosaveTimer);
+                this.maxAutosaveTimer = null;
+                this.scheduleAutosave();
+            }
         }
     }
 
     createNew() {
-        if (this.isBusy) return;
+        if (this.isBusy || this.isSaving) return;
         if (!window.confirm('Create a new project? Current unsaved changes will be lost.')) return;
 
         this.engine.replaceElements([]);
