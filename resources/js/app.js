@@ -68,7 +68,10 @@ if (canvas && twoContainer && threeContainer) {
     viewport.init();
     initProjectControls(projects, controls);
     document.getElementById('show3D').addEventListener('click', () => viewport.show3D());
-    document.getElementById('show2D').addEventListener('click', () => viewport.show2D());
+    document.getElementById('show2D').addEventListener('click', () => {
+        viewport.show2D();
+        editor.scheduleCanvasRender();
+    });
 
     // Connect model changes to project state and both views in one place.
     engine.onModelChange = () => {

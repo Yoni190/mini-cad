@@ -28,6 +28,9 @@ export default class EditorController {
         this.isEditingLocked = false;
         this.pendingRenderFrame = null;
         this.pendingPreviewFrame = null;
+        this.measureStart = null;
+        this.measureEnd = null;
+        this.measureDone = false;
         this.wallTool = new WallDrawingTool({
             engine, snapManager, inputs: wallInputs,
             getScale: () => this.renderer.scale,
@@ -120,6 +123,20 @@ export default class EditorController {
             return;
         }
 
+        if (this.activeTool === 'measure') {
+            if (!this.measureStart || this.measureDone) {
+                this.measureStart = point;
+                this.measureEnd = point;
+                this.measureDone = false;
+            } else {
+                this.measureEnd = point;
+                this.measureDone = true;
+            }
+
+            this.renderMeasurement();
+            return;
+        }
+
         if(this.activeTool === 'column') {
             try {
                 this.engine.addColumn(point);
@@ -153,6 +170,14 @@ export default class EditorController {
 
         if (this.selectionTool.isDragging) {
             this.selectionTool.updateDrag(this.getMousePoint(event, false));
+            return;
+        }
+
+        if (this.activeTool === 'measure') {
+            if (this.measureStart && !this.measureDone) {
+                this.measureEnd = this.getMousePoint(event);
+                this.scheduleWallPreview();
+            }
             return;
         }
 
@@ -298,6 +323,10 @@ export default class EditorController {
         this.cancelWallDrawing();
         this.selectionTool.cancel({ clearSelection });
         this.navigation.stopPan();
+        this.measureStart = null;
+        this.measureEnd = null;
+        this.measureDone = false;
+        this.wallPreviewRenderer.clear();
     }
 
     /**
@@ -337,17 +366,19 @@ export default class EditorController {
         this.pendingPreviewFrame = requestAnimationFrame(() => {
             this.pendingPreviewFrame = null;
 
-            // The drawing operation may have ended while the frame was pending.
             if (
                 this.isEditingLocked ||
-                this.activeTool !== 'wall' ||
-                !this.wallTool.hasPreview ||
                 document.getElementById('threeContainer').style.display !== 'none'
-            ) {
+            ) return;
+
+            if (this.activeTool === 'measure') {
+                this.renderMeasurement();
                 return;
             }
 
-            this.renderWallPreview();
+            if (this.activeTool === 'wall' && this.wallTool.hasPreview) {
+                this.renderWallPreview();
+            }
         });
     }
 
@@ -375,6 +406,14 @@ export default class EditorController {
                 document.getElementById('threeContainer').style.display === 'none'
             ) {
                 this.renderWallPreview();
+            }
+
+            if (
+                !this.isEditingLocked &&
+                this.activeTool === 'measure' &&
+                document.getElementById('threeContainer').style.display === 'none'
+            ) {
+                this.renderMeasurement();
             }
         });
     }
@@ -416,5 +455,12 @@ export default class EditorController {
         if (this.activeTool === 'wall' && this.wallTool.hasPreview) {
             this.renderWallPreview();
         }
+    }
+
+    renderMeasurement() {
+        this.wallPreviewRenderer.renderMeasurement(
+            this.measureStart,
+            this.measureEnd
+        );
     }
 }
