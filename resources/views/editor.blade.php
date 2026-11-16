@@ -41,11 +41,11 @@
                     </button>
                 </form>
             @else
-                <a href="{{ route('login') }}" class="button-quiet">
+                <a href="{{ route('login') }}" class="button-quiet landing-link">
                     Login
                 </a>
 
-                <a href="{{ route('register') }}" class="button-primary">
+                <a href="{{ route('register') }}" class="button-primary project-create">
                     Sign Up
                 </a>
             @endauth
