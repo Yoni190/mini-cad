@@ -148,7 +148,7 @@ export default class DrawingEngine {
         return true;
     }
 
-    updateColumnDimensions(id, width, depth) {
+    updateColumnDimensions(id, width, depth, height) {
         const column = this.elements.find(
             element => element.id === id
         );
@@ -159,6 +159,7 @@ export default class DrawingEngine {
 
         width = Number(width);
         depth = Number(depth);
+        height = Number(height);
 
         if(!Number.isFinite(width) || width <= 0) {
             throw new Error('Column width must be a positive number');
@@ -167,12 +168,17 @@ export default class DrawingEngine {
             throw new Error('Column depth must be a positive number');
         }
 
-        if (column.width === width && column.depth === depth) {
+        if(!Number.isFinite(height) || height <= 0) {
+            throw new Error('Column height must be a positive number');
+        }
+
+        if (column.width === width && column.depth === depth && column.height === height) {
             return;
         }
 
         column.width = width;
         column.depth = depth;
+        column.height = height;
 
         this.handleModelChange();
     }

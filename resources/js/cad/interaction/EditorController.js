@@ -428,17 +428,17 @@ export default class EditorController {
         this.wallTool.createWallWithLength(length);
     }
 
-    updateSelectedColumnDimensions(width, depth) {
+    updateSelectedColumnDimensions(width, depth, height) {
         if (this.isEditingLocked) return;
         const selected = this.selectionManager.selectedElement;
         if (!selected || selected.type !== 'column') {
             throw new Error('Please select a column first.');
         }
         if (this.activeTool !== 'select') return;
-        if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(depth) || depth <= 0) {
-            throw new Error('Width and depth must be positive numbers.');
+        if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(depth) || depth <= 0 || !Number.isFinite(height) || height <= 0) {
+            throw new Error('Width, depth and height must be positive numbers.');
         }
-        this.engine.updateColumnDimensions(selected.id, width, depth);
+        this.engine.updateColumnDimensions(selected.id, width, depth, height);
     }
 
     updateSelectedWallHeight(height) {

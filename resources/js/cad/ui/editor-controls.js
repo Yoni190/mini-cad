@@ -3,6 +3,7 @@ export default function initEditorControls(editor) {
     const wallLength = document.getElementById('wallLength');
     const columnWidth = document.getElementById('columnWidth');
     const columnDepth = document.getElementById('columnDepth');
+    const columnHeight = document.getElementById('columnHeight');
     const wallThickness = document.getElementById('wallThickness');
     const wallHeight = document.getElementById('wallHeight');
 
@@ -20,7 +21,7 @@ export default function initEditorControls(editor) {
     });
     document.getElementById('updateColumn').addEventListener('click', () => {
         runAction(() => editor.updateSelectedColumnDimensions(
-            Number(columnWidth.value), Number(columnDepth.value)
+            Number(columnWidth.value), Number(columnDepth.value), Number(columnHeight.value)
         ));
     });
     document.getElementById('updateWallThickness').addEventListener('click', () => {
@@ -38,6 +39,7 @@ export default function initEditorControls(editor) {
         if (selected?.type === 'column') {
             columnWidth.value = selected.width;
             columnDepth.value = selected.depth;
+            columnHeight.value = selected.height;
         }
         wallThickness.value = selected?.type === 'wall' ? selected.thickness : '';
         wallHeight.value = selected?.type === 'wall' ? selected.height : '';
