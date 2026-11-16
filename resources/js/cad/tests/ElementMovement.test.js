@@ -123,7 +123,7 @@ describe('dragging through the engine', () => {
     function controllerFor(engine, selected) {
         const selection = new SelectionManager();
         selection.selectedElements = [selected];
-        const controller = new EditorController(null, engine, { scale: 0.1 }, null, selection);
+        const controller = new EditorController(null, engine, { scale: 0.1 }, null, selection, null, { setLength: vi.fn() });
         controller.activeTool = 'select';
         controller.getMousePoint = event => event.point;
         controller.scheduleCanvasRender = vi.fn();

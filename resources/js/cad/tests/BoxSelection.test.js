@@ -25,7 +25,7 @@ function setup() {
     const selection = new SelectionManager();
     const preview = { renderSelectionBox: vi.fn(), clear: vi.fn() };
     const view = { render: vi.fn() };
-    const editor = new EditorController(canvas, engine, { scale: 0.1 }, null, selection, view, null, preview);
+    const editor = new EditorController(canvas, engine, { scale: 0.1 }, null, selection, view, { setLength: vi.fn() }, preview);
     editor.activeTool = 'select';
     editor.getMousePoint = event => event.point;
     editor.init();

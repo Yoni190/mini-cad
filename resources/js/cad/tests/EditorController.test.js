@@ -12,16 +12,14 @@ describe('pending wall input', () => {
             elements,
             addWall: vi.fn((start, end) => elements.push({ type: 'wall', start, end })),
         };
-        const controller = new EditorController(null, engine, null, null, { clear: vi.fn() }, { render: vi.fn() });
-        controller.wallPreviewRenderer = { clear: vi.fn() };
-        controller.getMousePoint = event => event.point;
         const inputs = {
             wallLength: { value: '' },
             newWallThickness: { value: '200', checkValidity: () => true },
             threeContainer: { style: { display: 'none' } },
         };
         vi.stubGlobal('document', { getElementById: id => inputs[id] });
-        controller.wallTool.inputs = createWallInputs();
+        const controller = new EditorController(null, engine, null, null, { clear: vi.fn() }, { render: vi.fn() }, createWallInputs(), { clear: vi.fn() });
+        controller.getMousePoint = event => event.point;
         return { controller, engine, inputs };
     }
 
@@ -198,7 +196,7 @@ describe('property actions', () => {
         const engine = { updateColumnDimensions: vi.fn(), updateWallThickness: vi.fn() };
         const selection = new SelectionManager();
         selection.selectedElements = selectedElement ? [selectedElement] : [];
-        const controller = new EditorController(null, engine, null, null, selection);
+        const controller = new EditorController(null, engine, null, null, selection, null, { setLength: vi.fn() });
         controller.wallTool.createWallWithLength = vi.fn();
         controller.renderWallPreview = vi.fn();
         return { controller, engine };
@@ -277,9 +275,9 @@ describe('navigation routing', () => {
             getBoundingClientRect: () => ({ left: 0, top: 0 }),
         });
         const renderer = { scale: 1, offsetX: 0, offsetY: 0, screenToWorld: (x, y) => ({ x, y }) };
-        const controller = new EditorController(canvas, {}, renderer, null, {}, { render: vi.fn() });
+        const controller = new EditorController(canvas, {}, renderer, null, {}, { render: vi.fn() }, { setLength: vi.fn() });
         controller.scheduleCanvasRender = vi.fn();
-        controller.wallPreviewRenderer = { renderStartHints: vi.fn() };
+        controller.wallPreviewRenderer = { clear: vi.fn(), renderStartHints: vi.fn() };
         vi.stubGlobal('window', new EventTarget());
         vi.stubGlobal('document', Object.assign(new EventTarget(), {
             getElementById: () => new EventTarget(),
@@ -340,7 +338,7 @@ describe('selection routing and cancellation', () => {
         vi.spyOn(selectionManager, 'clear');
         vi.spyOn(selectionManager, 'isPointInsideColumn').mockReturnValue(true);
         const engine = { elements: [selected], getWallDisplayGeometry: () => new Map(), moveColumn: vi.fn(), removeElements: vi.fn() };
-        const controller = new EditorController(canvas, engine, { scale: 1 }, null, selectionManager, { render: vi.fn() });
+        const controller = new EditorController(canvas, engine, { scale: 1 }, null, selectionManager, { render: vi.fn() }, { setLength: vi.fn() }, { clear: vi.fn() });
         controller.activeTool = 'select';
         controller.getMousePoint = vi.fn(event => event.point);
         controller.scheduleCanvasRender = vi.fn();

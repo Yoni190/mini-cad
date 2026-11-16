@@ -3,7 +3,7 @@ import WallDrawingTool from '../interaction/tools/WallDrawingTool';
 import Wall from '../models/Wall';
 
 function setup() {
-    let length = '', thickness = 200, time = 0;
+    let length = '', thickness = 200;
     const engine = {
         elements: [],
         addWall: vi.fn((start, end, thickness) => {
@@ -21,10 +21,10 @@ function setup() {
     const showMessage = vi.fn();
     const tool = new WallDrawingTool({
         engine, inputs, preview, snapManager, showMessage,
-        getScale: () => 0.5, now: () => time,
+        getScale: () => 0.5,
     });
     return { tool, engine, inputs, preview, snapManager, showMessage,
-        setThickness: value => { thickness = value; }, setTime: value => { time = value; } };
+        setThickness: value => { thickness = value; } };
 }
 
 const a = { x: 0, y: 0 };
@@ -60,7 +60,7 @@ describe('wall drafting', () => {
         expect(snapManager.snap).not.toHaveBeenCalled();
     });
 
-    it('routes numeric keys, backspace, and Enter while pointer movement clears typed length', () => {
+    it('routes numeric keys, backspace, and Enter while pointer movement preserves typed length', () => {
         const { tool, inputs, engine, preview } = setup();
         tool.handleClick(a);
         tool.handleMouseMove(b);
@@ -78,7 +78,7 @@ describe('wall drafting', () => {
         expect(preview.render).toHaveBeenCalledTimes(4);
         inputs.setLength('600');
         tool.handleMouseMove(c);
-        expect(inputs.getLength()).toBe('');
+        expect(inputs.getLength()).toBe('600');
         expect(preview.request).toHaveBeenCalledTimes(2);
         const event = { key: 'x', preventDefault: vi.fn() };
         expect(tool.handleKeyDown(event)).toBe(false);
@@ -96,16 +96,12 @@ describe('wall drafting', () => {
         expect(snapManager.snap).toHaveBeenLastCalledWith({ x: 0, y: 1000 }, [], 40, { axis: 'x', value: 0 });
     });
 
-    it('holds guide alignment for 250ms, then releases beyond the zoom-scaled threshold', () => {
-        const { tool, setTime } = setup();
+    it('aligns points within the zoom-scaled threshold and releases outside it', () => {
+        const { tool } = setup();
         tool.handleClick(a);
         expect(tool.alignWallPoint({ x: 15, y: 100 })).toEqual({ x: 0, y: 100 });
-        setTime(100);
-        expect(tool.alignWallPoint({ x: 50, y: 100 })).toEqual({ x: 0, y: 100 });
-        setTime(251);
-        expect(tool.alignWallPoint({ x: 15, y: 100 })).toEqual({ x: 0, y: 100 });
+        expect(tool.alignWallPoint({ x: 16, y: 100 })).toEqual({ x: 16, y: 100 });
         expect(tool.alignWallPoint({ x: 50, y: 100 })).toEqual({ x: 50, y: 100 });
-        expect(tool.alignmentHold.x).toBeNull();
     });
 
     it('rejects a two-edge closure and finishes a valid chain at the exact original point', () => {

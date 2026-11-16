@@ -85,7 +85,7 @@ describe('scheduled redraws after model changes', () => {
     it('combines model changes into one frame and uses the current selection', () => {
         const { engine, renderer, view } = setup();
         const selection = new SelectionManager();
-        const controller = new EditorController(null, engine, renderer, null, selection, view);
+        const controller = new EditorController(null, engine, renderer, null, selection, view, { setLength: vi.fn() });
         let drawFrame;
         const requestFrame = vi.fn(callback => {
             drawFrame = callback;
@@ -111,7 +111,7 @@ describe('scheduled redraws after model changes', () => {
 
     it('clears the previous picture when a project is replaced', () => {
         const { engine, renderer, previewRenderer, view } = setup();
-        const controller = new EditorController(null, engine, renderer, null, new SelectionManager(), view);
+        const controller = new EditorController(null, engine, renderer, null, new SelectionManager(), view, { setLength: vi.fn() });
         let drawFrame;
         vi.stubGlobal('requestAnimationFrame', callback => {
             drawFrame = callback;

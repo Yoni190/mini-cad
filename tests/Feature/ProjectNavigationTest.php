@@ -40,7 +40,7 @@ class ProjectNavigationTest extends TestCase
             'email' => 'designer@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-        ])->assertRedirect(route('projects.index'));
+        ])->assertRedirect(route('editor'));
 
         $this->assertAuthenticated();
     }
