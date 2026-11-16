@@ -11,6 +11,8 @@ Route::get('/', function () {
 });
 
 Route::middleware('guest')->group(function () {
+    Route::view('/', 'landing')->name('home');
+
     Route::view('/register', 'auth.register')->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 
