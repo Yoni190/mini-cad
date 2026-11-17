@@ -37,6 +37,16 @@ export default class DrawingView {
             );
         }
 
+        for (const element of this.engine.elements) {
+            if (element.type !== 'wall') continue;
+
+            const corners = wallGeometry.get(element.id) ?? element.getGeometry();
+
+            if (this.renderer.isGeometryVisible(corners)) {
+                this.renderer.drawWallFaceLengths(corners);
+            }
+        }
+        
         this.renderer.drawWallCornerAngles(this.engine.elements.filter(element => element.type === 'wall'));
 
         // A full redraw replaces any temporary drawing preview.

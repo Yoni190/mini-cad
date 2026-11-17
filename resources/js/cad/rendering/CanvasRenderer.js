@@ -443,4 +443,77 @@ export default class CanvasRenderer {
         ctx.fillText(`${angle}°`, midpoint.x, midpoint.y + 10);
         ctx.restore();
     }
+
+    drawWallFaceLengths(corners) {
+        const ctx = this.ctx;
+
+        // The midpoint of the wall footprint helps us place each label
+        // on the outside of its corresponding face.
+        const center = {
+            x: corners.reduce((sum, point) => sum + point.x, 0) / 4,
+            y: corners.reduce((sum, point) => sum + point.y, 0) / 4,
+        };
+
+        const faces = [
+            [corners[0], corners[1]], // Reference face
+            [corners[3], corners[2]], // Opposite face
+        ];
+
+        ctx.save();
+        ctx.font = '600 12px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillStyle = '#334155';
+
+        for (const [start, end] of faces) {
+            const length = Math.hypot(
+                end.x - start.x,
+                end.y - start.y
+            );
+
+            if (length === 0) continue;
+
+            const midpoint = {
+                x: (start.x + end.x) / 2,
+                y: (start.y + end.y) / 2,
+            };
+
+            // Pick the normal that points away from the wall footprint.
+            let normalX = -(end.y - start.y) / length;
+            let normalY = (end.x - start.x) / length;
+
+            const pointsOutward =
+                normalX * (midpoint.x - center.x) +
+                normalY * (midpoint.y - center.y);
+
+            if (pointsOutward < 0) {
+                normalX = -normalX;
+                normalY = -normalY;
+            }
+
+            const screen = this.worldToScreen(midpoint.x, midpoint.y);
+            const x = screen.x + normalX * 16;
+            const y = screen.y + normalY * 16;
+            const label = `${Math.round(length)} mm`;
+
+            let angle = Math.atan2(end.y - start.y, end.x - start.x);
+
+            // Keep the label readable when the wall points left.
+            if (angle > Math.PI / 2 || angle < -Math.PI / 2) {
+                angle += Math.PI;
+            }
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.strokeText(label, 0, 0);
+            ctx.fillText(label, 0, 0);
+            ctx.restore();
+        }
+
+        ctx.restore();
+    }
 }
