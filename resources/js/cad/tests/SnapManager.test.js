@@ -56,4 +56,78 @@ describe('SnapManager', () => {
 
         expect(result).toEqual({ x: 4100, y: 0 });
     })
+
+    it('prefers an endpoint over a closer point on a wall', () => {
+        const snapManager = new SnapManager();
+
+        const endpointWall = new Wall({
+            start: { x: 30, y: 0 },
+            end: { x: 30, y: 100 }
+        });
+
+        const nearbyWall = new Wall({
+            start: { x: -100, y: 5 },
+            end: { x: 100, y: 5 }
+        });
+
+        const result = snapManager.snap(
+            { x: 0, y: 0 },
+            [endpointWall, nearbyWall],
+            50
+        );
+
+        expect(result).toEqual({ x: 30, y: 0 });
+    });
+
+    it('keeps the first endpoint when distances are equal', () => {
+        const snapManager = new SnapManager();
+
+        const firstWall = new Wall({
+            start: { x: -20, y: 0 },
+            end: { x: -20, y: 100 }
+        });
+
+        const secondWall = new Wall({
+            start: { x: 20, y: 0 },
+            end: { x: 20, y: 100 }
+        });
+
+        const result = snapManager.snap(
+            { x: 0, y: 0 },
+            [firstWall, secondWall],
+            50
+        );
+
+        expect(result).toEqual({ x: -20, y: 0 });
+    });
+
+    it('snaps to a wall intersection on the constrained axis', () => {
+        const snapManager = new SnapManager();
+
+        const wall = new Wall({
+            start: { x: -100, y: 20 },
+            end: { x: 100, y: 20 }
+        });
+
+        const result = snapManager.snap(
+            { x: 0, y: 0 },
+            [wall],
+            50,
+            { axis: 'x', value: 0 }
+        );
+
+        expect(result).toEqual({ x: 0, y: 20 });
+    });
+
+    it('detects whether a point lies on a wall', () => {
+        const snapManager = new SnapManager();
+
+        const wall = new Wall({
+            start: { x: -100, y: 0 },
+            end: { x: 100, y: 0 }
+        });
+
+        expect(snapManager.isOnWall({ x: 0, y: 0 }, [wall])).toBe(true);
+        expect(snapManager.isOnWall({ x: 0, y: 1 }, [wall])).toBe(false);
+    });
 });
