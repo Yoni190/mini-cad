@@ -5,7 +5,7 @@ import Wall from '../models/Wall';
 
 afterEach(() => vi.unstubAllGlobals());
 
-it('leaves wall below a raised door opening', () => {
+it('renders a door from the floor to its specified height', () => {
     const viewer = Object.create(ThreeViewer.prototype);
     const wall = new Wall({
         start: { x: 0, y: 0 }, end: { x: 4000, y: 0 },
@@ -17,8 +17,9 @@ it('leaves wall below a raised door opening', () => {
         new THREE.Vector3(1.5, height, -1), new THREE.Vector3(0, 0, 1)
     ).intersectObject(mesh)[0].distance;
 
-    expect(distanceAt(0.05)).toBeCloseTo(1);
-    expect(distanceAt(0.11)).toBeCloseTo(1.08);
+    expect(distanceAt(0.05)).toBeCloseTo(1.08);
+    expect(distanceAt(2.09)).toBeCloseTo(1.08);
+    expect(distanceAt(2.11)).toBeCloseTo(1);
     mesh.geometry.dispose();
     mesh.material.dispose();
 });

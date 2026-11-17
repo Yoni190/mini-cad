@@ -129,10 +129,9 @@ export default class ThreeViewer {
      */
     createWallMesh(wall, corners = wall.getGeometry()) {
         const geometries = [];
-        const floorGap = opening => Math.min(100, opening.height / 2);
         const openingBottom = opening => opening.type === 'window'
             ? opening.sillHeight
-            : floorGap(opening);
+            : 0;
 
         const openingTop = opening => opening.type === 'window'
             ? opening.sillHeight + opening.height
