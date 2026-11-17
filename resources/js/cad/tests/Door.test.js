@@ -16,6 +16,14 @@ function createWall() {
 }
 
 describe('doors', () => {
+    it.each([0, -1])('rejects door and window heights of %s without changing the drawing', height => {
+        const { engine, wallId } = createWall();
+
+        expect(() => engine.addDoor(wallId, 1000, 900, height)).toThrow('Invalid wall opening.');
+        expect(() => engine.addWindow(wallId, 1000, 900, height, 900)).toThrow('Invalid wall opening.');
+        expect(engine.elements[0].openings).toEqual([]);
+    });
+
     it('adds a door and supports undo and redo', () => {
         const { engine, wallId } = createWall();
 

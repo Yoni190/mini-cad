@@ -64,6 +64,7 @@ export default class Wall extends DrawingElement {
                 !Number.isFinite(opening.height) ||
                 opening.offset < 0 ||
                 opening.width <= 0 ||
+                opening.height <= 0 ||
                 (opening.type !== undefined && opening.type !== 'window') ||
                 !Number.isFinite(sillHeight) ||
                 sillHeight < 0 ||
