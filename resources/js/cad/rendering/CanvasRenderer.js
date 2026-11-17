@@ -61,6 +61,54 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
+    drawDoor(wall, opening, isSelected = false) {
+        const length = wall.getLength();
+
+        // Unit vector pointing from the wall's start to its end.
+        const dx = (wall.end.x - wall.start.x) / length;
+        const dy = (wall.end.y - wall.start.y) / length;
+
+        // The hinge sits at the start of the opening.
+        const hinge = this.worldToScreen(
+            wall.start.x + dx * opening.offset,
+            wall.start.y + dy * opening.offset
+        );
+
+        const radius = opening.width * this.scale;
+        const closedAngle = Math.atan2(dy, dx);
+        const side = wall.thicknessSide;
+        const openAngle = closedAngle + side * Math.PI / 2;
+
+        const ctx = this.ctx;
+
+        ctx.save();
+        ctx.strokeStyle = isSelected ? '#245ec7' : '#526374';
+        ctx.lineWidth = isSelected ? 2 : 1.25;
+
+        // Draw the door leaf in its open position.
+        ctx.beginPath();
+        ctx.moveTo(hinge.x, hinge.y);
+        ctx.lineTo(
+            hinge.x + radius * Math.cos(openAngle),
+            hinge.y + radius * Math.sin(openAngle)
+        );
+        ctx.stroke();
+
+        // Draw the path the door follows as it swings.
+        ctx.beginPath();
+        ctx.arc(
+            hinge.x,
+            hinge.y,
+            radius,
+            closedAngle,
+            openAngle,
+            side < 0
+        );
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
     isGeometryVisible(corners) {
         // Include a small margin for the element's stroke.
         const margin = 4;

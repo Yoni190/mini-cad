@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import WallTopology from '../geometry/WallTopology';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { clipWallSection, wallSections } from '../geometry/wallSections';
 
 export default class ThreeViewer {
     constructor(container) {
@@ -126,40 +128,114 @@ export default class ThreeViewer {
      * The mesh is derived from drawing data and does not replace it.
      */
     createWallMesh(wall, corners = wall.getGeometry()) {
-        const shape = new THREE.Shape();
+        const geometries = [];
 
-        // Convert CAD millimeters to Three.js meters.
-        // Negate CAD Y because we will rotate the shape into the XZ plane.
-        shape.moveTo(
-            corners[0].x / 1000,
-            -corners[0].y / 1000
-        );
 
-        for (let i = 1; i < corners.length; i++) {
-            shape.lineTo(
-                corners[i].x / 1000,
-                -corners[i].y / 1000
-            );
+        const setGeometryColor = (geometry, colorValue) => {
+            const color = new THREE.Color(colorValue);
+            const count = geometry.getAttribute('position').count;
+            const colors = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+            }
+
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        };
+
+        const addSection = (section, bottom, height) => {
+            if (height <= 0 || section.length < 3) return;
+
+            const shape = new THREE.Shape();
+
+            shape.moveTo(section[0].x / 1000, -section[0].y / 1000);
+
+            for (const point of section.slice(1)) {
+                shape.lineTo(point.x / 1000, -point.y / 1000);
+            }
+
+            shape.closePath();
+
+            const geometry = new THREE.ExtrudeGeometry(shape, {
+                depth: height / 1000,
+                bevelEnabled: false,
+            });
+
+            // Before rotation, extrusion depth becomes vertical height.
+            geometry.translate(0, 0, bottom / 1000);
+            geometries.push(geometry);
+        };
+
+        // Full-height wall sections between openings.
+        for (const section of wallSections(wall, corners)) {
+            addSection(section, 0, wall.height);
         }
 
-        shape.closePath();
+        // Wall above each door.
+        for (const opening of wall.openings) {
+            const section = clipWallSection(
+                wall, corners, opening.offset, opening.offset + opening.width
+            );
+            addSection(section, opening.height, wall.height - opening.height);
+        }
 
-        const geometry = new THREE.ExtrudeGeometry(shape, {
-            depth: wall.height / 1000,
-            bevelEnabled: false
-        });
+        for (const geometry of geometries) {
+            setGeometryColor(geometry, 0xc3ced8);
+        }
+
+        // Add a closed door leaf inside each opening.
+        for (const opening of wall.openings) {
+            const length = wall.getLength();
+            const dx = (wall.end.x - wall.start.x) / length;
+            const dy = (wall.end.y - wall.start.y) / length;
+
+            // Place the panel halfway through the wall's thickness.
+            const middle = wall.thickness * wall.thicknessSide / 2;
+
+            const hingeX = wall.start.x + dx * opening.offset - dy * middle;
+            const hingeY = wall.start.y + dy * opening.offset + dx * middle;
+
+            const closedAngle = Math.atan2(dy, dx);
+            const doorThickness = 40; // mm
+
+            const door = new THREE.BoxGeometry(
+                opening.width / 1000,
+                doorThickness / 1000,
+                opening.height / 1000
+            ).toNonIndexed();
+
+            door.translate(
+                opening.width / 2000,
+                0,
+                opening.height / 2000
+            );
+
+            door.rotateZ(-closedAngle);
+            door.translate(hingeX / 1000, -hingeY / 1000, 0);
+
+            setGeometryColor(door, 0x8b5a2b);
+            geometries.push(door);
+        }
+
+        const geometry = geometries.length
+            ? mergeGeometries(geometries)
+            : new THREE.BufferGeometry();
+
+        for (const part of geometries) {
+            part.dispose();
+        }
 
         const material = new THREE.MeshStandardMaterial({
-            color: 0xc3ced8,
-            roughness: 0.9
+            color: 0xffffff,
+            vertexColors: true,
+            roughness: 0.9,
         });
 
         const mesh = new THREE.Mesh(geometry, material);
-
         mesh.rotation.x = -Math.PI / 2;
 
-        // No separate wall position or direction rotation is needed.
-        // The footprint already contains the wall's world coordinates.
         return mesh;
     }
 
@@ -196,6 +272,7 @@ export default class ThreeViewer {
                 signature = JSON.stringify([
                     'wall',
                     element.height,
+                    element.openings,
                     corners.map(point => [point.x, point.y])
                 ]);
             } else if (element.type === 'column') {

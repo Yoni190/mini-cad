@@ -9,6 +9,29 @@ use Tests\TestCase;
 class ProjectTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_wall_openings_survive_saving_and_loading(): void
+    {
+        $user = User::factory()->create();
+        $opening = ['offset' => 1000, 'width' => 900, 'height' => 2100];
+        $response = $this->actingAs($user)->postJson('/projects', [
+            'name' => 'Door plan',
+            'elements' => [[
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'type' => 'wall',
+                'start' => ['x' => 0, 'y' => 0],
+                'end' => ['x' => 4000, 'y' => 0],
+                'thickness' => 200,
+                'height' => 3000,
+                'thicknessSide' => 1,
+                'openings' => [$opening],
+            ]],
+        ]);
+
+        $response->assertCreated()->assertJsonPath('project.elements.0.openings.0', $opening);
+        $this->getJson('/projects/'.$response->json('project.id'))
+            ->assertOk()->assertJsonPath('elements.0.openings.0', $opening);
+    }
     
     /**
      * Verify that a user cannot view another user's project.

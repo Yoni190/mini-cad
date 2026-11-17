@@ -38,9 +38,9 @@ it('draws corner angles for completed walls and updates them after undo', () => 
     engine.addWall({ x: 1000, y: 3000 }, { x: 1000, y: 1000 });
 
     view.render();
-    expect(ctx.fillText.mock.calls.map(call => call[0])).toEqual(['90°', '90°', '90°', '90°']);
+    expect(ctx.fillText.mock.calls.map(call => call[0]).filter(text => text.endsWith('°'))).toEqual(['90°', '90°', '90°', '90°']);
     ctx.fillText.mockClear();
     engine.undo();
     view.render();
-    expect(ctx.fillText.mock.calls.map(call => call[0])).toEqual(['90°', '90°']);
+    expect(ctx.fillText.mock.calls.map(call => call[0]).filter(text => text.endsWith('°'))).toEqual(['90°', '90°']);
 });

@@ -1,3 +1,5 @@
+import { wallSections } from '../geometry/wallSections';
+
 /** Coordinates the 2D view of committed drawing elements. */
 export default class DrawingView {
     constructor(engine, renderer, previewRenderer = null) {
@@ -29,12 +31,17 @@ export default class DrawingView {
                 continue;
             }
 
-            this.renderer.drawElement(
-                element,
-                false,
-                isSelected,
-                corners
-            );
+            if (element.type === 'wall' && element.openings.length > 0) {
+                for (const section of wallSections(element, corners)) {
+                    this.renderer.drawElement(element, false, isSelected, section);
+                }
+
+                for (const opening of element.openings) {
+                    this.renderer.drawDoor(element, opening, isSelected);
+                }
+            } else {
+                this.renderer.drawElement(element, false, isSelected, corners);
+            }
         }
 
         for (const element of this.engine.elements) {

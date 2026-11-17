@@ -10,6 +10,7 @@ export default function initEditorUI() {
         column: 'Column: Click to place a column. Choose Select to move or resize it.',
         select: 'Select: Click an element, or double-click and hold to draw a selection box. Ctrl+A selects all; drag to move; Delete to remove.',
         measure: 'Measure: Click two points to measure distance. Esc clears the ruler.',
+        door: 'Door: Choose a width and height, then click a wall.',
     };
 
     document.addEventListener('cad-selection-change', (event) => {
@@ -61,6 +62,7 @@ export default function initEditorUI() {
             button.disabled = toolSelect.disabled;
         });
         document.getElementById('wallProperties').hidden = tool !== 'wall';
+        document.getElementById('doorProperties').hidden = tool !== 'door';
         document.getElementById('columnProperties').hidden =
             tool !== 'select' || selectedElement?.type !== 'column';
 

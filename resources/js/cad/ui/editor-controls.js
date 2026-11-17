@@ -7,6 +7,25 @@ export default function initEditorControls(editor) {
     const wallThickness = document.getElementById('wallThickness');
     const wallHeight = document.getElementById('wallHeight');
 
+    const wallDoors = document.getElementById('wallDoors');
+    const removeWallDoor = document.getElementById('removeWallDoor');
+
+    function showWallDoors(wall) {
+        wallDoors.replaceChildren();
+
+        const openings = wall?.type === 'wall' ? wall.openings : [];
+
+        openings.forEach((opening, index) => {
+            const option = document.createElement('option');
+            option.value = String(index);
+            option.textContent =
+                `Door ${index + 1}: ${Math.round(opening.offset)} mm from start`;
+            wallDoors.appendChild(option);
+        });
+
+        removeWallDoor.disabled = openings.length === 0;
+    }
+
     // Validation belongs to the action; presentation of its error belongs here.
     function runAction(action) {
         try {
@@ -30,12 +49,19 @@ export default function initEditorControls(editor) {
     document.getElementById('updateWallHeight').addEventListener('click', () => {
         runAction(() => editor.updateSelectedWallHeight(wallHeight.value));
     });
+    removeWallDoor.addEventListener('click', () => {
+        runAction(() => {
+            editor.removeSelectedWallDoor(Number(wallDoors.value));
+            showWallDoors(editor.selectionManager.selectedElement);
+        });
+    })
     document.getElementById('newWallThickness').addEventListener('input', () => {
         editor.refreshWallPreview();
     });
 
     document.addEventListener('cad-selection-change', event => {
         const selected = event.detail;
+        showWallDoors(selected);
         if (selected?.type === 'column') {
             columnWidth.value = selected.width;
             columnDepth.value = selected.depth;

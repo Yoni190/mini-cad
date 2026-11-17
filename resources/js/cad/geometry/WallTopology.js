@@ -131,10 +131,36 @@ export default class WallTopology {
 
                 if (distance(start, end) <= EPS) continue;
 
+                const pieceStart = this.project(start, wall).t * wall.getLength();
+                const pieceEnd = this.project(end, wall).t * wall.getLength();
+
+                const openings = [];
+
+                for (const opening of wall.openings) {
+                    const openingStart = opening.offset;
+                    const openingEnd = opening.offset + opening.width;
+
+                    // Ignore openings that belong entirely to another piece.
+                    if (openingEnd <= pieceStart + EPS || openingStart >= pieceEnd - EPS) {
+                        continue;
+                    }
+
+                    // An opening cannot span a new wall junction.
+                    if (openingStart < pieceStart - EPS || openingEnd > pieceEnd + EPS) {
+                        throw new Error('A wall cannot split through a door.');
+                    }
+
+                    openings.push({
+                        ...opening,
+                        offset: Math.max(0, openingStart - pieceStart),
+                    });
+                }
+
                 result.push(new Wall({
                     ...wall,
                     start,
                     end,
+                    openings,
                     // Keep the original ID on the first piece.
                     id: k === 0 ? wall.id : undefined
                 }));

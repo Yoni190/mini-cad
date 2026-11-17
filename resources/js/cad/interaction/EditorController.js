@@ -1,6 +1,7 @@
 import WallDrawingTool from './tools/WallDrawingTool';
 import SelectionTool from './tools/SelectionTool';
 import CanvasNavigation from './CanvasNavigation';
+import WallTopology from '../geometry/WallTopology';
 
 export default class EditorController {
     constructor(canvas, engine, renderer, snapManager, selectionManager, view, wallInputs, wallPreviewRenderer) {
@@ -134,6 +135,47 @@ export default class EditorController {
             }
 
             this.renderMeasurement();
+            return;
+        }
+
+        if (this.activeTool === 'door') {
+            const click = this.getMousePoint(event, false);
+            const width = Number(document.getElementById('doorWidth').value);
+            const height = Number(document.getElementById('doorHeight').value);
+
+            let closestWall = null;
+            let closestProjection = null;
+
+            for (const wall of this.engine.elements) {
+                if (wall.type !== 'wall') continue;
+
+                const projection = WallTopology.project(click, wall);
+                const tolerance = wall.thickness + 20 / this.renderer.scale;
+
+                if (
+                    projection.distance <= tolerance &&
+                    (!closestProjection || projection.distance < closestProjection.distance)
+                ) {
+                    closestWall = wall;
+                    closestProjection = projection;
+                }
+            }
+
+            if (!closestWall) {
+                alert('Click closer to a wall.');
+                return;
+            }
+
+            // Center the door on the clicked position.
+            const offset = closestProjection.t * closestWall.getLength() - width / 2;
+
+            try {
+                this.engine.addDoor(closestWall.id, offset, width, height);
+                this.view.render();
+            } catch (error) {
+                alert(error.message);
+            }
+
             return;
         }
 
@@ -475,6 +517,19 @@ export default class EditorController {
         this.engine.updateWallHeight(selected.id, height);
     }
 
+    removeSelectedWallDoor(index) {
+        if (this.isEditingLocked || this.activeTool !== 'select') return;
+
+        const wall = this.selectionManager.selectedElement;
+
+        if (!wall || wall.type !== 'wall') {
+            throw new Error('Please select a wall first.');
+        }
+
+        this.engine.removeDoor(wall.id, index);
+        this.view.render(this.selectionManager.selectedIds);
+    }
+    
     updateSelectedWallThickness(thickness) {
         if (this.isEditingLocked || this.activeTool !== 'select') return;
         const selected = this.selectionManager.selectedElement;

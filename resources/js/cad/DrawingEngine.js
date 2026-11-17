@@ -85,6 +85,47 @@ export default class DrawingEngine {
         this.recordHistory();
     }
 
+    addDoor(wallId, offset, width, height) {
+        const wall = this.elements.find(
+            element => element.type === 'wall' && element.id === wallId
+        );
+
+        if (!wall) {
+            throw new Error('Wall not found.');
+        }
+
+        // Constructing a Wall checks that the new opening fits and does not overlap.
+        const candidate = new Wall({
+            ...wall,
+            openings: [
+                ...wall.openings,
+                { offset, width, height },
+            ],
+        });
+
+        wall.openings = candidate.openings;
+        this.handleModelChange({ wallsChanged: true });
+        this.recordHistory();
+    }
+
+    removeDoor(wallId, index) {
+        const wall = this.elements.find(
+            element => element.type === 'wall' && element.id === wallId
+        );
+
+        if (!wall) {
+            throw new Error('Wall not found.');
+        }
+
+        if (!Number.isInteger(index) || index < 0 || index >= wall.openings.length) {
+            throw new Error('Select a door first.');
+        }
+
+        wall.openings.splice(index, 1);
+        this.handleModelChange({ wallsChanged: true });
+        this.recordHistory();
+    }
+
     addColumn(position) {
         if (this.elements.length >= MAX_ELEMENTS) {
             throw new Error('A project can contain at most 1,000 elements. Remove elements before adding a column.');
@@ -134,6 +175,14 @@ export default class DrawingEngine {
 
             // Preserve the minimum length used when dragging connected walls.
             if (Math.hypot(end.x - start.x, end.y - start.y) < 0.001) {
+                return false;
+            }
+
+            const newLength = Math.hypot(end.x - start.x, end.y - start.y);
+
+            if (wall.openings.some(opening =>
+                opening.offset + opening.width > newLength
+            )) {
                 return false;
             }
 
@@ -223,6 +272,9 @@ export default class DrawingEngine {
             throw new Error('Wall height must be a positive number.');
         }
         if (wall.height === height) return;
+        if (wall.openings.some(opening => opening.height > height)) {
+            throw new Error('Wall height cannot be less than a door height.');
+        }
         wall.height = height;
         this.handleModelChange();
         this.recordHistory();

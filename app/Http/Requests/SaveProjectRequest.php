@@ -44,6 +44,12 @@ class SaveProjectRequest extends FormRequest
             'elements.*.thicknessSide' => ['sometimes', 'integer:strict', 'in:-1,1'],
             'elements.*.height' => ['sometimes', 'numeric'],
 
+            'elements.*.openings' => ['sometimes', 'array', 'list'],
+            'elements.*.openings.*' => ['required', 'array'],
+            'elements.*.openings.*.offset' => ['required', 'numeric'],
+            'elements.*.openings.*.width' => ['required', 'numeric'],
+            'elements.*.openings.*.height' => ['required', 'numeric'],
+
             'elements.*.position' => ['sometimes', 'array'],
             'elements.*.position.x' => ['sometimes', 'numeric'],
             'elements.*.position.y' => ['sometimes', 'numeric'],
@@ -102,7 +108,7 @@ class SaveProjectRequest extends FormRequest
     ): void {
         $this->checkAllowedKeys(
             $wall,
-            ['id', 'type', 'start', 'end', 'thickness', 'height', 'thicknessSide'],
+            ['id', 'type', 'start', 'end', 'thickness', 'height', 'thicknessSide', 'openings'],
             $path,
             $validator
         );
@@ -134,6 +140,105 @@ class SaveProjectRequest extends FormRequest
         $start = $wall['start'] ?? null;
         $end = $wall['end'] ?? null;
 
+        $openings = $wall['openings'] ?? [];
+
+        if (!is_array($openings) || !array_is_list($openings)) {
+            $validator->errors()->add(
+                "$path.openings",
+                'Wall openings must be a list.'
+            );
+        } else {
+            $wallLength = null;
+
+            if ($this->isValidPoint($start) && $this->isValidPoint($end)) {
+                $wallLength = hypot(
+                    $end['x'] - $start['x'],
+                    $end['y'] - $start['y']
+                );
+            }
+
+            $previousEnd = 0;
+            $validOpenings = [];
+
+            foreach ($openings as $index => $opening) {
+                $openingPath = "$path.openings.$index";
+
+                if (!is_array($opening)) {
+                    $validator->errors()->add(
+                        $openingPath,
+                        'The opening must be an object.'
+                    );
+                    continue;
+                }
+
+                $this->checkAllowedKeys(
+                    $opening,
+                    ['offset', 'width', 'height'],
+                    $openingPath,
+                    $validator
+                );
+
+                $offset = $opening['offset'] ?? null;
+                $width = $opening['width'] ?? null;
+                $height = $opening['height'] ?? null;
+
+                if (
+                    !$this->isFiniteNumber($offset) ||
+                    !$this->isFiniteNumber($width) ||
+                    !$this->isFiniteNumber($height) ||
+                    $offset < 0 ||
+                    $width <= 0 ||
+                    $height <= 0
+                ) {
+                    $validator->errors()->add(
+                        $openingPath,
+                        'The opening must have a non-negative offset and positive dimensions.'
+                    );
+                    continue;
+                }
+
+                if (
+                    $wallLength !== null &&
+                    $offset + $width > $wallLength
+                ) {
+                    $validator->errors()->add(
+                        $openingPath,
+                        'The opening must fit within the wall.'
+                    );
+                }
+
+                if (
+                    $this->isFiniteNumber($wall['height'] ?? null) &&
+                    $height > $wall['height']
+                ) {
+                    $validator->errors()->add(
+                        "$openingPath.height",
+                        'The opening cannot be taller than the wall.'
+                    );
+                }
+
+                $validOpenings[] = [
+                    'offset' => $offset,
+                    'end' => $offset + $width,
+                ];
+            }
+
+            usort(
+                $validOpenings,
+                fn ($a, $b) => $a['offset'] <=> $b['offset']
+            );
+
+            foreach ($validOpenings as $index => $opening) {
+                if ($index > 0 && $opening['offset'] < $previousEnd) {
+                    $validator->errors()->add(
+                        "$path.openings",
+                        'Wall openings cannot overlap.'
+                    );
+                }
+
+                $previousEnd = max($previousEnd, $opening['end']);
+            }
+        }
         if ($this->isValidPoint($start) &&
             $this->isValidPoint($end) &&
             $start['x'] == $end['x'] &&

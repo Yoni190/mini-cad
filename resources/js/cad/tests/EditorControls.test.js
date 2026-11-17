@@ -9,8 +9,10 @@ describe('editor property controls', () => {
         controls = Object.fromEntries([
             'wallLength', 'columnWidth', 'columnDepth', 'columnHeight', 'wallThickness', 'wallHeight',
             'applyWallLength', 'updateColumn', 'updateWallThickness', 'updateWallHeight', 'newWallThickness',
+            'wallDoors', 'removeWallDoor',
         ].map(id => [id, Object.assign(new EventTarget(), { value: '' })]));
-        document = Object.assign(new EventTarget(), { getElementById: id => controls[id] });
+        Object.assign(controls.wallDoors, { replaceChildren: vi.fn(), appendChild: vi.fn() });
+        document = Object.assign(new EventTarget(), { getElementById: id => controls[id], createElement: () => ({}) });
         vi.stubGlobal('document', document);
         vi.stubGlobal('alert', vi.fn());
         editor = {
@@ -55,7 +57,7 @@ describe('editor property controls', () => {
         expect(controls.columnDepth.value).toBe(400);
         expect(controls.columnHeight.value).toBe(3000);
         expect(controls.wallThickness.value).toBe('');
-        select({ type: 'wall', thickness: 200, height: 3000 });
+        select({ type: 'wall', thickness: 200, height: 3000, openings: [] });
         expect(controls.wallThickness.value).toBe(200);
         expect(controls.wallHeight.value).toBe(3000);
         select(null);

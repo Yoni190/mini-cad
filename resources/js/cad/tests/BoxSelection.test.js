@@ -103,7 +103,7 @@ describe('box selection', () => {
     it('highlights, moves and deletes selected elements as a group', () => {
         const { engine, wall, column, outside, selection, editor } = setup();
         selection.setSelection([wall, column]);
-        const renderer = { clear: vi.fn(), drawGrid: vi.fn(), isGeometryVisible: () => true, drawElement: vi.fn(), drawWallCornerAngles: vi.fn() };
+        const renderer = { clear: vi.fn(), drawGrid: vi.fn(), isGeometryVisible: () => true, drawElement: vi.fn(), drawWallFaceLengths: vi.fn(), drawWallCornerAngles: vi.fn() };
         new DrawingView(engine, renderer).render(selection.selectedIds);
         expect(renderer.drawElement.mock.calls.map(call => [call[0], call[2]])).toEqual([[wall, true], [column, true], [outside, false]]);
         const tool = editor.selectionTool;

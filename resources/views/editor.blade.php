@@ -82,6 +82,7 @@
             <label for="drawingTool" class="visually-hidden">Drawing tool</label>
             <select id="drawingTool" hidden>
                 <option value="wall">Wall</option>
+                <option value="door">Door</option>
                 <option value="column">Column</option>
                 <option value="select">Select</option>
                 <option value="measure">Measure</option>
@@ -92,6 +93,13 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM4 12h16M12 5v7M8 12v7M16 12v7"/></svg>
                     <span>Wall</span>
                     <span class="tool-tooltip" aria-hidden="true">Draw wall <kbd>W</kbd></span>
+                </button>
+                <button type="button" class="tool-button" data-tool="door" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 21V3h14v18M5 21h14M15 12h1"/>
+                    </svg>
+                    <span>Door</span>
+                    <span class="tool-tooltip" aria-hidden="true">Place door</span>
                 </button>
                 <button type="button" class="tool-button" data-tool="column" aria-pressed="false" aria-keyshortcuts="C">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v3H6zM8 7v10M16 7v10M6 17h12v3H6z"/></svg>
@@ -148,6 +156,17 @@
 
         <aside class="properties-panel" aria-label="Tool properties">
             <h2 class="panel-label">Properties</h2>
+            <section class="property-section" id="doorProperties" hidden>
+                <h3>New door</h3>
+
+                <label for="doorWidth">Width (mm)</label>
+                <input type="number" id="doorWidth" min="1" value="900" required>
+
+                <label for="doorHeight">Height (mm)</label>
+                <input type="number" id="doorHeight" min="1" value="2100" required>
+
+                <p class="field-help">Click a wall to place the door.</p>
+            </section>
             <section class="property-section" id="wallProperties">
                 <h3>New wall</h3>
                 <label for="newWallThickness">Thickness (mm)</label>
@@ -167,6 +186,9 @@
             </section>
             <section class="property-section" id="wallThicknessProperties" hidden>
                 <h3>Wall dimensions</h3>
+                <label for="wallDoors">Doors on this wall</label>
+                <select id="wallDoors"></select>
+                <button type="button" id="removeWallDoor">Remove selected door</button>
                 <p class="field-help">Choose Select and click a wall to edit it.</p>
 
                 <label for="wallThickness">Thickness (mm)</label>
