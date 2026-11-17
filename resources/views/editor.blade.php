@@ -94,12 +94,12 @@
                     <span>Wall</span>
                     <span class="tool-tooltip" aria-hidden="true">Draw wall <kbd>W</kbd></span>
                 </button>
-                <button type="button" class="tool-button" data-tool="door" aria-pressed="false">
+                <button type="button" class="tool-button" data-tool="door" aria-pressed="false" aria-keyshortcuts="D">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M5 21V3h14v18M5 21h14M15 12h1"/>
                     </svg>
                     <span>Door</span>
-                    <span class="tool-tooltip" aria-hidden="true">Place door</span>
+                    <span class="tool-tooltip" aria-hidden="true">Place door <kbd>D</kbd></span>
                 </button>
                 <button type="button" class="tool-button" data-tool="column" aria-pressed="false" aria-keyshortcuts="C">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v3H6zM8 7v10M16 7v10M6 17h12v3H6z"/></svg>

@@ -36,6 +36,7 @@ export default function initEditorUI() {
 
         const shortcuts = {
             w: 'wall',
+            d: 'door',
             c: 'column',
             s: 'select',
             m: 'measure',
