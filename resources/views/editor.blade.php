@@ -91,26 +91,22 @@
             <div class="tool-group" role="group" aria-label="Draw">
                 <p class="group-label">Draw</p>
                 <button type="button" class="tool-button" data-tool="wall" aria-pressed="true" aria-keyshortcuts="W">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM4 12h16M12 5v7M8 12v7M16 12v7"/></svg>
+                    <x-icons.wall />
                     <span>Wall</span>
                     <span class="tool-tooltip" aria-hidden="true">Draw wall <kbd>W</kbd></span>
                 </button>
                 <button type="button" class="tool-button" data-tool="door" aria-pressed="false" aria-keyshortcuts="D">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M5 21V3h14v18M5 21h14M15 12h1"/>
-                    </svg>
+                    <x-icons.door />
                     <span>Door</span>
                     <span class="tool-tooltip" aria-hidden="true">Place door <kbd>D</kbd></span>
                 </button>
                 <button type="button" class="tool-button" data-tool="window" aria-pressed="false">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4 4h16v16H4zM12 4v16M4 12h16"/>
-                    </svg>
+                    <x-icons.window />
                     <span>Window</span>
                     <span class="tool-tooltip" aria-hidden="true">Place window</span>
                 </button>
                 <button type="button" class="tool-button" data-tool="column" aria-pressed="false" aria-keyshortcuts="C">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v3H6zM8 7v10M16 7v10M6 17h12v3H6z"/></svg>
+                    <x-icons.column />
                     <span>Column</span>
                     <span class="tool-tooltip" aria-hidden="true">Place column <kbd>C</kbd></span>
                 </button>
@@ -118,7 +114,7 @@
             <div class="tool-group" role="group" aria-label="Edit">
                 <p class="group-label">Edit</p>
                 <button type="button" class="tool-button" data-tool="select" aria-pressed="false" aria-keyshortcuts="S">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 14 10-7 1-3 7z"/></svg>
+                    <x-icons.select />
                     <span>Select</span>
                     <span class="tool-tooltip" aria-hidden="true">Select / move <kbd>S</kbd></span>
                 </button>
@@ -129,10 +125,7 @@
                     aria-pressed="false"
                     aria-keyshortcuts="M">
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M3 17L17 3L21 7L7 21Z"/>
-                    <path d="M10 10L12 12M13 7L15 9M7 13L9 15"/>
-                </svg>
+                <x-icons.measure />
 
                 <span>Measure</span>
                 <span class="tool-tooltip" aria-hidden="true">
