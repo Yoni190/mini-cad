@@ -4,6 +4,7 @@ import GeometryService from "./geometry/GeometryService";
 import WallTopology from './geometry/WallTopology';
 import WallGeometry from './geometry/WallGeometry';
 import restoreElements from './persistence/restoreElements';
+import WallSpatialIndex from './geometry/WallSpatialIndex';
 
 const MAX_ELEMENTS = 1000;
 
@@ -15,6 +16,7 @@ export default class DrawingEngine {
         this.wallGeometryElements = null;
         this.history = [JSON.stringify(this.elements)];
         this.historyIndex = 0;
+        this.wallSpatialIndex = null;
     }
 
     replaceElements(elements) {
@@ -238,8 +240,21 @@ export default class DrawingEngine {
      * Redrawing remains with the caller so drag updates can be scheduled.
      */
     handleModelChange({ wallsChanged = false } = {}) {
-        if (wallsChanged) this.invalidateWallGeometry();
+        if (wallsChanged) {
+            this.invalidateWallGeometry();
+            this.wallSpatialIndex = null;
+        }
+
         this.notifyModelChange();
+    }
+
+    findWallsNear(point, tolerance) {
+        if (this.wallSpatialIndex === null) {
+            const walls = this.elements.filter(element => element.type === 'wall');
+            this.wallSpatialIndex = new WallSpatialIndex(walls);
+        }
+
+        return this.wallSpatialIndex.findNear(point, tolerance);
     }
 
     getWallDisplayGeometry() {

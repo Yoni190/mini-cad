@@ -16,7 +16,10 @@ export default class WallSpatialIndex {
             const maxY = Math.floor(Math.max(wall.start.y, wall.end.y) / CELL_SIZE);
             const cellCount = (maxX - minX + 1) * (maxY - minY + 1);
 
-            if (cellCount > MAX_CELLS) {
+            if (
+                ![minX, maxX, minY, maxY].every(Number.isSafeInteger) ||
+                cellCount > MAX_CELLS
+            ) {
                 this.disabled = true;
                 this.cells.clear();
                 return;
@@ -42,7 +45,14 @@ export default class WallSpatialIndex {
         const maxY = Math.floor((point.y + tolerance) / CELL_SIZE);
         const cellCount = (maxX - minX + 1) * (maxY - minY + 1);
 
-        if (cellCount > MAX_CELLS) return this.walls;
+        if (
+            !Number.isFinite(tolerance) ||
+            tolerance < 0 ||
+            ![minX, maxX, minY, maxY].every(Number.isSafeInteger) ||
+            cellCount > MAX_CELLS
+        ) {
+            return this.walls;
+        }
 
         const candidates = new Set();
 
