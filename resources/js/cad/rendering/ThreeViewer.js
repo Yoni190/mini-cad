@@ -129,6 +129,7 @@ export default class ThreeViewer {
      */
     createWallMesh(wall, corners = wall.getGeometry()) {
         const geometries = [];
+        const floorGap = opening => Math.min(100, opening.height / 2);
 
 
         const setGeometryColor = (geometry, colorValue) => {
@@ -173,11 +174,12 @@ export default class ThreeViewer {
             addSection(section, 0, wall.height);
         }
 
-        // Wall above each door.
+        // Wall above and below each door.
         for (const opening of wall.openings) {
             const section = clipWallSection(
                 wall, corners, opening.offset, opening.offset + opening.width
             );
+            addSection(section, 0, floorGap(opening));
             addSection(section, opening.height, wall.height - opening.height);
         }
 
@@ -199,17 +201,20 @@ export default class ThreeViewer {
 
             const closedAngle = Math.atan2(dy, dx);
             const doorThickness = 40; // mm
+            const gap = floorGap(opening);
+            const doorHeight = opening.height - gap;
+
 
             const door = new THREE.BoxGeometry(
                 opening.width / 1000,
                 doorThickness / 1000,
-                opening.height / 1000
+                doorHeight / 1000
             ).toNonIndexed();
 
             door.translate(
                 opening.width / 2000,
                 0,
-                opening.height / 2000
+                (gap + doorHeight / 2) / 1000
             );
 
             door.rotateZ(-closedAngle);

@@ -5,6 +5,24 @@ import Wall from '../models/Wall';
 
 afterEach(() => vi.unstubAllGlobals());
 
+it('leaves wall below a raised door opening', () => {
+    const viewer = Object.create(ThreeViewer.prototype);
+    const wall = new Wall({
+        start: { x: 0, y: 0 }, end: { x: 4000, y: 0 },
+        openings: [{ offset: 1000, width: 900, height: 2100 }],
+    });
+    const mesh = viewer.createWallMesh(wall);
+    mesh.updateMatrixWorld();
+    const distanceAt = height => new THREE.Raycaster(
+        new THREE.Vector3(1.5, height, -1), new THREE.Vector3(0, 0, 1)
+    ).intersectObject(mesh)[0].distance;
+
+    expect(distanceAt(0.05)).toBeCloseTo(1);
+    expect(distanceAt(0.11)).toBeCloseTo(1.08);
+    mesh.geometry.dispose();
+    mesh.material.dispose();
+});
+
 it('adds a floor for a closed room and removes it when the room opens', () => {
     const viewer = Object.create(ThreeViewer.prototype);
     viewer.floorsGroup = new THREE.Group();
