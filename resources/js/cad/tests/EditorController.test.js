@@ -359,7 +359,7 @@ describe('selection routing and cancellation', () => {
         vi.spyOn(selectionManager, 'select').mockReturnValue(selected);
         vi.spyOn(selectionManager, 'clear');
         vi.spyOn(selectionManager, 'isPointInsideColumn').mockReturnValue(true);
-        const engine = { elements: [selected], getWallDisplayGeometry: () => new Map(), moveColumn: vi.fn(), removeElements: vi.fn() };
+        const engine = { elements: [selected], getWallDisplayGeometry: () => new Map(), moveColumn: vi.fn(), removeElements: vi.fn(), recordHistory: vi.fn() };
         const controller = new EditorController(canvas, engine, { scale: 1 }, null, selectionManager, { render: vi.fn() }, { setLength: vi.fn() }, { clear: vi.fn() });
         controller.activeTool = 'select';
         controller.getMousePoint = vi.fn(event => event.point);
@@ -403,6 +403,24 @@ describe('selection routing and cancellation', () => {
         window.dispatchEvent(new Event('mouseup'));
         expect(controller.selectionTool.isDragging).toBe(false);
     });
+
+    it.each([['z', false, 'undo'], ['z', true, 'redo'], ['y', false, 'redo']])(
+        'routes Ctrl+%s with shift=%s to %s and preserves text-field undo', (key, shiftKey, action) => {
+            const { controller, engine, selectionManager } = setup();
+            engine.undo = vi.fn();
+            engine.redo = vi.fn();
+            const event = { key, shiftKey, ctrlKey: true, preventDefault: vi.fn() };
+            controller.handleKeyDown(event);
+            expect(engine[action]).toHaveBeenCalledOnce();
+            expect(selectionManager.clear).toHaveBeenCalledOnce();
+            expect(event.preventDefault).toHaveBeenCalledOnce();
+
+            const input = new HTMLElement();
+            input.matches = () => true;
+            controller.handleKeyDown({ ...event, target: input, preventDefault: vi.fn() });
+            expect(engine[action]).toHaveBeenCalledOnce();
+        }
+    );
 
     it('gives panning priority over an active selection drag', () => {
         const { controller, engine } = setup();

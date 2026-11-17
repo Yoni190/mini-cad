@@ -186,7 +186,7 @@ export default class SelectionTool {
             const column = this.selectionManager.selectedElement;
 
             if (!column) {
-                this.drag = null;
+                this.endDrag();
                 return;
             }
 
@@ -200,7 +200,11 @@ export default class SelectionTool {
     }
 
     endDrag() {
-        if (this.drag?.type === 'wall' || this.drag?.type === 'group') this.suppressNextClick = this.drag.moved;
+        if (this.drag?.type === 'wall' || this.drag?.type === 'group') {
+            this.suppressNextClick = this.drag.moved;
+        }
+
+        if (this.drag) this.engine.recordHistory();
         this.drag = null;
     }
 
@@ -212,6 +216,7 @@ export default class SelectionTool {
     }
 
     cancel({ clearSelection = false } = {}) {
+        if (this.drag) this.engine.recordHistory();
         this.drag = null;
         if (this.box) this.clearBox();
         this.box = null;
@@ -221,6 +226,7 @@ export default class SelectionTool {
 
     deleteSelected() {
         if (!this.hasSelection) return;
+        this.endDrag();
         this.engine.removeElements(this.selectionManager.selectedIds);
         this.cancel({ clearSelection: true });
     }

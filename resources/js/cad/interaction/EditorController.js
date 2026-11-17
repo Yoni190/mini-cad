@@ -221,6 +221,26 @@ export default class EditorController {
                 event.target.isContentEditable
             );
 
+        const modifier = event.ctrlKey || event.metaKey;
+        const key = event.key.toLowerCase();
+
+        if (!isTypingInField && modifier && !event.altKey) {
+            const undo = key === 'z' && !event.shiftKey;
+            const redo = (key === 'z' && event.shiftKey) ||
+                (key === 'y' && !event.shiftKey);
+
+            if (undo || redo) {
+                event.preventDefault();
+                this.cancelInteraction({ clearSelection: true });
+
+                if (undo) this.engine.undo();
+                else this.engine.redo();
+
+                this.view.render();
+                return;
+            }
+        }
+
         if (
             !isTypingInField && (event.ctrlKey || event.metaKey) &&
             !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'a' &&

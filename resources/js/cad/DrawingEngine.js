@@ -3,6 +3,7 @@ import Column from "./models/Column";
 import GeometryService from "./geometry/GeometryService";
 import WallTopology from './geometry/WallTopology';
 import WallGeometry from './geometry/WallGeometry';
+import restoreElements from './persistence/restoreElements';
 
 const MAX_ELEMENTS = 1000;
 
@@ -12,6 +13,8 @@ export default class DrawingEngine {
         this.onModelChange = null;
         this.wallGeometryCache = null;
         this.wallGeometryElements = null;
+        this.history = [JSON.stringify(this.elements)];
+        this.historyIndex = 0;
     }
 
     replaceElements(elements) {
@@ -77,6 +80,7 @@ export default class DrawingEngine {
 
         this.elements = nextElements;
         this.handleModelChange({ wallsChanged: true });
+        this.recordHistory();
     }
 
     addColumn(position) {
@@ -88,6 +92,7 @@ export default class DrawingEngine {
 
         this.elements.push(column);
         this.handleModelChange();
+        this.recordHistory();
     }
 
     /** Moves a column; the caller schedules the redraw during dragging. */
@@ -181,6 +186,7 @@ export default class DrawingEngine {
         column.height = height;
 
         this.handleModelChange();
+        this.recordHistory();
     }
 
     updateWallThickness(id, thickness) {
@@ -204,6 +210,7 @@ export default class DrawingEngine {
 
         wall.thickness = thickness;
         this.handleModelChange({ wallsChanged: true });
+        this.recordHistory();
     }
 
     updateWallHeight(id, height) {
@@ -216,6 +223,7 @@ export default class DrawingEngine {
         if (wall.height === height) return;
         wall.height = height;
         this.handleModelChange();
+        this.recordHistory();
     }
 
     /** Clears derived wall geometry without notifying listeners or redrawing. */
@@ -270,6 +278,41 @@ export default class DrawingEngine {
         const remaining = this.elements.filter(element => !selected.has(element.id));
         this.elements.splice(0, this.elements.length, ...remaining);
         this.handleModelChange({ wallsChanged: removed.some(element => element.type === 'wall') });
+        this.recordHistory();
     }
 
+    resetHistory() {
+        this.history = [JSON.stringify(this.elements)];
+        this.historyIndex = 0;
+    }
+
+    recordHistory() {
+        const snapshot = JSON.stringify(this.elements);
+
+        if (snapshot === this.history[this.historyIndex]) return;
+
+        this.history = this.history.slice(0, this.historyIndex + 1);
+        this.history.push(snapshot);
+        this.historyIndex++;
+    }
+
+    undo() {
+        if (this.historyIndex === 0) return false;
+
+        this.historyIndex--;
+        this.replaceElements(
+            restoreElements(JSON.parse(this.history[this.historyIndex]))
+        );
+        return true;
+    }
+
+    redo() {
+        if (this.historyIndex >= this.history.length - 1) return false;
+
+        this.historyIndex++;
+        this.replaceElements(
+            restoreElements(JSON.parse(this.history[this.historyIndex]))
+        );
+        return true;
+    }
 }

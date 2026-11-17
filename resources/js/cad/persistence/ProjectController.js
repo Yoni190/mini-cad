@@ -50,6 +50,7 @@ export default class ProjectController {
         try {
             const elements = restoreElements(project.elements);
             this.engine.replaceElements(elements);
+            this.engine.resetHistory();
             this.currentProjectId = project.id;
             this.currentProjectVersion = project.version;
             this.controls.name.value = project.name;
@@ -130,11 +131,12 @@ export default class ProjectController {
         if (this.isBusy || this.isSaving) return;
         if (!window.confirm('Create a new project? Current unsaved changes will be lost.')) return;
 
+        this.editor.cancelInteraction({ clearSelection: true });
         this.engine.replaceElements([]);
+        this.engine.resetHistory();
         this.currentProjectId = null;
         this.currentProjectVersion = null;
         window.history.replaceState(null, '', '/editor');
-        this.editor.cancelInteraction({ clearSelection: true });
         this.controls.name.value = 'Untitled Project';
         this.setUnsavedChanges(false);
         this.controls.status.textContent = 'New project created.';

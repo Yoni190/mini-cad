@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ProjectController from '../persistence/ProjectController';
+import DrawingEngine from '../DrawingEngine';
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
@@ -15,7 +16,7 @@ describe('project lifecycle', () => {
             changesStatus: { dataset: {}, textContent: 'Saved.' },
             busyControls: [{ disabled: false }],
         };
-        engine = { elements: [], replaceElements: vi.fn() };
+        engine = { elements: [], replaceElements: vi.fn(), resetHistory: vi.fn() };
         service = { saveProject: vi.fn(), updateProject: vi.fn() };
         projects = new ProjectController({
             engine, controls, projectService: service, canvas: { style: {} },
@@ -98,10 +99,12 @@ describe('project lifecycle', () => {
 
     it('opens a project as clean and resets identity when creating a new project', () => {
         projects.open({ id: 8, name: 'Existing', elements: [], version: 3 });
+        expect(engine.resetHistory).toHaveBeenCalledOnce();
         expect(projects.currentProjectVersion).toBe(3);
         expect(projects.currentProjectId).toBe(8);
         expect(projects.hasUnsavedChanges).toBe(false);
         projects.createNew();
+        expect(engine.resetHistory).toHaveBeenCalledTimes(2);
         expect(projects.currentProjectId).toBeNull();
         expect(projects.currentProjectVersion).toBeNull();
         expect(projects.editor.cancelInteraction).toHaveBeenCalledWith({ clearSelection: true });
@@ -116,6 +119,18 @@ describe('project lifecycle', () => {
         expect(projects.isBusy).toBe(true);
         expect(engine.replaceElements).not.toHaveBeenCalled();
         expect(payload.remove).toHaveBeenCalledOnce();
+    });
+
+    it('does not undo into a previous project after opening or creating one', () => {
+        const drawing = new DrawingEngine();
+        projects.engine = drawing;
+        drawing.addColumn({ x: 10, y: 10 });
+        projects.open({ id: 8, name: 'Existing', elements: [], version: 1 });
+        expect(drawing.undo()).toBe(false);
+        drawing.addColumn({ x: 20, y: 20 });
+        projects.createNew();
+        expect(drawing.undo()).toBe(false);
+        expect(drawing.elements).toEqual([]);
     });
 
     it('preserves the drawing when saved geometry is invalid', () => {
