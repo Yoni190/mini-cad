@@ -1,3 +1,5 @@
+import WallTopology from '../geometry/WallTopology';
+
 export default class CanvasRenderer {
     constructor (canvas) {
         this.canvas = canvas;
@@ -360,6 +362,85 @@ export default class CanvasRenderer {
         ctx.fillStyle = '#92400e';
         ctx.fillText(label, midX, midY);
 
+        ctx.restore();
+    }
+
+    drawWallCornerAngles(walls) {
+        const junctions = new Map();
+        for (const wall of walls) {
+            for (const [point, other] of [[wall.start, wall.end], [wall.end, wall.start]]) {
+                const key = `${point.x},${point.y}`;
+                if (!junctions.has(key)) junctions.set(key, { point, rays: [] });
+                junctions.get(key).rays.push({
+                    angle: Math.atan2(other.y - point.y, other.x - point.x),
+                    thickness: wall.thickness,
+                });
+            }
+        }
+
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.font = '600 12px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillStyle = '#334155';
+        for (const { point, rays } of junctions.values()) {
+            if (rays.length < 2) continue;
+            rays.sort((a, b) => a.angle - b.angle);
+            const screen = this.worldToScreen(point.x, point.y);
+            for (let i = 0; i < rays.length; i++) {
+                const a = rays[i];
+                const b = rays[(i + 1) % rays.length];
+                const gap = (b.angle - a.angle + 2 * Math.PI) % (2 * Math.PI);
+                if (gap < 1e-8 || gap >= Math.PI - 1e-8) continue;
+                const direction = a.angle + gap / 2;
+                const offset = 30 + Math.max(a.thickness, b.thickness) * this.scale / 2;
+                const x = screen.x + Math.cos(direction) * offset;
+                const y = screen.y + Math.sin(direction) * offset;
+                const label = `${Math.round(gap * 180 / Math.PI)}°`;
+                ctx.strokeText(label, x, y);
+                ctx.fillText(label, x, y);
+            }
+        }
+        ctx.restore();
+    }
+
+    drawWallAngle(wall, nearbyWalls = []) {
+        const { start, end } = wall;
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        let degrees = Math.atan2(-dy, dx) * 180 / Math.PI;
+        const angles = [];
+        for (const connected of nearbyWalls) {
+            if (WallTopology.project(start, connected).distance > 1e-6) continue;
+            for (const point of [connected.start, connected.end]) {
+                const x = point.x - start.x;
+                const y = point.y - start.y;
+                if (Math.hypot(x, y) <= 1e-6) continue;
+                angles.push(Math.atan2(Math.abs(dx * y - dy * x), dx * x + dy * y) * 180 / Math.PI);
+            }
+        }
+        if (angles.length) degrees = Math.min(...angles);
+        const angle = ((Math.round(degrees) % 360) + 360) % 360;
+        const midpoint = this.worldToScreen(
+            (start.x + end.x) / 2,
+            (start.y + end.y) / 2
+        );
+
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.font = '600 12px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillStyle = '#334155';
+        ctx.strokeText(`${angle}°`, midpoint.x, midpoint.y + 10);
+        ctx.fillText(`${angle}°`, midpoint.x, midpoint.y + 10);
         ctx.restore();
     }
 }
