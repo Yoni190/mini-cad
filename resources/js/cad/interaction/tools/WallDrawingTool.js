@@ -115,10 +115,12 @@ export default class WallDrawingTool {
             };
         }
 
+        const tolerance = 20 / this.getScale();
+
         return this.snapManager.snap(
             point,
-            this.engine.elements,
-            20 / this.getScale(),
+            this.engine.findWallsNear(point, tolerance),
+            tolerance,
             constraint
         );
     }

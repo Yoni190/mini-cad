@@ -6,6 +6,7 @@ function setup() {
     let length = '', thickness = 200;
     const engine = {
         elements: [],
+        findWallsNear: vi.fn(() => engine.elements.filter(element => element.type === 'wall')),
         addWall: vi.fn((start, end, thickness) => {
             engine.elements.push(new Wall({ start, end, thickness }));
         }),

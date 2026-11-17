@@ -8,10 +8,17 @@ function setup(snapped = false) {
         'clear', 'drawElement', 'drawWallLength', 'drawWallGuides', 'drawSnapMarker',
     ].map(name => [name, vi.fn()]));
     const snapManager = { isOnWall: vi.fn(() => snapped) };
-    const wallPreview = new WallPreviewRenderer({ renderer, previewRenderer, snapManager });
     const wall = new Wall({ start: { x: 0, y: 0 }, end: { x: 1000, y: 0 } });
     const elements = [wall];
-    return { renderer, previewRenderer, snapManager, wallPreview, wall, elements };
+    const engine = { findWallsNear: vi.fn(() => elements) };
+    const wallPreview = new WallPreviewRenderer({
+        renderer,
+        previewRenderer,
+        snapManager,
+        engine
+    });
+
+    return { renderer, previewRenderer, snapManager, wallPreview, wall, elements, engine };
 }
 
 describe('wall preview rendering', () => {

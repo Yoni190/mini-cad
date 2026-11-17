@@ -24,7 +24,12 @@ if (canvas && twoContainer && threeContainer) {
     const previewRenderer = new CanvasRenderer(previewCanvas);
     const engine = new DrawingEngine();
     const snapManager = new SnapManager();
-    const wallPreviewRenderer = new WallPreviewRenderer({ renderer, previewRenderer, snapManager });
+    const wallPreviewRenderer = new WallPreviewRenderer({
+        renderer,
+        previewRenderer,
+        snapManager,
+        engine
+    });
     const view = new DrawingView(engine, renderer, wallPreviewRenderer);
     const selectionManager = new SelectionManager();
     const editor = new EditorController(
