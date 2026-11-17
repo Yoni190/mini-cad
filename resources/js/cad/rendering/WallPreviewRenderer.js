@@ -21,6 +21,7 @@ export default class WallPreviewRenderer {
         if (!preview) return;
         this.previewRenderer.drawElement(preview, true);
         this.previewRenderer.drawWallLength(preview);
+        this.previewRenderer.drawWallAngle(preview, this.engine.findWallsNear(preview.start, 1e-6));
         this.previewRenderer.drawWallGuides(preview, elements);
         this.drawSnapMarker(preview.end);
     }

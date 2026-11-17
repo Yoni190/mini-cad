@@ -37,6 +37,8 @@ export default class DrawingView {
             );
         }
 
+        this.renderer.drawWallCornerAngles(this.engine.elements.filter(element => element.type === 'wall'));
+
         // A full redraw replaces any temporary drawing preview.
         this.previewRenderer?.clear();
     }
