@@ -105,7 +105,7 @@ export default class CanvasRenderer {
 
         const radius = opening.width * this.scale;
         const closedAngle = Math.atan2(dy, dx);
-        const side = wall.thicknessSide;
+        const side = wall.thicknessSide * (opening.swingSide ?? 1);
         const openAngle = closedAngle + side * Math.PI / 2;
 
         const ctx = this.ctx;

@@ -51,6 +51,7 @@ class SaveProjectRequest extends FormRequest
             'elements.*.openings.*.height' => ['required', 'numeric'],
             'elements.*.openings.*.type' => ['sometimes', 'in:window'],
             'elements.*.openings.*.sillHeight' => ['sometimes', 'numeric'],
+            'elements.*.openings.*.swingSide' => ['sometimes', 'integer:strict', 'in:-1,1'],
 
             'elements.*.position' => ['sometimes', 'array'],
             'elements.*.position.x' => ['sometimes', 'numeric'],
@@ -175,7 +176,7 @@ class SaveProjectRequest extends FormRequest
 
                 $this->checkAllowedKeys(
                     $opening,
-                    ['offset', 'width', 'height', 'type', 'sillHeight'],
+                    ['offset', 'width', 'height', 'type', 'sillHeight', 'swingSide'],
                     $openingPath,
                     $validator
                 );

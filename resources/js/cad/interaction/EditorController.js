@@ -2,6 +2,7 @@ import WallDrawingTool from './tools/WallDrawingTool';
 import SelectionTool from './tools/SelectionTool';
 import CanvasNavigation from './CanvasNavigation';
 import WallTopology from '../geometry/WallTopology';
+import Wall from '../models/Wall';
 
 export default class EditorController {
     constructor(canvas, engine, renderer, snapManager, selectionManager, view, wallInputs, wallPreviewRenderer) {
@@ -59,7 +60,10 @@ export default class EditorController {
         });
 
         this.canvas.addEventListener('mouseleave', () => {
-            if (this.activeTool === 'wall' && !this.wallTool.startPoint) {
+            if (
+                this.activeTool === 'door' ||
+                (this.activeTool === 'wall' && !this.wallTool.startPoint)
+            ) {
                 this.wallPreviewRenderer.clear();
             }
         });
@@ -98,6 +102,41 @@ export default class EditorController {
 
         document.getElementById('toggleOrtho')
             .addEventListener('click', () => this.toggleOrtho());
+    }
+
+    findOpeningPosition(point, width) {
+        let closestWall = null;
+        let closestProjection = null;
+
+        for (const wall of this.engine.elements) {
+            if (wall.type !== 'wall') continue;
+
+            const projection = WallTopology.project(point, wall);
+            const tolerance = wall.thickness + 20 / this.renderer.scale;
+
+            if (
+                projection.distance <= tolerance &&
+                (!closestProjection || projection.distance < closestProjection.distance)
+            ) {
+                closestWall = wall;
+                closestProjection = projection;
+            }
+        }
+
+        if (!closestWall) return null;
+
+        const dx = closestWall.end.x - closestWall.start.x;
+        const dy = closestWall.end.y - closestWall.start.y;
+        const cross = dx * (point.y - closestWall.start.y)
+            - dy * (point.x - closestWall.start.x);
+
+        return {
+            wall: closestWall,
+            offset: closestProjection.t * closestWall.getLength() - width / 2,
+            swingSide: cross === 0 || Math.sign(cross) === closestWall.thicknessSide
+                ? 1
+                : -1,
+        };
     }
 
     /**
@@ -150,30 +189,14 @@ export default class EditorController {
                 isWindow ? 'windowHeight' : 'doorHeight'
             ).value);
 
-            let closestWall = null;
-            let closestProjection = null;
+            const position = this.findOpeningPosition(click, width);
 
-            for (const wall of this.engine.elements) {
-                if (wall.type !== 'wall') continue;
-
-                const projection = WallTopology.project(click, wall);
-                const tolerance = wall.thickness + 20 / this.renderer.scale;
-
-                if (
-                    projection.distance <= tolerance &&
-                    (!closestProjection || projection.distance < closestProjection.distance)
-                ) {
-                    closestWall = wall;
-                    closestProjection = projection;
-                }
-            }
-
-            if (!closestWall) {
+            if (!position) {
                 alert('Click closer to a wall.');
                 return;
             }
 
-            const offset = closestProjection.t * closestWall.getLength() - width / 2;
+            const { wall, offset, swingSide } = position;
 
             try {
                 if (isWindow) {
@@ -182,10 +205,10 @@ export default class EditorController {
                     );
 
                     this.engine.addWindow(
-                        closestWall.id, offset, width, height, sillHeight
+                        wall.id, offset, width, height, sillHeight
                     );
                 } else {
-                    this.engine.addDoor(closestWall.id, offset, width, height);
+                    this.engine.addDoor(wall.id, offset, width, height, swingSide);
                 }
 
                 this.view.render();
@@ -208,6 +231,30 @@ export default class EditorController {
         this.wallTool.handleClick(point);
     }
 
+    renderDoorPreview(point) {
+        const width = Number(document.getElementById('doorWidth').value);
+        const height = Number(document.getElementById('doorHeight').value);
+        const position = this.findOpeningPosition(point, width);
+
+        this.wallPreviewRenderer.prepareFrame();
+
+        if (!position) return;
+
+        const { wall, offset, swingSide } = position;
+        const opening = { offset, width, height, swingSide };
+
+        try {
+            new Wall({
+                ...wall,
+                openings: [...wall.openings, opening],
+            });
+        } catch {
+            return;
+        }
+
+        this.wallPreviewRenderer.previewRenderer.drawDoor(wall, opening, true);
+    }
+
     /**
      * Updates panning, column dragging, or a temporary wall preview.
      *
@@ -219,6 +266,11 @@ export default class EditorController {
         // Navigation takes priority over dragging and drafting previews.
         if (this.navigation.isPanning) {
             this.navigation.updatePan(event);
+            return;
+        }
+
+        if (this.activeTool === 'door') {
+            this.renderDoorPreview(this.getMousePoint(event, false));
             return;
         }
 

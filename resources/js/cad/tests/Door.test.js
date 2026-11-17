@@ -83,6 +83,19 @@ describe('doors', () => {
         ]);
     });
 
+    it('keeps the chosen swing side through undo and redo', () => {
+        const { engine, wallId } = createWall();
+
+        engine.addDoor(wallId, 1000, 900, 2100, -1);
+
+        expect(engine.elements[0].openings[0].swingSide).toBe(-1);
+
+        engine.undo();
+        engine.redo();
+
+        expect(engine.elements[0].openings[0].swingSide).toBe(-1);
+    });
+
     it('rejects a wall that would split through a door', () => {
         const { engine, wallId } = createWall();
 

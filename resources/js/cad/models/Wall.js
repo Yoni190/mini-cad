@@ -69,6 +69,7 @@ export default class Wall extends DrawingElement {
                 sillHeight < 0 ||
                 sillHeight + opening.height > height ||
                 opening.offset + opening.width > wallLength ||
+                (opening.swingSide !== undefined && ![1, -1].includes(opening.swingSide)) ||
                 opening.height > height
             ) {
                 throw new Error('Invalid wall opening.');

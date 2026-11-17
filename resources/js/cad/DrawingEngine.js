@@ -85,8 +85,8 @@ export default class DrawingEngine {
         this.recordHistory();
     }
 
-    addDoor(wallId, offset, width, height) {
-        this.addOpening(wallId, { offset, width, height });
+    addDoor(wallId, offset, width, height, swingSide = 1) {
+        this.addOpening(wallId, { offset, width, height, swingSide });
     }
 
     addWindow(wallId, offset, width, height, sillHeight) {
