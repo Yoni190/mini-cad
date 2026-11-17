@@ -1,15 +1,15 @@
 # Mini CAD Editor
 
-A browser-based architectural CAD prototype built with **Laravel 12**, **JavaScript (ES6+)**, the **HTML Canvas API**, and **Three.js**. Users can create and edit simple wall and column layouts in 2D, inspect the same elements in 3D, and save or reopen projects associated with their accounts.
+A browser-based architectural CAD prototype built with **Laravel 12**, **JavaScript (ES6+)**, the **HTML Canvas API**, and **Three.js**. Users can draw walls and columns, add doors and windows, inspect the drawing in 3D, and save projects to their accounts.
 
 ## Features
 
-- **2D drafting:** Draw walls using two points or a specified numeric length; create columns with editable width and depth.
-- **Interaction:** Select and delete walls and columns, move columns, and use wall-endpoint snapping. A measurement grid, mouse-wheel zoom, and viewport panning support navigation.
+- **2D drafting:** Draw walls using two points or a specified numeric length. Add columns and place doors and windows in walls.
+- **Interaction:** Select, move, and delete elements, use wall-endpoint snapping, and measure distances. A grid, mouse-wheel zoom, and viewport panning support navigation.
 - **Wall geometry:** Calculates wall lengths, thickness-based footprints, and a limited L-shaped endpoint junction. The original wall reference endpoints and measured lengths remain unchanged.
-- **3D visualization:** Switch between 2D and 3D. Three.js uses a perspective camera and OrbitControls; columns are rendered as boxes, while wall footprints are extruded to preserve the supported 2D junction geometry.
+- **3D visualization:** Switch between 2D, 3D, and split views. The 3D view includes wall openings, columns, and floors for closed rooms.
 - **User accounts:** Register, log in, and log out using Laravel session authentication.
-- **Project persistence:** Create, list, save, update, and load projects. Projects are stored as validated JSON and scoped to their authenticated owners.
+- **Project persistence:** Create, list, save, and reopen projects. Signed-in users' changes save automatically, and projects are scoped to their owners.
 - **Automated tests:** Laravel feature tests and JavaScript geometry tests.
 
 ## Tech stack
@@ -95,7 +95,7 @@ A browser-based architectural CAD prototype built with **Laravel 12**, **JavaScr
    npm run dev
    ```
 
-7. Open `http://127.0.0.1:8000`, register an account, and open the editor.
+7. Open `http://127.0.0.1:8000` and register an account. Registration opens a new drawing in the editor. Later logins open the Projects page.
 
 For a frontend production build, run:
 
@@ -106,11 +106,14 @@ npm run build
 ## Using the editor
 
 1. **Draw walls:** Choose the Wall tool and click two points on the 2D canvas. Alternatively, choose a starting point and direction, enter a wall length in millimeters, and create the wall using the numeric control.
-2. **Add columns:** Choose the Column tool and click a position. Select a column to edit its width and depth, or move it by dragging.
-3. **Select and delete:** Choose Select, click an element, and use Delete/Backspace to remove it.
-4. **Navigate:** Use the grid as a visual reference, the mouse wheel to zoom, and middle-mouse dragging to pan.
-5. **Switch views:** Use the 2D and 3D buttons. In 3D, OrbitControls supports camera rotation, zoom, and pan.
-6. **Save and load:** Enter a project name and select Save Project. Use the saved-project selector to load existing work. Subsequent saves update the currently opened project; New Project resets the current working drawing.
+2. **Add columns:** Choose the Column tool and click a position. Select a column to edit its dimensions or move it by dragging.
+3. **Add doors and windows:** Choose Door or Window, set its dimensions, and click a wall. To remove an opening, select its wall and use the Properties panel.
+4. **Select and delete:** Choose Select, click an element, and press Delete or Backspace to remove it. Double-click and hold to draw a selection box.
+5. **Navigate:** Use the grid as a visual reference, the mouse wheel to zoom, and middle-mouse dragging to pan. Use Measure to check a distance.
+6. **Switch views:** Choose 2D, 3D, or Split. In 3D, drag to orbit, scroll to zoom, and right-drag to pan.
+7. **Save and reopen:** Enter a project name and choose Save. Signed-in users' edits also save automatically. To reopen a project, use the Projects page. Choose File > New Project to start a new drawing.
+
+You can draw without an account. When a guest chooses Save, the editor stores the draft in the browser and opens registration. After registration, the editor restores and saves the draft.
 
 All CAD dimensions are stored in **millimeters**. The 2D canvas uses a configurable pixel scale, and the 3D viewer converts **1,000 mm to 1 Three.js unit (1 meter)**.
 
@@ -144,7 +147,7 @@ The editor maintains one collection of `Wall` and `Column` model instances in `D
 
 `resources/js/app.js` constructs the editor and wires model changes to project state and rendering. `ProjectController` owns project lifecycle and operation locks; `ViewportController` coordinates resizing and the 2D/3D views; `ui/project-controls.js` connects project buttons and Ctrl/Cmd+S to shared actions. `EditorController` routes input events to wall drafting, selection, and navigation components. `SelectionTool` owns selection gestures and drag state, while `SelectionManager` owns hit testing and selected identity. `WallPreviewRenderer` draws temporary walls and hints, while the controller schedules redraws. `WallDrawingTool` owns pending wall state and commits through `DrawingEngine`, which owns the current element collection. Adding a wall uses `WallTopology.split()` to split connected reference edges; `WallTopology.rooms()` finds closed paths. The engine caches display footprints from `WallGeometry`: it starts with each wall's reference-edge footprint, resolves supported junctions, and rejects changes that produce invalid polygons. The original reference edges remain the source for dimensions and saved data. `GeometryService` provides the underlying calculations and tolerances. The 2D renderer and 3D viewer consume the same resolved footprints.
 
-Model changes must invalidate cached wall geometry and notify the 3D view. Use engine mutation methods rather than modifying its element array directly. In particular, `replaceElements()` clears the pending start point, invalidates the cache, notifies listeners, and redraws. The project load handler reconstructs model instances before calling it; saving serializes the current models as JSON. The Laravel request validates that JSON, and the project policy protects individual records. When changing the saved element shape, update both model reconstruction and server validation, and consider compatibility with existing projects.
+Model changes must invalidate cached wall geometry and notify the 3D view. Use engine mutation methods rather than modifying its element array directly. `replaceElements()` replaces the collection, invalidates cached wall geometry, and notifies listeners. The project load handler reconstructs model instances before calling it; saving serializes the current models as JSON. The Laravel request validates that JSON, and the project policy protects individual records. When changing the saved element shape, update both model reconstruction and server validation, and consider compatibility with existing projects.
 
 ### Project data and security
 
@@ -208,8 +211,8 @@ For a final handoff, rerun the tests and `npm run build` after any code changes.
 
 - Wall joining is a **limited prototype** supporting specific endpoint configurations; it is not a general-purpose solver for T-junctions, complex multi-wall intersections, or every drawing direction.
 - The 3D viewer extrudes the currently resolved 2D wall footprints; unsupported junction configurations remain unsupported in both views.
-- The application focuses on simple walls and columns and does not implement a full CAD/BIM feature set, such as doors, windows, parametric building components, or collaborative editing.
-- The current frontend does not offer a full revision history or conflict resolution for concurrent edits.
+- The application does not implement a full CAD/BIM feature set, such as parametric building components or collaborative editing.
+- Undo and redo are available during an editing session. The app does not provide a saved revision history or automatic conflict resolution for concurrent edits.
 
 ## Notes
 Wall lengths are measured along the wall's reference edge. The `thicknessSide` property determines which side of the directed reference edge contains the wall footprint; the editor chooses a side using nearby geometry.
