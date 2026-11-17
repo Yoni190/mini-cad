@@ -30,7 +30,7 @@ describe('doors', () => {
         engine.addDoor(wallId, 1000, 900, 2100);
 
         expect(engine.elements[0].openings).toEqual([
-            { offset: 1000, width: 900, height: 2100 },
+            { offset: 1000, width: 900, height: 2100, swingSide: 1 },
         ]);
 
         engine.undo();
@@ -38,7 +38,7 @@ describe('doors', () => {
 
         engine.redo();
         expect(engine.elements[0].openings).toEqual([
-            { offset: 1000, width: 900, height: 2100 },
+            { offset: 1000, width: 900, height: 2100, swingSide: 1 },
         ]);
     });
 
@@ -67,7 +67,7 @@ describe('doors', () => {
         engine.undo();
 
         expect(engine.elements[0].openings).toEqual([
-            { offset: 1000, width: 900, height: 2100 },
+            { offset: 1000, width: 900, height: 2100, swingSide: 1 },
         ]);
     });
 
@@ -87,7 +87,7 @@ describe('doors', () => {
 
         expect(pieceWithDoor.start).toEqual({ x: 2000, y: 0 });
         expect(pieceWithDoor.openings).toEqual([
-            { offset: 500, width: 900, height: 2100 },
+            { offset: 500, width: 900, height: 2100, swingSide: 1 },
         ]);
     });
 
