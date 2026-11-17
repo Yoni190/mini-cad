@@ -130,6 +130,13 @@ export default class ThreeViewer {
     createWallMesh(wall, corners = wall.getGeometry()) {
         const geometries = [];
         const floorGap = opening => Math.min(100, opening.height / 2);
+        const openingBottom = opening => opening.type === 'window'
+            ? opening.sillHeight
+            : floorGap(opening);
+
+        const openingTop = opening => opening.type === 'window'
+            ? opening.sillHeight + opening.height
+            : opening.height;
 
 
         const setGeometryColor = (geometry, colorValue) => {
@@ -179,8 +186,11 @@ export default class ThreeViewer {
             const section = clipWallSection(
                 wall, corners, opening.offset, opening.offset + opening.width
             );
-            addSection(section, 0, floorGap(opening));
-            addSection(section, opening.height, wall.height - opening.height);
+            const bottom = openingBottom(opening);
+            const top = openingTop(opening);
+
+            addSection(section, 0, bottom);
+            addSection(section, top, wall.height - top);
         }
 
         for (const geometry of geometries) {
@@ -201,26 +211,28 @@ export default class ThreeViewer {
 
             const closedAngle = Math.atan2(dy, dx);
             const doorThickness = 40; // mm
-            const gap = floorGap(opening);
-            const doorHeight = opening.height - gap;
-
+            const bottom = openingBottom(opening);
+            const panelHeight = openingTop(opening) - bottom;
 
             const door = new THREE.BoxGeometry(
                 opening.width / 1000,
                 doorThickness / 1000,
-                doorHeight / 1000
+                panelHeight / 1000
             ).toNonIndexed();
 
             door.translate(
                 opening.width / 2000,
                 0,
-                (gap + doorHeight / 2) / 1000
+                (bottom + panelHeight / 2) / 1000
             );
 
             door.rotateZ(-closedAngle);
             door.translate(hingeX / 1000, -hingeY / 1000, 0);
 
-            setGeometryColor(door, 0x8b5a2b);
+            setGeometryColor(
+                door,
+                opening.type === 'window' ? 0x8ab6cc : 0x8b5a2b
+            );
             geometries.push(door);
         }
 

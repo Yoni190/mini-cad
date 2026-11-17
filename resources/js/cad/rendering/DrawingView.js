@@ -37,7 +37,11 @@ export default class DrawingView {
                 }
 
                 for (const opening of element.openings) {
-                    this.renderer.drawDoor(element, opening, isSelected);
+                    if (opening.type === 'window') {
+                        this.renderer.drawWindow(element, opening, isSelected);
+                    } else {
+                        this.renderer.drawDoor(element, opening, isSelected);
+                    }
                 }
             } else {
                 this.renderer.drawElement(element, false, isSelected, corners);

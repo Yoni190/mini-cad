@@ -138,10 +138,17 @@ export default class EditorController {
             return;
         }
 
-        if (this.activeTool === 'door') {
+        if (this.activeTool === 'door' || this.activeTool === 'window') {
             const click = this.getMousePoint(event, false);
-            const width = Number(document.getElementById('doorWidth').value);
-            const height = Number(document.getElementById('doorHeight').value);
+            const isWindow = this.activeTool === 'window';
+
+            const width = Number(document.getElementById(
+                isWindow ? 'windowWidth' : 'doorWidth'
+            ).value);
+
+            const height = Number(document.getElementById(
+                isWindow ? 'windowHeight' : 'doorHeight'
+            ).value);
 
             let closestWall = null;
             let closestProjection = null;
@@ -166,11 +173,21 @@ export default class EditorController {
                 return;
             }
 
-            // Center the door on the clicked position.
             const offset = closestProjection.t * closestWall.getLength() - width / 2;
 
             try {
-                this.engine.addDoor(closestWall.id, offset, width, height);
+                if (isWindow) {
+                    const sillHeight = Number(
+                        document.getElementById('windowSillHeight').value
+                    );
+
+                    this.engine.addWindow(
+                        closestWall.id, offset, width, height, sillHeight
+                    );
+                } else {
+                    this.engine.addDoor(closestWall.id, offset, width, height);
+                }
+
                 this.view.render();
             } catch (error) {
                 alert(error.message);

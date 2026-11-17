@@ -49,6 +49,8 @@ class SaveProjectRequest extends FormRequest
             'elements.*.openings.*.offset' => ['required', 'numeric'],
             'elements.*.openings.*.width' => ['required', 'numeric'],
             'elements.*.openings.*.height' => ['required', 'numeric'],
+            'elements.*.openings.*.type' => ['sometimes', 'in:window'],
+            'elements.*.openings.*.sillHeight' => ['sometimes', 'numeric'],
 
             'elements.*.position' => ['sometimes', 'array'],
             'elements.*.position.x' => ['sometimes', 'numeric'],
@@ -173,7 +175,7 @@ class SaveProjectRequest extends FormRequest
 
                 $this->checkAllowedKeys(
                     $opening,
-                    ['offset', 'width', 'height'],
+                    ['offset', 'width', 'height', 'type', 'sillHeight'],
                     $openingPath,
                     $validator
                 );
@@ -181,11 +183,15 @@ class SaveProjectRequest extends FormRequest
                 $offset = $opening['offset'] ?? null;
                 $width = $opening['width'] ?? null;
                 $height = $opening['height'] ?? null;
+                $isWindow = ($opening['type'] ?? null) === 'window';
+                $sillHeight = $isWindow ? ($opening['sillHeight'] ?? null) : 0;
 
                 if (
                     !$this->isFiniteNumber($offset) ||
                     !$this->isFiniteNumber($width) ||
                     !$this->isFiniteNumber($height) ||
+                    !$this->isFiniteNumber($sillHeight) ||
+                    $sillHeight < 0 ||
                     $offset < 0 ||
                     $width <= 0 ||
                     $height <= 0
@@ -209,7 +215,7 @@ class SaveProjectRequest extends FormRequest
 
                 if (
                     $this->isFiniteNumber($wall['height'] ?? null) &&
-                    $height > $wall['height']
+                    $sillHeight + $height > $wall['height']
                 ) {
                     $validator->errors()->add(
                         "$openingPath.height",

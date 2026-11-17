@@ -54,6 +54,8 @@ export default class Wall extends DrawingElement {
 
         for (let i = 0; i < sortedOpenings.length; i++) {
             const opening = sortedOpenings[i];
+            const isWindow = opening?.type === 'window';
+            const sillHeight = isWindow ? opening.sillHeight : 0;
 
             if (
                 !opening ||
@@ -62,7 +64,10 @@ export default class Wall extends DrawingElement {
                 !Number.isFinite(opening.height) ||
                 opening.offset < 0 ||
                 opening.width <= 0 ||
-                opening.height <= 0 ||
+                (opening.type !== undefined && opening.type !== 'window') ||
+                !Number.isFinite(sillHeight) ||
+                sillHeight < 0 ||
+                sillHeight + opening.height > height ||
                 opening.offset + opening.width > wallLength ||
                 opening.height > height
             ) {

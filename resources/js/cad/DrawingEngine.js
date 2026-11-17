@@ -86,6 +86,20 @@ export default class DrawingEngine {
     }
 
     addDoor(wallId, offset, width, height) {
+        this.addOpening(wallId, { offset, width, height });
+    }
+
+    addWindow(wallId, offset, width, height, sillHeight) {
+        this.addOpening(wallId, {
+            type: 'window',
+            offset,
+            width,
+            height,
+            sillHeight,
+        });
+    }
+
+    addOpening(wallId, opening) {
         const wall = this.elements.find(
             element => element.type === 'wall' && element.id === wallId
         );
@@ -94,13 +108,9 @@ export default class DrawingEngine {
             throw new Error('Wall not found.');
         }
 
-        // Constructing a Wall checks that the new opening fits and does not overlap.
         const candidate = new Wall({
             ...wall,
-            openings: [
-                ...wall.openings,
-                { offset, width, height },
-            ],
+            openings: [...wall.openings, opening],
         });
 
         wall.openings = candidate.openings;
@@ -272,8 +282,14 @@ export default class DrawingEngine {
             throw new Error('Wall height must be a positive number.');
         }
         if (wall.height === height) return;
-        if (wall.openings.some(opening => opening.height > height)) {
-            throw new Error('Wall height cannot be less than a door height.');
+        if (wall.openings.some(opening => {
+            const sillHeight = opening.type === 'window'
+                ? opening.sillHeight
+                : 0;
+
+            return sillHeight + opening.height > height;
+        })) {
+            throw new Error('Wall height cannot be less than the top of an opening.');
         }
         wall.height = height;
         this.handleModelChange();

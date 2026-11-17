@@ -18,8 +18,10 @@ export default function initEditorControls(editor) {
         openings.forEach((opening, index) => {
             const option = document.createElement('option');
             option.value = String(index);
+            const name = opening.type === 'window' ? 'Window' : 'Door';
             option.textContent =
-                `Door ${index + 1}: ${Math.round(opening.offset)} mm from start`;
+                `${name} ${index + 1}: ${Math.round(opening.offset)} mm from start`;
+                
             wallDoors.appendChild(option);
         });
 

@@ -61,6 +61,35 @@ export default class CanvasRenderer {
         ctx.restore();
     }
 
+    drawWindow(wall, opening, isSelected = false) {
+        const length = wall.getLength();
+        const dx = (wall.end.x - wall.start.x) / length;
+        const dy = (wall.end.y - wall.start.y) / length;
+
+        const middle = wall.thickness * wall.thicknessSide / 2;
+
+        const start = this.worldToScreen(
+            wall.start.x + dx * opening.offset - dy * middle,
+            wall.start.y + dy * opening.offset + dx * middle
+        );
+
+        const end = this.worldToScreen(
+            wall.start.x + dx * (opening.offset + opening.width) - dy * middle,
+            wall.start.y + dy * (opening.offset + opening.width) + dx * middle
+        );
+
+        const ctx = this.ctx;
+
+        ctx.save();
+        ctx.strokeStyle = isSelected ? '#245ec7' : '#526374';
+        ctx.lineWidth = isSelected ? 2 : 1.25;
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+        ctx.restore();
+    }
+
     drawDoor(wall, opening, isSelected = false) {
         const length = wall.getLength();
 

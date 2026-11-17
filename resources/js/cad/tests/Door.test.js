@@ -103,7 +103,7 @@ describe('doors', () => {
         engine.addDoor(wallId, 1000, 900, 2100);
 
         expect(() => engine.updateWallHeight(wallId, 2000))
-            .toThrow('Wall height cannot be less than a door height.');
+            .toThrow('Wall height cannot be less than the top of an opening.');
 
         expect(engine.elements[0].height).toBe(3000);
     });
