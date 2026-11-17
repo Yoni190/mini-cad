@@ -15,6 +15,7 @@ function setup() {
         drawGrid: vi.fn(),
         isGeometryVisible: vi.fn(() => true),
         drawElement: vi.fn(),
+        drawWallCornerAngles: vi.fn(),
     };
     const previewRenderer = { clear: vi.fn() };
     const view = new DrawingView(engine, renderer, previewRenderer);

@@ -5,7 +5,7 @@ import Wall from '../models/Wall';
 function setup(snapped = false) {
     const renderer = { scale: 0.5, offsetX: 20, offsetY: -30 };
     const previewRenderer = Object.fromEntries([
-        'clear', 'drawElement', 'drawWallLength', 'drawWallGuides', 'drawSnapMarker',
+        'clear', 'drawElement', 'drawWallLength', 'drawWallAngle', 'drawWallGuides', 'drawSnapMarker',
     ].map(name => [name, vi.fn()]));
     const snapManager = { isOnWall: vi.fn(() => snapped) };
     const wall = new Wall({ start: { x: 0, y: 0 }, end: { x: 1000, y: 0 } });
@@ -33,6 +33,7 @@ describe('wall preview rendering', () => {
         wallPreview.render(wall, elements);
         expect(previewRenderer.drawElement).toHaveBeenCalledWith(wall, true);
         expect(previewRenderer.drawWallLength).toHaveBeenCalledWith(wall);
+        expect(previewRenderer.drawWallAngle).toHaveBeenCalledWith(wall, elements);
         expect(previewRenderer.drawWallGuides).toHaveBeenCalledWith(wall, elements);
         expect(previewRenderer.drawSnapMarker).not.toHaveBeenCalled();
     });
