@@ -331,7 +331,14 @@ export default class EditorController {
         if (!applySnap) return rawPoint;
 
         if (this.activeTool === 'wall') return this.wallTool.getSnappedPoint(rawPoint);
-        return this.snapManager.snap(rawPoint, this.engine.elements, 20 / this.renderer.scale, null);
+        const tolerance = 20 / this.renderer.scale;
+
+        return this.snapManager.snap(
+            rawPoint,
+            this.engine.findWallsNear(rawPoint, tolerance),
+            tolerance,
+            null
+        );
     }
 
     cancelWallDrawing() {
