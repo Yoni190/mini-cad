@@ -6,9 +6,30 @@ use Illuminate\Http\Request;
 use App\Http\Requests\SaveProjectRequest;
 use App\Models\Project;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
+    public function uploadBlueprint(Request $request, Project $project)
+    {
+        Gate::authorize('update', $project);
+        $request->validate(['blueprint' => ['required', 'image', 'max:20480']]);
+        $path = $request->file('blueprint')->store('blueprints', 'local');
+        if (!$path) {
+            return response()->json(['message' => 'Could not store the blueprint.'], 500);
+        }
+        $project->blueprint_path = $path;
+        $project->save();
+
+        return response()->json(['url' => '/projects/' . $project->id . '/blueprint']);
+    }
+
+    public function blueprint(Project $project)
+    {
+        Gate::authorize('view', $project);
+        abort_unless($project->blueprint_path && Storage::disk('local')->exists($project->blueprint_path), 404);
+        return Storage::disk('local')->response($project->blueprint_path, null, ['Cache-Control' => 'no-store']);
+    }
     public function store(SaveProjectRequest $request)
     {
         $validated = $request->validated();
