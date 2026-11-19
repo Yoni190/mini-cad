@@ -33,4 +33,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
     Route::put('/projects/{project}', [ProjectController::class, 'update']);
+    Route::post('/projects/{project}/blueprint', [ProjectController::class, 'uploadBlueprint']);
+    Route::get('/projects/{project}/blueprint', [ProjectController::class, 'blueprint']);
 });
