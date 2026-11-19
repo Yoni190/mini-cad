@@ -72,6 +72,65 @@ if (canvas && twoContainer && threeContainer) {
 
     viewport.init();
     initProjectControls(projects, controls);
+    const blueprintFile = document.getElementById('blueprintFile');
+    let blueprintLoad = 0;
+    projects.onBlueprintChange = url => {
+        const load = ++blueprintLoad;
+        view.blueprint = null;
+        editor.scheduleCanvasRender();
+        if (!url) return;
+        const image = new Image();
+        image.onload = () => {
+            if (load !== blueprintLoad) return;
+            view.blueprint = image;
+            editor.scheduleCanvasRender();
+        };
+        image.onerror = () => {
+            if (load === blueprintLoad) controls.status.textContent = 'Could not load the blueprint image.';
+        };
+        image.src = `${url}?t=${Date.now()}`;
+    };
+    document.getElementById('uploadBlueprint').addEventListener('click', event => {
+        event.currentTarget.closest('details').open = false;
+        blueprintFile.click();
+    });
+    blueprintFile.addEventListener('change', async () => {
+        const file = blueprintFile.files[0];
+        blueprintFile.value = '';
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            controls.status.textContent = 'Please select an image. PDF display is not available yet.';
+            return;
+        }
+        if (projects.isGuest) {
+            controls.status.textContent = 'Sign in to upload a blueprint.';
+            return;
+        }
+        if (projects.isBusy || projects.isSaving) {
+            controls.status.textContent = 'Please wait for the current project operation to finish.';
+            return;
+        }
+        if (!projects.currentProjectId) await projects.save();
+        if (!projects.currentProjectId) return;
+        projects.setBusy(true);
+        try {
+            const data = new FormData();
+            data.append('blueprint', file);
+            const response = await fetch(`/projects/${projects.currentProjectId}/blueprint`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': projects.projectService.csrfToken },
+                body: data,
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Upload failed.');
+            projects.onBlueprintChange(result.url);
+            controls.status.textContent = 'Blueprint uploaded.';
+        } catch (error) {
+            controls.status.textContent = `Blueprint upload failed: ${error.message}`;
+        } finally {
+            projects.setBusy(false);
+        }
+    });
     document.getElementById('show3D').addEventListener('click', () => viewport.show3D());
     document.getElementById('showSplit').addEventListener('click', () => {
         viewport.showSplit();
