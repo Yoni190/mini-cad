@@ -20,6 +20,14 @@ export default class DrawingView {
 
         this.renderer.drawGrid();
 
+        if (this.blueprint) {
+            const origin = this.renderer.worldToScreen(0, 0);
+            const fit = Math.min(1000 / this.blueprint.width, 600 / this.blueprint.height);
+            const scale = this.renderer.scale / 0.1;
+            this.renderer.ctx.drawImage(this.blueprint, origin.x, origin.y,
+                this.blueprint.width * fit * scale, this.blueprint.height * fit * scale);
+        }
+
         for (const element of this.engine.elements) {
             const isSelected = selectedIds.has(element.id);
 

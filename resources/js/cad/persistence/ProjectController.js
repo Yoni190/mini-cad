@@ -53,6 +53,7 @@ export default class ProjectController {
             this.engine.resetHistory();
             this.currentProjectId = project.id;
             this.currentProjectVersion = project.version;
+            this.onBlueprintChange?.(project.blueprint_path ? `/projects/${project.id}/blueprint` : null);
             this.controls.name.value = project.name;
             this.setUnsavedChanges(false);
             this.controls.status.textContent = `Project "${project.name}" loaded.`;
@@ -136,6 +137,7 @@ export default class ProjectController {
         this.engine.resetHistory();
         this.currentProjectId = null;
         this.currentProjectVersion = null;
+        this.onBlueprintChange?.(null);
         window.history.replaceState(null, '', '/editor');
         this.controls.name.value = 'Untitled Project';
         this.setUnsavedChanges(false);
