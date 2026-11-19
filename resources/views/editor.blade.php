@@ -88,6 +88,7 @@
                 <option value="window">Window</option>
                 <option value="column">Column</option>
                 <option value="select">Select</option>
+                <option value="pan">Pan</option>
                 <option value="measure">Measure</option>
             </select>
             <div class="tool-group" role="group" aria-label="Draw">
@@ -119,6 +120,11 @@
                     <x-icons.select />
                     <span>Select</span>
                     <span class="tool-tooltip" aria-hidden="true">Select / move <kbd>S</kbd></span>
+                </button>
+                <button type="button" class="tool-button" data-tool="pan" aria-pressed="false" aria-keyshortcuts="H">
+                    <x-icons.hand />
+                    <span>Pan</span>
+                    <span class="tool-tooltip" aria-hidden="true">Pan <kbd>H</kbd></span>
                 </button>
             </div>
             <button type="button"
