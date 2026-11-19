@@ -62,6 +62,8 @@
             </summary>
             <div class="file-menu-items">
                 <button type="button" id="newProject">New Project</button>
+                <button type="button" id="uploadBlueprint">Upload Blueprint</button>
+                <input type="file" id="blueprintFile" accept="image/*,application/pdf,.pdf" hidden>
             </div>
         </details>
         <a href="#drawing-workspace" aria-current="page">Home</a>
@@ -235,7 +237,7 @@
         </aside>
     </div>
     @isset($project)
-        @php($initialProject = $project->only(['id', 'name', 'elements', 'version']))
+        @php($initialProject = $project->only(['id', 'name', 'elements', 'version', 'blueprint_path']))
         <script id="initialProject" type="application/json">@json($initialProject)</script>
     @endisset
 </body>
