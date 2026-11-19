@@ -42,7 +42,7 @@ describe('pending wall input', () => {
         const getPoint = vi.spyOn(controller, 'getMousePoint');
 
         controller.handleClick({ button: 0, point: { x: 100, y: 200 } });
-        controller.handleClick({ button: 0, point: { x: 600, y: 200 } });
+        controller.handleClick({ button: 0, point: { x: 600, y: 240 } });
         expect(getPoint).toHaveBeenLastCalledWith(expect.anything(), false);
         expect(controller.measureDone).toBe(true);
         expect(controller.onCalibrationPoints).toHaveBeenLastCalledWith(
@@ -51,6 +51,21 @@ describe('pending wall input', () => {
 
         controller.handleClick({ button: 0, point: { x: 1100, y: 200 } });
         expect(controller.onCalibrationPoints).toHaveBeenLastCalledWith(null, null, 'Select a point on the blueprint.');
+    });
+
+    it('locks the calibration preview and endpoint to the dominant axis', () => {
+        const { controller } = setup();
+        controller.activeTool = 'calibrate';
+        controller.view.blueprint = { width: 100, height: 100 };
+        controller.view.blueprintScale = 10;
+        controller.renderMeasurement = vi.fn();
+        controller.scheduleWallPreview = vi.fn();
+        controller.handleClick({ button: 0, point: { x: 100, y: 200 } });
+
+        controller.handleMouseMove({ point: { x: 130, y: 700 } });
+        expect(controller.measureEnd).toEqual({ x: 100, y: 700 });
+        controller.handleClick({ button: 0, point: { x: 130, y: 700 } });
+        expect(controller.measureEnd).toEqual({ x: 100, y: 700 });
     });
 
     it('keeps the first click in the controller until a wall is committed', () => {

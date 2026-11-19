@@ -167,7 +167,7 @@ export default class EditorController {
                 this.measureEnd = point;
                 this.measureDone = false;
             } else {
-                this.measureEnd = point;
+                this.measureEnd = this.constrainCalibrationPoint(point);
                 this.measureDone = true;
             }
             this.onCalibrationPoints?.(this.measureStart, this.measureDone ? this.measureEnd : null);
@@ -308,7 +308,9 @@ export default class EditorController {
 
         if (this.activeTool === 'measure' || this.activeTool === 'calibrate') {
             if (this.measureStart && !this.measureDone) {
-                this.measureEnd = this.getMousePoint(event, this.activeTool === 'measure');
+                const point = this.getMousePoint(event, this.activeTool === 'measure');
+                this.measureEnd = this.activeTool === 'calibrate'
+                    ? this.constrainCalibrationPoint(point) : point;
                 this.scheduleWallPreview();
             }
             return;
@@ -641,8 +643,14 @@ export default class EditorController {
     renderMeasurement() {
         this.wallPreviewRenderer.renderMeasurement(
             this.measureStart,
-            this.measureEnd,
-            this.activeTool !== 'calibrate'
+            this.measureEnd
         );
+    }
+
+    constrainCalibrationPoint(point) {
+        const start = this.measureStart;
+        return Math.abs(point.x - start.x) >= Math.abs(point.y - start.y)
+            ? { x: point.x, y: start.y }
+            : { x: start.x, y: point.y };
     }
 }

@@ -173,7 +173,7 @@
             <h2 class="panel-label">Properties</h2>
             <section class="property-section" id="calibrationProperties" hidden>
                 <h3>Calibrate blueprint</h3>
-                <p class="field-help">Click the two ends of a known distance on the blueprint, then enter its length.</p>
+                <p class="field-help">Click the two ends of a horizontal or vertical known distance, then enter its length. The displayed length uses the current image scale.</p>
                 <label for="calibrationLength">Known length (mm)</label>
                 <input type="number" id="calibrationLength" min="0.001" step="any" inputmode="decimal">
                 <button type="button" id="applyCalibration">Set scale</button>
