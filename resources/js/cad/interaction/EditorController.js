@@ -81,7 +81,7 @@ export default class EditorController {
         });
 
         window.addEventListener('mousemove', event => {
-            if (event.target !== this.canvas && this.selectionTool.box) this.handleMouseMove(event);
+            if (event.target !== this.canvas && (this.selectionTool.box || this.navigation.isPanning)) this.handleMouseMove(event);
         });
         window.addEventListener('mouseup', event => {
             this.handleMouseUp(event);
@@ -147,6 +147,7 @@ export default class EditorController {
      */
     handleClick(event) {
         if (this.isEditingLocked) return;
+        if (this.activeTool === 'pan') return;
         if (this.selectionTool.consumeNextClick()) return;
 
         if (event.button !== 0) {
@@ -299,7 +300,7 @@ export default class EditorController {
 
     handleMouseDown(event) {
         if (this.isEditingLocked) return;
-        if (event.button === 1) {
+        if (event.button === 1 || (event.button === 0 && this.activeTool === 'pan')) {
             this.navigation.startPan(event);
             return;
         }
