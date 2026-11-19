@@ -153,6 +153,27 @@ export default class EditorController {
         if (event.button !== 0) {
             return;
         }
+
+        if (this.activeTool === 'calibrate') {
+            const point = this.getMousePoint(event, false);
+            const image = this.view.blueprint;
+            const scale = this.view.blueprintScale ?? (image && Math.min(1000 / image.width, 600 / image.height) / 0.1);
+            if (!image || point.x < 0 || point.y < 0 || point.x > image.width * scale || point.y > image.height * scale) {
+                this.onCalibrationPoints?.(null, null, 'Select a point on the blueprint.');
+                return;
+            }
+            if (!this.measureStart || this.measureDone) {
+                this.measureStart = point;
+                this.measureEnd = point;
+                this.measureDone = false;
+            } else {
+                this.measureEnd = point;
+                this.measureDone = true;
+            }
+            this.onCalibrationPoints?.(this.measureStart, this.measureDone ? this.measureEnd : null);
+            this.renderMeasurement();
+            return;
+        }
         
         let point = this.getMousePoint(
             event,
@@ -285,9 +306,9 @@ export default class EditorController {
             return;
         }
 
-        if (this.activeTool === 'measure') {
+        if (this.activeTool === 'measure' || this.activeTool === 'calibrate') {
             if (this.measureStart && !this.measureDone) {
-                this.measureEnd = this.getMousePoint(event);
+                this.measureEnd = this.getMousePoint(event, this.activeTool === 'measure');
                 this.scheduleWallPreview();
             }
             return;
@@ -465,6 +486,7 @@ export default class EditorController {
         this.measureStart = null;
         this.measureEnd = null;
         this.measureDone = false;
+        this.onCalibrationPoints?.(null, null);
         this.wallPreviewRenderer.clear();
     }
 
@@ -510,7 +532,7 @@ export default class EditorController {
                 document.getElementById('twoContainer').style.display === 'none'
             ) return;
 
-            if (this.activeTool === 'measure') {
+            if (this.activeTool === 'measure' || this.activeTool === 'calibrate') {
                 this.renderMeasurement();
                 return;
             }
@@ -549,7 +571,7 @@ export default class EditorController {
 
             if (
                 !this.isEditingLocked &&
-                this.activeTool === 'measure' &&
+                (this.activeTool === 'measure' || this.activeTool === 'calibrate') &&
                 document.getElementById('twoContainer').style.display !== 'none'
             ) {
                 this.renderMeasurement();
@@ -619,7 +641,8 @@ export default class EditorController {
     renderMeasurement() {
         this.wallPreviewRenderer.renderMeasurement(
             this.measureStart,
-            this.measureEnd
+            this.measureEnd,
+            this.activeTool !== 'calibrate'
         );
     }
 }

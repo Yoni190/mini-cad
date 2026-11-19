@@ -53,7 +53,8 @@ export default class ProjectController {
             this.engine.resetHistory();
             this.currentProjectId = project.id;
             this.currentProjectVersion = project.version;
-            this.onBlueprintChange?.(project.blueprint_path ? `/projects/${project.id}/blueprint` : null);
+            this.onBlueprintChange?.(project.blueprint_path ? `/projects/${project.id}/blueprint` : null,
+                project.blueprint_path, project.blueprint_scale);
             this.controls.name.value = project.name;
             this.setUnsavedChanges(false);
             this.controls.status.textContent = `Project "${project.name}" loaded.`;

@@ -18,10 +18,28 @@ class ProjectController extends Controller
         if (!$path) {
             return response()->json(['message' => 'Could not store the blueprint.'], 500);
         }
-        $project->blueprint_path = $path;
-        $project->save();
+        Project::whereKey($project->id)->update([
+            'blueprint_path' => $path,
+            'blueprint_scale' => null,
+        ]);
 
-        return response()->json(['url' => '/projects/' . $project->id . '/blueprint']);
+        return response()->json(['url' => '/projects/' . $project->id . '/blueprint', 'path' => $path]);
+    }
+
+    public function calibrateBlueprint(Request $request, Project $project)
+    {
+        Gate::authorize('update', $project);
+        $data = $request->validate([
+            'path' => ['required', 'string'],
+            'scale' => ['required', 'numeric', 'gt:0', 'lte:1000000000'],
+        ]);
+        $updated = Project::whereKey($project->id)
+            ->where('blueprint_path', $data['path'])
+            ->update(['blueprint_scale' => $data['scale']]);
+        if (!$updated) {
+            return response()->json(['message' => 'The blueprint changed. Reload the project and try again.'], 409);
+        }
+        return response()->json(['scale' => (float) $data['scale']]);
     }
 
     public function blueprint(Project $project)

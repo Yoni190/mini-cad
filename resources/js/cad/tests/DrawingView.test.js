@@ -81,6 +81,22 @@ describe('DrawingView', () => {
         expect(renderer.drawGrid).toHaveBeenCalledTimes(1);
         expect(renderer.drawElement).not.toHaveBeenCalled();
     });
+
+    it('draws the blueprint at its saved millimeters per pixel across zoom levels', () => {
+        const { renderer, view } = setup();
+        renderer.worldToScreen = vi.fn(() => ({ x: 25, y: 30 }));
+        renderer.ctx = { drawImage: vi.fn() };
+        renderer.scale = 0.2;
+        view.blueprint = { width: 800, height: 400 };
+        view.blueprintScale = 5;
+
+        view.render();
+
+        expect(renderer.ctx.drawImage).toHaveBeenCalledWith(view.blueprint, 25, 30, 800, 400);
+        renderer.scale = 0.1;
+        view.render();
+        expect(renderer.ctx.drawImage).toHaveBeenLastCalledWith(view.blueprint, 25, 30, 400, 200);
+    });
 });
 
 describe('scheduled redraws after model changes', () => {

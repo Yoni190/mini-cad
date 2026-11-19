@@ -11,6 +11,7 @@ export default function initEditorUI() {
         select: 'Select: Click an element, or double-click and hold to draw a selection box. Ctrl+A selects all; drag to move; Delete to remove.',
         pan: 'Pan: Left-drag to move around the drawing.',
         measure: 'Measure: Click two points to measure distance. Esc clears the ruler.',
+        calibrate: 'Calibrate: Click the two ends of a known distance on the blueprint.',
         door: 'Door: Choose a width and height, then click a wall.',
         window: 'Window: Choose dimensions, then click a wall.',
     };
@@ -66,6 +67,7 @@ export default function initEditorUI() {
             button.disabled = toolSelect.disabled;
         });
         document.getElementById('wallProperties').hidden = tool !== 'wall';
+        document.getElementById('calibrationProperties').hidden = tool !== 'calibrate';
         document.getElementById('doorProperties').hidden = tool !== 'door';
         document.getElementById('windowProperties').hidden = tool !== 'window';
         document.getElementById('columnProperties').hidden =

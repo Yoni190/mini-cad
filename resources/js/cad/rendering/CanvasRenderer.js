@@ -392,7 +392,7 @@ export default class CanvasRenderer {
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    drawMeasurement(start, end) {
+    drawMeasurement(start, end, showLength = true) {
         const ctx = this.ctx;
         const a = this.worldToScreen(start.x, start.y);
         const b = this.worldToScreen(end.x, end.y);
@@ -422,6 +422,11 @@ export default class CanvasRenderer {
             ctx.beginPath();
             ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        if (!showLength) {
+            ctx.restore();
+            return;
         }
 
         // Measurement label

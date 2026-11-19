@@ -73,16 +73,38 @@ if (canvas && twoContainer && threeContainer) {
     viewport.init();
     initProjectControls(projects, controls);
     const blueprintFile = document.getElementById('blueprintFile');
+    const calibrationTool = document.getElementById('calibrateTool');
+    const calibrationStatus = document.getElementById('calibrationStatus');
+    const calibrationLength = document.getElementById('calibrationLength');
+    const toolSelect = document.getElementById('drawingTool');
     let blueprintLoad = 0;
-    projects.onBlueprintChange = url => {
+    let blueprintPath = null;
+    editor.onCalibrationPoints = (start, end, message) => {
+        calibrationStatus.textContent = message || (end
+            ? 'Enter the known length and select Set scale.'
+            : start ? 'Select the other end of the known distance.' : 'Select the first point.');
+    };
+    projects.onBlueprintChange = (url, path = null, scale = null, calibrate = false) => {
         const load = ++blueprintLoad;
+        blueprintPath = path;
         view.blueprint = null;
+        view.blueprintScale = scale == null ? null : Number(scale);
+        calibrationTool.hidden = true;
+        if (toolSelect.value === 'calibrate') {
+            toolSelect.value = 'wall';
+            toolSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
         editor.scheduleCanvasRender();
         if (!url) return;
         const image = new Image();
         image.onload = () => {
             if (load !== blueprintLoad) return;
             view.blueprint = image;
+            calibrationTool.hidden = false;
+            if (calibrate) {
+                toolSelect.value = 'calibrate';
+                toolSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            }
             editor.scheduleCanvasRender();
         };
         image.onerror = () => {
@@ -123,10 +145,56 @@ if (canvas && twoContainer && threeContainer) {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Upload failed.');
-            projects.onBlueprintChange(result.url);
+            projects.onBlueprintChange(result.url, result.path, null, true);
             controls.status.textContent = 'Blueprint uploaded.';
         } catch (error) {
             controls.status.textContent = `Blueprint upload failed: ${error.message}`;
+        } finally {
+            projects.setBusy(false);
+        }
+    });
+    document.getElementById('applyCalibration').addEventListener('click', async () => {
+        const start = editor.measureStart;
+        const end = editor.measureDone && editor.measureEnd;
+        const length = Number(calibrationLength.value);
+        const distance = start && end ? Math.hypot(end.x - start.x, end.y - start.y) : 0;
+        if (!distance) {
+            calibrationStatus.textContent = 'Select two different points on the blueprint.';
+            return;
+        }
+        if (!Number.isFinite(length) || length <= 0) {
+            calibrationStatus.textContent = 'Enter a positive length in millimeters.';
+            return;
+        }
+        const image = view.blueprint;
+        const currentScale = view.blueprintScale ?? Math.min(1000 / image.width, 600 / image.height) / 0.1;
+        const scale = currentScale * length / distance;
+        if (!Number.isFinite(scale) || scale <= 0 || scale > 1000000000) {
+            calibrationStatus.textContent = 'The resulting scale is outside the supported range.';
+            return;
+        }
+        if (projects.isBusy || projects.isSaving) {
+            calibrationStatus.textContent = 'Wait for the current project operation to finish.';
+            return;
+        }
+        projects.setBusy(true);
+        try {
+            const response = await fetch(`/projects/${projects.currentProjectId}/blueprint/scale`, {
+                method: 'PUT',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': projects.projectService.csrfToken,
+                },
+                body: JSON.stringify({ path: blueprintPath, scale }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Could not save the scale.');
+            view.blueprintScale = result.scale;
+            editor.scheduleCanvasRender();
+            calibrationStatus.textContent = 'Blueprint scale saved.';
+        } catch (error) {
+            calibrationStatus.textContent = `Calibration failed: ${error.message}`;
         } finally {
             projects.setBusy(false);
         }

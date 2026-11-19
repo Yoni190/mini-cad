@@ -32,6 +32,27 @@ describe('pending wall input', () => {
         expect(alert).toHaveBeenCalledWith('Element limit reached');
     });
 
+    it('captures calibration points without snapping and rejects points outside the image', () => {
+        const { controller } = setup();
+        controller.activeTool = 'calibrate';
+        controller.view.blueprint = { width: 100, height: 100 };
+        controller.view.blueprintScale = 10;
+        controller.renderMeasurement = vi.fn();
+        controller.onCalibrationPoints = vi.fn();
+        const getPoint = vi.spyOn(controller, 'getMousePoint');
+
+        controller.handleClick({ button: 0, point: { x: 100, y: 200 } });
+        controller.handleClick({ button: 0, point: { x: 600, y: 200 } });
+        expect(getPoint).toHaveBeenLastCalledWith(expect.anything(), false);
+        expect(controller.measureDone).toBe(true);
+        expect(controller.onCalibrationPoints).toHaveBeenLastCalledWith(
+            { x: 100, y: 200 }, { x: 600, y: 200 }
+        );
+
+        controller.handleClick({ button: 0, point: { x: 1100, y: 200 } });
+        expect(controller.onCalibrationPoints).toHaveBeenLastCalledWith(null, null, 'Select a point on the blueprint.');
+    });
+
     it('keeps the first click in the controller until a wall is committed', () => {
         const { controller, engine } = setup();
         const point = { x: 1000, y: 2000 };

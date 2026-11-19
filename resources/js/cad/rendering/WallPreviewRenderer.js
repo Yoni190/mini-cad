@@ -45,11 +45,11 @@ export default class WallPreviewRenderer {
         }
     }
 
-    renderMeasurement(start, end) {
+    renderMeasurement(start, end, showLength = true) {
         this.prepareFrame();
 
         if (start && end) {
-            this.previewRenderer.drawMeasurement(start, end);
+            this.previewRenderer.drawMeasurement(start, end, showLength);
         }
     }
 }

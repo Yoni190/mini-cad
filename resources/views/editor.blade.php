@@ -90,6 +90,7 @@
                 <option value="select">Select</option>
                 <option value="pan">Pan</option>
                 <option value="measure">Measure</option>
+                <option value="calibrate">Calibrate blueprint</option>
             </select>
             <div class="tool-group" role="group" aria-label="Draw">
                 <p class="group-label">Draw</p>
@@ -140,6 +141,11 @@
                     Measure distance <kbd>M</kbd>
                 </span>
             </button>
+            <button type="button" id="calibrateTool" class="tool-button" data-tool="calibrate" aria-pressed="false" hidden>
+                <x-icons.measure />
+                <span>Calibrate</span>
+                <span class="tool-tooltip" aria-hidden="true">Calibrate blueprint</span>
+            </button>
             <p class="tool-note">Dimensions in mm</p>
         </aside>
 
@@ -165,6 +171,14 @@
 
         <aside class="properties-panel" aria-label="Tool properties">
             <h2 class="panel-label">Properties</h2>
+            <section class="property-section" id="calibrationProperties" hidden>
+                <h3>Calibrate blueprint</h3>
+                <p class="field-help">Click the two ends of a known distance on the blueprint, then enter its length.</p>
+                <label for="calibrationLength">Known length (mm)</label>
+                <input type="number" id="calibrationLength" min="0.001" step="any" inputmode="decimal">
+                <button type="button" id="applyCalibration">Set scale</button>
+                <p class="field-help" id="calibrationStatus" role="status" aria-live="polite"></p>
+            </section>
             <section class="property-section" id="doorProperties" hidden>
                 <h3>New door</h3>
 
@@ -243,7 +257,7 @@
         </aside>
     </div>
     @isset($project)
-        @php($initialProject = $project->only(['id', 'name', 'elements', 'version', 'blueprint_path']))
+        @php($initialProject = $project->only(['id', 'name', 'elements', 'version', 'blueprint_path', 'blueprint_scale']))
         <script id="initialProject" type="application/json">@json($initialProject)</script>
     @endisset
 </body>

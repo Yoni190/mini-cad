@@ -35,4 +35,5 @@ Route::middleware('auth')->group(function () {
     Route::put('/projects/{project}', [ProjectController::class, 'update']);
     Route::post('/projects/{project}/blueprint', [ProjectController::class, 'uploadBlueprint']);
     Route::get('/projects/{project}/blueprint', [ProjectController::class, 'blueprint']);
+    Route::put('/projects/{project}/blueprint/scale', [ProjectController::class, 'calibrateBlueprint']);
 });

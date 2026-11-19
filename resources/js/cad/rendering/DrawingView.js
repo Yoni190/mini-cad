@@ -22,10 +22,11 @@ export default class DrawingView {
 
         if (this.blueprint) {
             const origin = this.renderer.worldToScreen(0, 0);
-            const fit = Math.min(1000 / this.blueprint.width, 600 / this.blueprint.height);
-            const scale = this.renderer.scale / 0.1;
+            const millimetersPerPixel = this.blueprintScale ??
+                Math.min(1000 / this.blueprint.width, 600 / this.blueprint.height) / 0.1;
+            const scale = this.renderer.scale * millimetersPerPixel;
             this.renderer.ctx.drawImage(this.blueprint, origin.x, origin.y,
-                this.blueprint.width * fit * scale, this.blueprint.height * fit * scale);
+                this.blueprint.width * scale, this.blueprint.height * scale);
         }
 
         for (const element of this.engine.elements) {
