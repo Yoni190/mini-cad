@@ -97,6 +97,19 @@ describe('DrawingView', () => {
         view.render();
         expect(renderer.ctx.drawImage).toHaveBeenLastCalledWith(view.blueprint, 25, 30, 400, 200);
     });
+
+    it.each([null, 5])('centers the blueprint in the viewport with saved scale %s', savedScale => {
+        const { renderer, view } = setup();
+        renderer.canvas = { width: 1200, height: 600 };
+        renderer.scale = 0.1;
+        view.blueprint = { width: 800, height: 400 };
+        view.blueprintScale = savedScale;
+
+        view.centerBlueprint();
+
+        expect(renderer.offsetX).toBe(savedScale === null ? 100 : 400);
+        expect(renderer.offsetY).toBe(savedScale === null ? 50 : 200);
+    });
 });
 
 describe('scheduled redraws after model changes', () => {

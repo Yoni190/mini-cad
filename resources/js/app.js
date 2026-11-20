@@ -100,6 +100,7 @@ if (canvas && twoContainer && threeContainer) {
         image.onload = () => {
             if (load !== blueprintLoad) return;
             view.blueprint = image;
+            view.centerBlueprint();
             calibrationTool.hidden = false;
             if (calibrate) {
                 toolSelect.value = 'calibrate';
@@ -166,8 +167,7 @@ if (canvas && twoContainer && threeContainer) {
             calibrationStatus.textContent = 'Enter a positive length in millimeters.';
             return;
         }
-        const image = view.blueprint;
-        const currentScale = view.blueprintScale ?? Math.min(1000 / image.width, 600 / image.height) / 0.1;
+        const currentScale = view.blueprintMillimetersPerPixel;
         const scale = currentScale * length / distance;
         if (!Number.isFinite(scale) || scale <= 0 || scale > 1000000000) {
             calibrationStatus.textContent = 'The resulting scale is outside the supported range.';

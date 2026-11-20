@@ -8,6 +8,18 @@ export default class DrawingView {
         this.previewRenderer = previewRenderer;
     }
 
+    get blueprintMillimetersPerPixel() {
+        return this.blueprintScale ??
+            Math.min(1000 / this.blueprint.width, 600 / this.blueprint.height) / 0.1;
+    }
+
+    centerBlueprint() {
+        const { canvas, scale } = this.renderer;
+        const pixelsPerImagePixel = scale * this.blueprintMillimetersPerPixel;
+        this.renderer.offsetX = (canvas.width - this.blueprint.width * pixelsPerImagePixel) / 2;
+        this.renderer.offsetY = (canvas.height - this.blueprint.height * pixelsPerImagePixel) / 2;
+    }
+
     /**
      * Redraws stored elements using their resolved display geometry.
      *
@@ -22,9 +34,7 @@ export default class DrawingView {
 
         if (this.blueprint) {
             const origin = this.renderer.worldToScreen(0, 0);
-            const millimetersPerPixel = this.blueprintScale ??
-                Math.min(1000 / this.blueprint.width, 600 / this.blueprint.height) / 0.1;
-            const scale = this.renderer.scale * millimetersPerPixel;
+            const scale = this.renderer.scale * this.blueprintMillimetersPerPixel;
             this.renderer.ctx.drawImage(this.blueprint, origin.x, origin.y,
                 this.blueprint.width * scale, this.blueprint.height * scale);
         }
