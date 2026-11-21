@@ -71,6 +71,8 @@ export default function initEditorUI(view) {
             tool !== 'wall' && tool !== 'smart-tracing';
 
         document.getElementById('manualWallControls').hidden = tool !== 'wall';
+        document.getElementById('tracingWallControls').hidden =
+            tool !== 'smart-tracing';
         document.getElementById('calibrationProperties').hidden = tool !== 'calibrate';
         document.getElementById('doorProperties').hidden = tool !== 'door';
         document.getElementById('windowProperties').hidden = tool !== 'window';

@@ -213,6 +213,14 @@
                 <h3>New wall</h3>
                 <label for="newWallThickness">Thickness (mm)</label>
                 <input type="number" id="newWallThickness" min="0.001" step="any" value="200" required>
+                <div id="tracingWallControls" hidden>
+                    <label for="tracingThicknessSide">Thickness direction</label>
+                    <select id="tracingThicknessSide">
+                        <option value="auto">Automatic</option>
+                        <option value="opposite">Opposite</option>
+                    </select>
+                    <p class="field-help">Move the pointer over the blueprint to preview the chosen direction.</p>
+                </div>
                 <div id="manualWallControls">
                     <p class="field-help" id="wallLengthHelp">Click a start point and move the mouse to set a direction. Enter a length to create the wall.</p>
                     <button
