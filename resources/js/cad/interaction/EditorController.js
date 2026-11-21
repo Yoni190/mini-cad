@@ -166,7 +166,7 @@ export default class EditorController {
                 this.wallPreviewRenderer.clear();
                 return;
             }
-            
+
             const candidate = this.renderTracingPreview(event);
 
             if (!candidate) return;
@@ -347,15 +347,31 @@ export default class EditorController {
 
         if (!line) return;
 
-        const start = {
+        const detectedStart = {
             x: (line.start.x + 0.5) * scale,
             y: (line.start.y + 0.5) * scale,
         };
 
-        const end = {
+        const detectedEnd = {
             x: (line.end.x + 0.5) * scale,
             y: (line.end.y + 0.5) * scale,
         };
+
+        const tolerance = 20 / this.renderer.scale;
+
+        const start = this.snapManager.snap(
+            detectedStart,
+            this.engine.findWallsNear(detectedStart, tolerance),
+            tolerance
+        );
+
+        const end = this.snapManager.snap(
+            detectedEnd,
+            this.engine.findWallsNear(detectedEnd, tolerance),
+            tolerance
+        );
+
+        if (start.x === end.x && start.y === end.y) return;
 
         const thickness = this.wallInputs.getThickness();
 
