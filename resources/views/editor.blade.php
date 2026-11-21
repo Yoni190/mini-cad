@@ -91,6 +91,7 @@
                 <option value="pan">Pan</option>
                 <option value="measure">Measure</option>
                 <option value="calibrate">Calibrate blueprint</option>
+                <option value="smart-tracing">Smart Tracing</option>
             </select>
             <div class="tool-group" role="group" aria-label="Draw">
                 <p class="group-label">Draw</p>
@@ -145,6 +146,10 @@
                 <x-icons.measure />
                 <span>Calibrate</span>
                 <span class="tool-tooltip" aria-hidden="true">Calibrate blueprint</span>
+            </button>
+            <button type="button" class="tool-button" data-tool="smart-tracing" aria-pressed="false">
+                <span>Smart Tracing</span>
+                <span class="tool-tooltip" aria-hidden="true">Trace walls from a calibrated blueprint</span>
             </button>
             <p class="tool-note">Dimensions in mm</p>
         </aside>
