@@ -3,6 +3,7 @@ import SelectionTool from './tools/SelectionTool';
 import CanvasNavigation from './CanvasNavigation';
 import WallTopology from '../geometry/WallTopology';
 import Wall from '../models/Wall';
+import findBlueprintLine from '../geometry/findBlueprintLine';
 
 export default class EditorController {
     constructor(canvas, engine, renderer, snapManager, selectionManager, view, wallInputs, wallPreviewRenderer) {
@@ -44,6 +45,9 @@ export default class EditorController {
                 showStartHints: point => this.wallPreviewRenderer.renderStartHints(point, this.engine.elements),
             },
         });
+        this.measureDone = false;
+        this.tracingImage = null;
+        this.tracingImageData = null;
     }
 
     init() {
@@ -62,6 +66,7 @@ export default class EditorController {
         this.canvas.addEventListener('mouseleave', () => {
             if (
                 this.activeTool === 'door' ||
+                this.activeTool === 'smart-tracing' ||
                 (this.activeTool === 'wall' && !this.wallTool.startPoint)
             ) {
                 this.wallPreviewRenderer.clear();
@@ -279,6 +284,62 @@ export default class EditorController {
         this.wallPreviewRenderer.previewRenderer.drawDoor(wall, opening, true);
     }
 
+    renderTracingPreview(event) {
+        const image = this.view.blueprint;
+        const scale = this.view.blueprintScale;
+
+        if (!image || !Number.isFinite(scale) || scale <= 0) {
+            this.wallPreviewRenderer.clear();
+            return;
+        }
+
+        if (this.tracingImage !== image) {
+            const imageCanvas = document.createElement('canvas');
+            imageCanvas.width = image.width;
+            imageCanvas.height = image.height;
+
+            const context = imageCanvas.getContext('2d', { willReadFrequently: true });
+            context.drawImage(image, 0, 0);
+
+            this.tracingImageData = context.getImageData(
+                0, 0, image.width, image.height
+            );
+            this.tracingImage = image;
+        }
+
+        const worldPoint = this.getMousePoint(event, false);
+        const imagePoint = {
+            x: worldPoint.x / scale,
+            y: worldPoint.y / scale,
+        };
+
+        const line = findBlueprintLine(this.tracingImageData, imagePoint);
+
+        this.wallPreviewRenderer.prepareFrame();
+
+        if (!line) return;
+
+        const previewRenderer = this.wallPreviewRenderer.previewRenderer;
+        const start = previewRenderer.worldToScreen(
+            (line.start.x + 0.5) * scale,
+            (line.start.y + 0.5) * scale
+        );
+        const end = previewRenderer.worldToScreen(
+            (line.end.x + 0.5) * scale,
+            (line.end.y + 0.5) * scale
+        );
+
+        const context = previewRenderer.ctx;
+        context.save();
+        context.beginPath();
+        context.moveTo(start.x, start.y);
+        context.lineTo(end.x, end.y);
+        context.strokeStyle = '#2563eb';
+        context.lineWidth = 3;
+        context.stroke();
+        context.restore();
+    }
+
     /**
      * Updates panning, column dragging, or a temporary wall preview.
      *
@@ -290,6 +351,11 @@ export default class EditorController {
         // Navigation takes priority over dragging and drafting previews.
         if (this.navigation.isPanning) {
             this.navigation.updatePan(event);
+            return;
+        }
+
+        if (this.activeTool === 'smart-tracing') {
+            this.renderTracingPreview(event);
             return;
         }
 
