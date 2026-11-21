@@ -160,6 +160,27 @@ export default class EditorController {
             return;
         }
 
+        if (this.activeTool === 'smart-tracing') {
+            const candidate = this.renderTracingPreview(event);
+
+            if (!candidate) return;
+
+            try {
+                this.engine.addWall(
+                    candidate.start,
+                    candidate.end,
+                    candidate.thickness,
+                    candidate.thicknessSide
+                );
+
+                this.wallPreviewRenderer.clear();
+            } catch (error) {
+                alert(error.message);
+            }
+
+            return;
+        }
+
         if (this.activeTool === 'calibrate') {
             const point = this.getMousePoint(event, false);
             const image = this.view.blueprint;
@@ -347,6 +368,8 @@ export default class EditorController {
         const previewRenderer = this.wallPreviewRenderer.previewRenderer;
         previewRenderer.drawElement(previewWall, true);
         previewRenderer.drawWallLength(previewWall);
+
+        return previewWall;
     }
 
     /**
