@@ -11,6 +11,7 @@ export default class EditorController {
         this.canvas = canvas;
         this.engine = engine;
         this.view = view;
+        this.wallInputs = wallInputs;
         this.wallPreviewRenderer = wallPreviewRenderer;
         this.renderer = renderer;
         this.snapManager = snapManager;
@@ -161,6 +162,11 @@ export default class EditorController {
         }
 
         if (this.activeTool === 'smart-tracing') {
+            if (this.wallInputs.getThickness(true) === null) {
+                this.wallPreviewRenderer.clear();
+                return;
+            }
+            
             const candidate = this.renderTracingPreview(event);
 
             if (!candidate) return;
@@ -351,7 +357,9 @@ export default class EditorController {
             y: (line.end.y + 0.5) * scale,
         };
 
-        const thickness = 200;
+        const thickness = this.wallInputs.getThickness();
+
+        if (thickness === null) return;
         const thicknessSide = GeometryService.resolveWallThicknessSide(
             start,
             end,
