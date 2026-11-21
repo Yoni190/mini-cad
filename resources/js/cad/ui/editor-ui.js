@@ -67,7 +67,10 @@ export default function initEditorUI(view) {
             button.setAttribute('aria-pressed', String(button.dataset.tool === tool));
             button.disabled = toolSelect.disabled;
         });
-        document.getElementById('wallProperties').hidden = tool !== 'wall';
+        document.getElementById('wallProperties').hidden =
+            tool !== 'wall' && tool !== 'smart-tracing';
+
+        document.getElementById('manualWallControls').hidden = tool !== 'wall';
         document.getElementById('calibrationProperties').hidden = tool !== 'calibrate';
         document.getElementById('doorProperties').hidden = tool !== 'door';
         document.getElementById('windowProperties').hidden = tool !== 'window';
