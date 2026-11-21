@@ -1,4 +1,4 @@
-export default function initEditorUI() {
+export default function initEditorUI(view) {
     const toolSelect = document.getElementById('drawingTool');
     const toolButtons = document.querySelectorAll('[data-tool]');
     const help = document.getElementById('activeToolHelp');
@@ -14,6 +14,7 @@ export default function initEditorUI() {
         calibrate: 'Calibrate: Click the two ends of a known distance on the blueprint.',
         door: 'Door: Choose a width and height, then click a wall.',
         window: 'Window: Choose dimensions, then click a wall.',
+        'smart-tracing': 'Smart Tracing: Move over a wall in the blueprint.',
     };
 
     document.addEventListener('cad-selection-change', (event) => {
@@ -91,6 +92,13 @@ export default function initEditorUI() {
     toolButtons.forEach(button => {
         button.addEventListener('click', () => {
             if (toolSelect.disabled || toolSelect.value === button.dataset.tool) return;
+            if (
+                button.dataset.tool === 'smart-tracing' &&
+                (!view.blueprint || !Number.isFinite(view.blueprintScale) || view.blueprintScale <= 0)
+            ) {
+                help.textContent = 'Upload and calibrate a blueprint before using Smart Tracing.';
+                return;
+            }
             toolSelect.value = button.dataset.tool;
             toolSelect.dispatchEvent(new Event('change', { bubbles: true }));
         });
