@@ -250,7 +250,9 @@ export default class EditorController {
             return;
         }
 
-        this.wallTool.handleClick(point);
+        if (this.activeTool === 'wall') {
+            this.wallTool.handleClick(point);
+        }
     }
 
     renderDoorPreview(point) {
