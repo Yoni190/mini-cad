@@ -376,11 +376,16 @@ export default class EditorController {
         const thickness = this.wallInputs.getThickness();
 
         if (thickness === null) return;
-        const thicknessSide = GeometryService.resolveWallThicknessSide(
+        const automaticSide = GeometryService.resolveWallThicknessSide(
             start,
             end,
             this.engine.elements
         );
+
+        const direction = document.getElementById('tracingThicknessSide').value;
+        const thicknessSide = direction === 'opposite'
+            ? -automaticSide
+            : automaticSide;
 
         const previewWall = new Wall({
             start,
