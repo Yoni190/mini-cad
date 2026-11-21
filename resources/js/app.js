@@ -44,7 +44,7 @@ if (canvas && twoContainer && threeContainer) {
     );
 
     editor.init();
-    initEditorUI();
+    initEditorUI(view);
     initEditorControls(editor);
     view.render();
 
@@ -90,7 +90,7 @@ if (canvas && twoContainer && threeContainer) {
         view.blueprint = null;
         view.blueprintScale = scale == null ? null : Number(scale);
         calibrationTool.hidden = true;
-        if (toolSelect.value === 'calibrate') {
+        if (toolSelect.value === 'calibrate' || toolSelect.value === 'smart-tracing') {
             toolSelect.value = 'wall';
             toolSelect.dispatchEvent(new Event('change', { bubbles: true }));
         }
