@@ -4,6 +4,7 @@ import CanvasNavigation from './CanvasNavigation';
 import WallTopology from '../geometry/WallTopology';
 import Wall from '../models/Wall';
 import findBlueprintLine from '../geometry/findBlueprintLine';
+import GeometryService from '../geometry/GeometryService';
 
 export default class EditorController {
     constructor(canvas, engine, renderer, snapManager, selectionManager, view, wallInputs, wallPreviewRenderer) {
@@ -319,25 +320,33 @@ export default class EditorController {
 
         if (!line) return;
 
-        const previewRenderer = this.wallPreviewRenderer.previewRenderer;
-        const start = previewRenderer.worldToScreen(
-            (line.start.x + 0.5) * scale,
-            (line.start.y + 0.5) * scale
-        );
-        const end = previewRenderer.worldToScreen(
-            (line.end.x + 0.5) * scale,
-            (line.end.y + 0.5) * scale
+        const start = {
+            x: (line.start.x + 0.5) * scale,
+            y: (line.start.y + 0.5) * scale,
+        };
+
+        const end = {
+            x: (line.end.x + 0.5) * scale,
+            y: (line.end.y + 0.5) * scale,
+        };
+
+        const thickness = 200;
+        const thicknessSide = GeometryService.resolveWallThicknessSide(
+            start,
+            end,
+            this.engine.elements
         );
 
-        const context = previewRenderer.ctx;
-        context.save();
-        context.beginPath();
-        context.moveTo(start.x, start.y);
-        context.lineTo(end.x, end.y);
-        context.strokeStyle = '#2563eb';
-        context.lineWidth = 3;
-        context.stroke();
-        context.restore();
+        const previewWall = new Wall({
+            start,
+            end,
+            thickness,
+            thicknessSide,
+        });
+
+        const previewRenderer = this.wallPreviewRenderer.previewRenderer;
+        previewRenderer.drawElement(previewWall, true);
+        previewRenderer.drawWallLength(previewWall);
     }
 
     /**
