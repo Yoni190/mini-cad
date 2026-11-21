@@ -3,7 +3,7 @@ import SelectionTool from './tools/SelectionTool';
 import CanvasNavigation from './CanvasNavigation';
 import WallTopology from '../geometry/WallTopology';
 import Wall from '../models/Wall';
-import findBlueprintLine from '../geometry/findBlueprintLine';
+import { findBlueprintLineNear } from '../geometry/findBlueprintLine';
 import GeometryService from '../geometry/GeometryService';
 
 export default class EditorController {
@@ -341,7 +341,7 @@ export default class EditorController {
             y: worldPoint.y / scale,
         };
 
-        const line = findBlueprintLine(this.tracingImageData, imagePoint);
+        const line = findBlueprintLineNear(this.tracingImageData, imagePoint);
 
         this.wallPreviewRenderer.prepareFrame();
 

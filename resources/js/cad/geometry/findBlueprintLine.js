@@ -55,3 +55,32 @@ export default function findBlueprintLine(imageData, point) {
         end: { x, y: bottom },
     };
 }
+
+export function findBlueprintLineNear(imageData, point) {
+    const centerX = Math.floor(point.x);
+    const centerY = Math.floor(point.y);
+    const searchRadius = 4;
+
+    if (!Number.isFinite(centerX) || !Number.isFinite(centerY)) {
+        return null;
+    }
+
+    for (let radius = 0; radius <= searchRadius; radius++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) {
+                    continue;
+                }
+
+                const line = findBlueprintLine(imageData, {
+                    x: centerX + dx,
+                    y: centerY + dy,
+                });
+
+                if (line) return line;
+            }
+        }
+    }
+
+    return null;
+}
